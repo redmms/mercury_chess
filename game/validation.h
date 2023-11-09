@@ -1,27 +1,21 @@
 #ifndef VALIDATION_H
 #define VALIDATION_H
-#include "tile.h"
-
+#include <set>
 class Board;
+class Tile;
+
 class Validation{
 
-public:
-
     Board& m_board;
-    int
-        m_valid_moves[28],
-        m_valid_n = 0,
-        m_wR = 0,
-        m_wC = 0;
+    void findValid(Tile* from);
 
-    Validation(Board* board) : m_board(*board)
-    {};
-                              
-    int findValid(Tile* temp);
-    bool validMove(Tile* from, Tile* to);
-    void dyeOrange();
-    void disOrange();
-    int  check(Tile* temp);
+public:
+    Validation(Board* board) : m_board(*board) {};
+
+    std::set<Tile*> m_valid_moves{ nullptr };
+   
+    void showPossible(Tile * from);
+    void hidePossible();
 };
 
 #endif // VALIDATION_H

@@ -9,7 +9,7 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
     ui->mainToolBar->hide();
-    Board board = new Board(ui->board_background);
+    Board* board = new Board(ui->board_background);
 }
 
 MainWindow::~MainWindow()

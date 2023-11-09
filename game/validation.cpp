@@ -1,111 +1,123 @@
 #pragma once
 #include "validation.h"
 #include "board.h"
+using namespace std;
 
-void Validation::validMove(Tile* from, Tile* to)
+void Validation::showPossible(Tile * from)
 {
-    int ret_value = 0, i = 0;
-
-    // FIX: it's better to read this method carefully, the error may be here
-
-    // if valid moves number is more than 0
-    // because 1 is probably for the tile itseft?
-    // or just because in the original project it was always max++
-    // FIX: instead of valid_n checking we can just check if m_from_tile is 
-    // not null
-    if (valid_n == 1)
-    {
-        if (temp->m_has_piece && temp->m_white_piece == m_white_turn)
-        {
-            //exp[m_valid_n++]=temp->m_tile_num;
-            ret_value = valid->findValid(temp);
-            // will paint all valid tiles in orange
-
-            if (ret_value)
-            {
-                // m_from_tile= new Tile(); // FIX: the source of the problem is here
-                temp->setStyleSheet("QLabel {background-color: green;}");
-                m_from_tile = temp;
-            }
-            // and it will paint the first click in green
-
-            else
-            {
-                //temp->setStyleSheet("QLabel {background-color: red;}");
-                m_valid_n = 0;
-            }
-            // reset the counter of valid moves for future use
-
-        }
-        else
-        {
-            //qDebug()<<"Rascel, clicking anywhere";
-            m_valid_n = 0;
-        }
-    }
-
-    // if the color of piece differ from the color of turn
-    // or if the tile is empty
-    // then disOrange valid tiles (return back their normal color)
-    else
-    {
-
-        // the first click is disoranged apart from valid moves
-        // it shouldn't be in the Validation::m_valid_moves[] actually
-        if (temp->m_tile_num == m_from_tile->m_tile_num)
-        {
-            m_from_tile->dyeNormal();
-            valid->disOrange(); // FIX: this line is not necessary, is it?
-            valid->m_valid_n = 0;
-            m_valid_n = 0;
-        }
-
-        // FIX: why would we need this cycle?
-        // if we can call valid->disOrange() only once?
-        for (i = 0; i < valid->m_valid_n; i++)  // FIX: maybe the problem with
-            // validation is because of m_valid_n is bigger than needed?
-        {
-            if (temp->m_tile_num == valid->m_valid_moves[i])
-            {
-                m_from_tile->m_has_piece = 0;
-                temp->m_has_piece = 1;
-
-                temp->m_white_piece = m_from_tile->m_white_piece;
-                temp->m_piece_name = m_from_tile->m_piece_name;
-
-                m_from_tile->drawPiece(m_from_tile->m_piece_name);
-                temp->drawPiece(m_from_tile->m_piece_name);
-
-                m_from_tile->dyeNormal();
-                temp->dyeNormal();
-
-                ret_value = valid->check(m_from_tile);
-
-                // FIX: what does this do? Some very misterious line
-                // and the place where wR and wC are used
-                /*
-                if(ret_value)
-                {
-                    m_tiles[m_wR][m_wC]->setStyleSheet("QLabel {background-color: red;}");
-                }
-                */
-
-                valid->disOrange();
-
-                valid->m_valid_n = 0;
-
-                // shouldn't it be outside of the cycle?
-                m_valid_n = 0;
-            }
-
-            else
-                m_valid_n = 1;
-        }
-    }
+    findValid(from);
+    for (auto tile : m_valid_moves)
+        tile->setStyleSheet("background: orange;");
+    from->setStyleSheet("background: green;");
 }
 
-int Validation::findValid(Tile *temp)
+void Validation::hidePossible()
 {
+    for (auto tile : m_valid_moves)
+        tile->dyeNormal();
+    m_valid_moves.clear();
+}
+
+void Validation::findValid(Tile *from)
+{
+    pair coord(from->m_coord);
+    auto onBoard = [](pair<int, int> coord) {
+        return coord.first >= 0 && coord.first < 8 && coord.second >= 0 && coord.second < 8;
+        };
+    auto differentColor = [this, coord]() {
+        // FIX: need to consider field names better
+        // FIX: need to change i and j to x and y;
+        return m_board[coord.second][coord.first]->m_white_piece != m_white_piece;
+        };
+    auto occupied = [&](pair <int, int> coord) {
+        return m_board[coord.second][coord.first]->m_has_piece;
+        };
+    auto pieceName = [&](pair <int, int> coord) {
+        return m_board[coord.second][coord.first]->m_piece_name;
+    };
+    auto runThrough = [&](pair<int, int> from, pair<int, int> add, bool& check_func()) {
+        for (; !check_func(); from.first += add.first, from.second += add.second)
+            if (!onBoard(from))
+                return false;
+        return true;
+        };
+    auto onDiagonals = [&](pair<int, int> from, bool& check_func()) {
+        return runThrough(from, { 1, 1 }, check_func) ||
+            runThrough(from, { 1, -1 }, check_func) ||
+            runThrough(from, { -1, 1 }, check_func) ||
+            runThrough(from, { -1, -1 }, check_func);
+        };
+    auto onPerp = [&](pair<int, int> from, bool& check_func()) {
+        return runThrough(from, { 0, 1 }, check_func) ||
+            runThrough(from, { 0, -1 }, check_func) ||
+            runThrough(from, { 1, 0 }, check_func) ||
+            runThrough(from, { -1, 0 }, check_func);
+        };
+    auto onLines = [&](pair<int, int> from, pair<int, int> to, bool& check_func()) {
+        int X = to.first - from.first;
+        int Y = to.second - from.second;
+        if (!Y)  // horizontal line
+            if (X > 0) // to the right
+                return runThrough(from, { 1, 0 }, check_func);
+            else  // to the left
+                return runThrough(from, { -1, 0 }, check_func);
+        else if (!X)  // vertical line
+            if (Y > 0) // to the top
+                return runThrough(from, { 0, 1 }, check_func);
+            else  // to the bottom
+                return runThrough(from, { 0, -1 }, check_func);
+        else if (X == Y)  // diagonal line
+            if (X > 0 && Y > 0) // to the top right
+                return runThrough(from, { 1, 1 }, check_func);
+            else if (X > 0 && Y < 0) // to the bottom right
+                return runThrough(from, { 1, -1 }, check_func);
+            else if (X < 0 && Y > 0) // to the top left
+                return runThrough(from, { -1, 1 }, check_func);
+            else // to the bottom left  
+                return runThrough(from, { -1, -1 }, check_func);
+        };
+
+
+        //int X =  board->king_coord.first - tile->m_col;
+        //int Y = board->king_coord.second - tile->m_row;
+
+        pair king(board->king_coord);
+        int X = king.first - tile->m_col;
+        int Y = king.second - tile->m_row;
+
+        bool on_same_line = X == Y || !X || !Y;
+        bool nothing_between = fromTo(pair(this_tile->m_col, this_tile->m_row), coord, !occupied);
+        bool is_attacked = ;
+
+        auto
+            if (&& throughDiagonal(pair(m_col, m_row), temp.coord);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     int return_count = 0;
 
     auto validatePawn = [&](Tile* temp) {
@@ -715,29 +727,3 @@ int Validation::findValid(Tile *temp)
     dyeOrange();
     return return_count;
 }
-
-void Validation::dyeOrange()
-{
-    int i/*,n*/;  // FIX: What is n here? Should here be some more code?
-    for(i=0; i < m_valid_n;i++)
-        m_board[m_valid_moves[i]/8][m_valid_moves[i]%8]->setStyleSheet("QLabel {background-color: orange;}");
-}
-
-void Validation::disOrange()
-{
-    int i;
-    for (i = 0; i < m_valid_n; i++)
-        m_board[m_valid_moves[i] / 8][m_valid_moves[i] % 8]->dyeNormal();
-
-}
-
-int Validation::check(Tile *temp)  // FIX: Why there's no check? Was it planned as TODO?
- //FIX: P.S. I suppose it's meant to check if a king (temp) is under the check
-{
-    int r,c,m_flag;
-    int return_count=0;
-
-    return return_count;
-}
-
-

@@ -3,8 +3,6 @@
 #include "windows\mainwindow.h"
 #include "game\tile.h"
 
-
-
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
