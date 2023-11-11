@@ -103,7 +103,7 @@ void Validation::findValid(Tile *from_tile)
         if (!Y)  // horizontal line
             if (X > 0) // to the right
                 return runThrough(coord, { 1, 0 }, stop_cond, borders_between);
-            else  // to the left
+            else  // to the left            
                 return runThrough(coord, { -1, 0 }, stop_cond, borders_between);
         else if (!X)  // vertical line
             if (Y > 0) // to the top
