@@ -1,36 +1,48 @@
 #pragma once
 #include "board.h"
-#include "validation.h"
+#include <QGridLayout>
+
 
 Board::Board(QLabel* background = 0) :
-    QLabel((QWidget*) background->parent()),
     m_tile_size(background->width() / 9)
 {
-    setGeometry(background->geometry());
-    setStyleSheet("background: rgb(170, 170, 125)");
+    setGeometry(background->geometry());   // replace ui board, by this class
+    setStyleSheet("background: rgb(170, 170, 120);");
+    background->parentWidget()->layout()->replaceWidget(background, this);
     background->~QLabel();
+
     drawLetters();
     drawNumbers();
     drawTiles();
 };
 
 void Board::reactOnClick(Tile* tile) {
-    if (m_from_tile == nullptr) { // then show valid moves
-        m_from_tile = tile;
-        m_valid.showPossible(tile);
+    if (m_from_tile == nullptr) { // if it's first click then pick the piece and 
+    // show valid moves
+        if (m_white_turn != tile->m_white_piece || tile->m_piece_name == 'e')
+            return;
+        // turn for black, but white try to move, or vice versa, or tile is empty
+        else {
+            m_from_tile = tile;
+            m_valid.showValid(tile);
+        }
     }
-    else if (m_valid.m_valid_moves.contains(tile)) { // then move pieces
-        m_valid.hidePossible();
+    else if (tile->m_white_piece == m_white_turn && tile->m_piece_name != 'e') { 
+    // if the second click
+    // is on the piece of same color then pick it instead
+        m_valid.hideValid();
+        m_from_tile = tile;
+        m_valid.showValid(tile);
+    }
+    else if (m_valid.isValid(tile)) { // if it's the second click and move is valid
+    //then move pieces
+        m_valid.hideValid();
         tile->setPiece(m_from_tile->m_piece_name, m_from_tile->m_white_piece);       
         m_from_tile->setPiece('e', 0);
         m_from_tile = nullptr;
+        m_white_turn = !m_white_turn;
+        emit newStatus(m_white_turn ? "White turn" : "Black turn");
     }
-    else if (tile->m_white_piece == m_white_turn) { // then pick another piece
-        m_valid.hidePossible();
-        m_from_tile = tile;
-        m_valid.showPossible(tile);
-    }
-
 }
 
 void Board::drawLetters() {
@@ -85,52 +97,54 @@ void Board::drawNumbers() {
     }
 }
 
-void Board::drawTiles(/*Tile* m_tiles[8][8]*/)
+void Board::drawTiles()
 {
-    int hor = m_tile_size / 2;
-    int ver = m_tile_size / 2;
-    int k = 0;
-    for (int i = 0; i < 8; i++){
-        for (int j = 0; j < 8; j++){
-            m_tiles[i][j] = new Tile(this);
-            m_tiles[i][j]->m_white_tile = k % 2;
-            m_tiles[i][j]->m_tile_num = k++;
-            m_tiles[i][j]->m_coord = std::pair(j, i); 
+    int indent = m_tile_size / 2;
+    int hor = indent;
+    int ver = indent;
+    for (int y = 7; y >= 0; y--){
+        for (int x = 0; x < 8; x++){
+            m_tiles[x][y] = new Tile(this);
+            m_tiles[x][y]->m_white_tile = !((x + y) % 2);
+            m_tiles[x][y]->m_tile_num = y * 8 + x;
             // is this field really needed?
-            // Yes, it is otherwise you can't connect the tile pointer to it's 
-            // index, when tileClicked signal is emitted
-            // and also we can't use gridlayout because its index goes
-            // upside down
-            m_tiles[i][j]->setGeometry(hor, ver, m_tile_size, m_tile_size);
-            m_tiles[i][j]->dyeNormal();
+// Yes, it is otherwise you can't connect the tile pointer to it's 
+// index, when tileClicked signal is emitted
+// and also we can't use gridlayout because its index goes
+// upside down
+            m_tiles[x][y]->m_coord = {x, y}; 
+            m_tiles[x][y]->setGeometry(hor, ver, m_tile_size, m_tile_size);
+            m_tiles[x][y]->dyeNormal();
+            QObject::connect(m_tiles[x][y], &Tile::tileClicked, this, &Board::reactOnClick);
             hor += m_tile_size;
         }
+        hor = indent;
         ver += m_tile_size;
     }
 
     //black pawns
-    for (int j = 0; j < 8; j++)
-        m_tiles[1][j]->setPiece('P', 0);
+    for (int x = 0; x < 8; x++)
+        m_tiles[x][6]->setPiece('P', 0);
 
     //white pawns
-    for (int j = 0; j < 8; j++)
-        m_tiles[6][j]->setPiece('P', 1);
+    for (int x = 0; x < 8; x++)
+        m_tiles[x][1]->setPiece('P', 1);
 
-    m_tiles[0][0]->setPiece('R', 0);
-    m_tiles[0][1]->setPiece('N', 0);
-    m_tiles[0][2]->setPiece('B', 0);
-    m_tiles[0][3]->setPiece('Q', 0);
-    m_tiles[0][4]->setPiece('K', 0);
-    m_tiles[0][5]->setPiece('B', 0);
-    m_tiles[0][6]->setPiece('N', 0);
     m_tiles[0][7]->setPiece('R', 0);
+    m_tiles[1][7]->setPiece('N', 0);
+    m_tiles[2][7]->setPiece('B', 0);
+    m_tiles[3][7]->setPiece('Q', 0);
+    m_tiles[4][7]->setPiece('K', 0);
+    m_tiles[5][7]->setPiece('B', 0);
+    m_tiles[6][7]->setPiece('N', 0);
+    m_tiles[7][7]->setPiece('R', 0);
 
+    m_tiles[0][0]->setPiece('R', 1);
+    m_tiles[1][0]->setPiece('N', 1);
+    m_tiles[2][0]->setPiece('B', 1);
+    m_tiles[3][0]->setPiece('Q', 1);
+    m_tiles[4][0]->setPiece('K', 1);
+    m_tiles[5][0]->setPiece('B', 1);
+    m_tiles[6][0]->setPiece('N', 1);
     m_tiles[7][0]->setPiece('R', 1);
-    m_tiles[7][1]->setPiece('N', 1);
-    m_tiles[7][2]->setPiece('B', 1);
-    m_tiles[7][3]->setPiece('Q', 1);
-    m_tiles[7][4]->setPiece('K', 1);
-    m_tiles[7][5]->setPiece('B', 1);
-    m_tiles[7][6]->setPiece('N', 1);
-    m_tiles[7][7]->setPiece('R', 1);
 }

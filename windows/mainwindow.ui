@@ -254,6 +254,9 @@
   <property name="toolTip">
    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Check!&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
   </property>
+  <property name="autoFillBackground">
+   <bool>false</bool>
+  </property>
   <widget class="QWidget" name="centralWidget">
    <layout class="QHBoxLayout" name="horizontalLayout">
     <property name="leftMargin">
@@ -354,6 +357,8 @@
           <property name="font">
            <font>
             <bold>true</bold>
+            <strikeout>false</strikeout>
+            <kerning>true</kerning>
            </font>
           </property>
           <property name="text">
@@ -525,6 +530,8 @@
           <property name="font">
            <font>
             <bold>true</bold>
+            <strikeout>false</strikeout>
+            <kerning>true</kerning>
            </font>
           </property>
           <property name="text">
@@ -796,6 +803,12 @@ li.checked::marker { content: &quot;\2612&quot;; }
           <height>396</height>
          </size>
         </property>
+        <property name="maximumSize">
+         <size>
+          <width>396</width>
+          <height>396</height>
+         </size>
+        </property>
         <property name="autoFillBackground">
          <bool>false</bool>
         </property>
@@ -820,7 +833,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
      <x>0</x>
      <y>0</y>
      <width>816</width>
-     <height>21</height>
+     <height>22</height>
     </rect>
    </property>
    <property name="defaultUp">
@@ -871,7 +884,21 @@ li.checked::marker { content: &quot;\2612&quot;; }
     <bool>false</bool>
    </attribute>
   </widget>
-  <widget class="QStatusBar" name="statusBar"/>
+  <widget class="QStatusBar" name="statusBar">
+   <property name="font">
+    <font>
+     <family>Century</family>
+     <pointsize>12</pointsize>
+     <bold>false</bold>
+     <underline>true</underline>
+     <strikeout>false</strikeout>
+     <kerning>true</kerning>
+    </font>
+   </property>
+   <property name="autoFillBackground">
+    <bool>false</bool>
+   </property>
+  </widget>
   <action name="actionSave_the_game">
    <property name="text">
     <string>Save the game</string>

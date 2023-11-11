@@ -2,728 +2,216 @@
 #include "validation.h"
 #include "board.h"
 using namespace std;
+using pint = pair<int, int>;
+using lambda = function<bool(pint)>;
 
-void Validation::showPossible(Tile * from)
+void Validation::showValid(Tile * from)
 {
     findValid(from);
-    for (auto tile : m_valid_moves)
-        tile->setStyleSheet("background: orange;");
-    from->setStyleSheet("background: green;");
+    if (!m_valid_moves.empty()) {
+        for (auto tile : m_valid_moves)
+            tile->setStyleSheet("background: orange;");
+        from->setStyleSheet("background: green;");
+    }
 }
 
-void Validation::hidePossible()
+void Validation::hideValid()
 {
+    m_board.m_from_tile->dyeNormal();
     for (auto tile : m_valid_moves)
         tile->dyeNormal();
     m_valid_moves.clear();
 }
 
-void Validation::findValid(Tile *from)
+bool Validation::isValid(Tile* tile)
 {
-    pair coord(from->m_coord);
-    auto onBoard = [](pair<int, int> coord) {
-        return coord.first >= 0 && coord.first < 8 && coord.second >= 0 && coord.second < 8;
+    return m_valid_moves.count(tile);
+}
+
+bool Validation::empty()
+{
+    return m_valid_moves.empty();
+}
+
+void Validation::findValid(Tile *from_tile)
+{
+    // NOTE: for the purpose of this code, we consider that m_board goes [x][y]
+    // instead of [i][j] that is equal to [y][x];
+    // and we also consider that white piece are on the 0 line and black on the 
+    // 7 line
+    bool turn = m_board.m_white_turn;
+    char piece = from_tile->m_piece_name;
+    bool color = from_tile->m_white_piece;
+    const pint king = color ? m_board.m_white_king->m_coord : m_board.m_black_king->m_coord;
+    const pint from = from_tile->m_coord;
+    const int x = from.first, y = from.second;
+    int k = from_tile->m_tile_num;
+    set <pint> potenial_moves;
+
+    auto inBoard = [](pint coord) -> bool {
+        int x = coord.first, y = coord.second;
+        return x >= 0 && x < 8 && y >= 0 && y < 8;
         };
-    auto differentColor = [this, coord]() {
-        // FIX: need to consider field names better
-        // FIX: need to change i and j to x and y;
-        return m_board[coord.second][coord.first]->m_white_piece != m_white_piece;
+    auto occupied = [this](pint coord) -> bool {
+        int x = coord.first, y = coord.second;
+        return m_board[x][y]->m_piece_name != 'e';
         };
-    auto occupied = [&](pair <int, int> coord) {
-        return m_board[coord.second][coord.first]->m_has_piece;
+    auto differentColor = [this, color, occupied](pint coord) -> bool {
+        int x = coord.first, y = coord.second;
+        return m_board[x][y]->m_white_piece != color && occupied(coord);
         };
-    auto pieceName = [&](pair <int, int> coord) {
-        return m_board[coord.second][coord.first]->m_piece_name;
-    };
-    auto runThrough = [&](pair<int, int> from, pair<int, int> add, bool& check_func()) {
-        for (; !check_func(); from.first += add.first, from.second += add.second)
-            if (!onBoard(from))
-                return false;
-        return true;
+    auto pieceName = [this](pint coord) -> char {
+        int x = coord.first, y = coord.second;
+        return m_board[x][y]->m_piece_name;
         };
-    auto onDiagonals = [&](pair<int, int> from, bool& check_func()) {
-        return runThrough(from, { 1, 1 }, check_func) ||
-            runThrough(from, { 1, -1 }, check_func) ||
-            runThrough(from, { -1, 1 }, check_func) ||
-            runThrough(from, { -1, -1 }, check_func);
+    auto addValid = [this](pint coord) -> void {
+        int x = coord.first, y = coord.second;
+        m_valid_moves.emplace(m_board[x][y]);  // FIX: should be insert or emplace?
+        // because m_board[x][y] does already exist, it doesn't have to be created
         };
-    auto onPerp = [&](pair<int, int> from, bool& check_func()) {
-        return runThrough(from, { 0, 1 }, check_func) ||
-            runThrough(from, { 0, -1 }, check_func) ||
-            runThrough(from, { 1, 0 }, check_func) ||
-            runThrough(from, { -1, 0 }, check_func);
+    auto runThrough = [&](pint coord, pint add, lambda stop_cond, lambda borders_cond) -> bool {
+        // here range is (from, to] or (from, to), depending on stop_cond
+        do { 
+            coord.first += add.first, coord.second += add.second;
+            if (stop_cond(coord))
+                return true;
+        }
+        while(borders_cond(coord));
+        return false;
         };
-    auto onLines = [&](pair<int, int> from, pair<int, int> to, bool& check_func()) {
-        int X = to.first - from.first;
-        int Y = to.second - from.second;
+    auto onDiagonals = [&](pint coord, lambda stop_cond) -> bool {
+        bool b1 = runThrough(coord, {  1,  1 }, stop_cond, inBoard),
+             b2 = runThrough(coord, {  1, -1 }, stop_cond, inBoard),
+             b3 = runThrough(coord, { -1,  1 }, stop_cond, inBoard),
+             b4 = runThrough(coord, { -1, -1 }, stop_cond, inBoard);
+        return b1 || b2 || b3 || b4;
+        };
+    auto onPerp = [&](pint coord, lambda stop_cond) -> bool {
+        bool b1 = runThrough(coord, { 0,  1  }, stop_cond, inBoard),
+             b2 = runThrough(coord, { 0,  -1 }, stop_cond, inBoard),
+             b3 = runThrough(coord, { 1,  0  }, stop_cond, inBoard),
+             b4 = runThrough(coord, { -1, 0  }, stop_cond, inBoard);
+        return b1 || b2 || b3 || b4;
+        };
+    auto inBetween = [&](pint coord, pint to, lambda stop_cond) -> bool {
+    // here range is (coord; to)
+        int X = to.first - coord.first;
+        int Y = to.second - coord.second;
+        auto borders_between = [coord, to](pint betw_coord){
+            return betw_coord == coord || betw_coord == to;
+            };
         if (!Y)  // horizontal line
             if (X > 0) // to the right
-                return runThrough(from, { 1, 0 }, check_func);
+                return runThrough(coord, { 1, 0 }, stop_cond, borders_between);
             else  // to the left
-                return runThrough(from, { -1, 0 }, check_func);
+                return runThrough(coord, { -1, 0 }, stop_cond, borders_between);
         else if (!X)  // vertical line
             if (Y > 0) // to the top
-                return runThrough(from, { 0, 1 }, check_func);
+                return runThrough(coord, { 0, 1 }, stop_cond, borders_between);
             else  // to the bottom
-                return runThrough(from, { 0, -1 }, check_func);
-        else if (X == Y)  // diagonal line
+                return runThrough(coord, { 0, -1 }, stop_cond, borders_between);
+        else if (abs(X) == abs(Y))  // diagonal line
             if (X > 0 && Y > 0) // to the top right
-                return runThrough(from, { 1, 1 }, check_func);
+                return runThrough(coord, { 1, 1 }, stop_cond, borders_between);
             else if (X > 0 && Y < 0) // to the bottom right
-                return runThrough(from, { 1, -1 }, check_func);
+                return runThrough(coord, { 1, -1 }, stop_cond, borders_between);
             else if (X < 0 && Y > 0) // to the top left
-                return runThrough(from, { -1, 1 }, check_func);
+                return runThrough(coord, { -1, 1 }, stop_cond, borders_between);
             else // to the bottom left  
-                return runThrough(from, { -1, -1 }, check_func);
+                return runThrough(coord, { -1, -1 }, stop_cond, borders_between);
         };
+    auto underAttack = [&](pint coord) -> bool {
+		return false;
+		};    // FIX
+    auto exposureKing = [&](pint coord) -> bool {
+        //return false;
+        if (piece == 'K')
+            return underAttack(coord);
+        // if the piece is King itself then we need to make another checking
 
-
-        //int X =  board->king_coord.first - tile->m_col;
-        //int Y = board->king_coord.second - tile->m_row;
-
-        pair king(board->king_coord);
-        int X = king.first - tile->m_col;
-        int Y = king.second - tile->m_row;
-
-        bool on_same_line = X == Y || !X || !Y;
-        bool nothing_between = fromTo(pair(this_tile->m_col, this_tile->m_row), coord, !occupied);
-        bool is_attacked = ;
-
-        auto
-            if (&& throughDiagonal(pair(m_col, m_row), temp.coord);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    int return_count = 0;
-
-    auto validatePawn = [&](Tile* temp) {
-        int row, col;
-
-        row = temp->m_row;
-        col = temp->m_col;
-
-        if (temp->m_white_piece)
-        {
-            if (row - 1 >= 0 && !m_board[row - 1][col]->m_has_piece)
-            {
-                m_valid_moves[m_valid_n++] = m_board[row - 1][col]->m_tile_num;
-                return_count = 1;
-            }
-
-            if (row == 6 && !m_board[5][col]->m_has_piece && !m_board[4][col]->m_has_piece)
-            {
-                m_valid_moves[m_valid_n++] = m_board[row - 2][col]->m_tile_num;
-                return_count = 1;
-            }
-
-            if (row - 1 >= 0 && col - 1 >= 0)
-            {
-                if (m_board[row - 1][col - 1]->m_white_piece != temp->m_white_piece && m_board[row - 1][col - 1]->m_has_piece)
-                {
-                    m_valid_moves[m_valid_n++] = m_board[row - 1][col - 1]->m_tile_num;
-                    return_count = 1;
-                }
-            }
-
-            if (row - 1 >= 0 && col + 1 <= 7)
-            {
-                if (m_board[row - 1][col + 1]->m_white_piece != temp->m_white_piece && m_board[row - 1][col + 1]->m_has_piece)
-                {
-                    m_valid_moves[m_valid_n++] = m_board[row - 1][col + 1]->m_tile_num;
-                    return_count = 1;
-                }
-            }
+        int X = x - king.first;  // from.x
+        int Y = y - king.second;  // from.y
+        bool on_same_line = abs(X) == abs(Y) || !X || !Y;
+        bool nothing_between = !inBetween(king, from, [occupied](pint coord) {
+                return occupied(coord); }
+             );
+        
+        if (on_same_line && nothing_between) {
+            bool will_exposure = inBetween(from, coord, [pieceName](pint coord) {
+                char name = pieceName(coord);
+                return name == 'R' || name == 'B' || name == 'Q'; }
+                //return "RBQ"sv.contains(pieceName(coord)); }
+                // can be used only in C++23, just try it
+                // this line means that on the same line with king and the piece
+                // there's some rook, bishop or queen.
+                // We shouldn't be afraid of a pawn or knight, or other king.   
+                );
+            return will_exposure;
+        }
+        else 
+            return false;
+        };
+    auto canMoveTo = [&](pint coord) -> bool {
+        return inBoard(coord) && (!occupied(coord) || differentColor(coord)) &&
+               pieceName(coord) != 'K' && !exposureKing(coord);
+    };
+    auto addMove = [&](pint coord) -> bool {
+        if (canMoveTo(coord)) {
+            addValid(coord);
+            if (occupied(coord))
+                return true; // add move but stop, we can eat but cannot go next
+		    return false; // continue
         }
         else
-        {
-            if (row + 1 <= 7 && !m_board[row + 1][col]->m_has_piece)
-            {
-                m_valid_moves[m_valid_n++] = m_board[row + 1][col]->m_tile_num;
-                return_count = 1;
-            }
-
-            if (row == 1 && !m_board[2][col]->m_has_piece && !m_board[3][col]->m_has_piece)
-            {
-                m_valid_moves[m_valid_n++] = m_board[row + 2][col]->m_tile_num;
-                return_count = 1;
-            }
-
-            if (row + 1 <= 7 && col - 1 >= 0)
-            {
-                if (m_board[row + 1][col - 1]->m_white_piece != temp->m_white_piece && m_board[row + 1][col - 1]->m_has_piece)
-                {
-                    m_valid_moves[m_valid_n++] = m_board[row + 1][col - 1]->m_tile_num;
-                    return_count = 1;
-                }
-            }
-
-            if (row + 1 <= 7 && col + 1 <= 7)
-            {
-                if (m_board[row + 1][col + 1]->m_white_piece != temp->m_white_piece && m_board[row + 1][col + 1]->m_has_piece)
-                {
-                    m_valid_moves[m_valid_n++] = m_board[row + 1][col + 1]->m_tile_num;
-                    return_count = 1;
-                }
-            }
-        }
-
-
+            return true; // break cycle
         };
-    auto validateRook = [&](Tile* temp) {
-        int r, c;
-
-        int return_count = 0;
-
-        r = temp->m_row;
-        c = temp->m_col;
-        while (r-- > 0)
-        {
-            if (!m_board[r][c]->m_has_piece)
-            {
-                m_valid_moves[m_valid_n++] = m_board[r][c]->m_tile_num;
-                return_count = 1;
-            }
-
-            else if (m_board[r][c]->m_white_piece == temp->m_white_piece)
-                break;
-
-            else if (m_board[r][c]->m_white_piece != temp->m_white_piece)
-            {
-                m_valid_moves[m_valid_n++] = m_board[r][c]->m_tile_num;
-                return_count = 1;
-                break;
-            }
-        }
-
-        r = temp->m_row;
-        c = temp->m_col;
-        while (r++ < 7)
-        {
-            if (!m_board[r][c]->m_has_piece)
-            {
-                m_valid_moves[m_valid_n++] = m_board[r][c]->m_tile_num;
-                return_count = 1;
-            }
-
-            else if (m_board[r][c]->m_white_piece == temp->m_white_piece)
-                break;
-
-            else if (m_board[r][c]->m_white_piece != temp->m_white_piece)
-            {
-                m_valid_moves[m_valid_n++] = m_board[r][c]->m_tile_num;
-                return_count = 1;
-                break;
-            }
-        }
-
-        r = temp->m_row;
-        c = temp->m_col;
-        while (c++ < 7)
-        {
-            if (!m_board[r][c]->m_has_piece)
-            {
-                m_valid_moves[m_valid_n++] = m_board[r][c]->m_tile_num;
-                return_count = 1;
-            }
-
-            else if (m_board[r][c]->m_white_piece == temp->m_white_piece)
-                break;
-
-            else if (m_board[r][c]->m_white_piece != temp->m_white_piece)
-            {
-                m_valid_moves[m_valid_n++] = m_board[r][c]->m_tile_num;
-                return_count = 1;
-                break;
-            }
-        }
-
-        r = temp->m_row;
-        c = temp->m_col;
-        while (c-- > 0)
-        {
-            if (!m_board[r][c]->m_has_piece)
-            {
-                m_valid_moves[m_valid_n++] = m_board[r][c]->m_tile_num;
-                return_count = 1;
-            }
-
-            else if (m_board[r][c]->m_white_piece == temp->m_white_piece)
-                break;
-
-            else if (m_board[r][c]->m_white_piece != temp->m_white_piece)
-            {
-                m_valid_moves[m_valid_n++] = m_board[r][c]->m_tile_num;
-                return_count = 1;
-                break;
-            }
-        }
+    auto kingPotential = [](pint coord, set<pint>& coords) -> void {
+        int x = coord.first, y = coord.second;
+        coords =    { { x - 1, y + 1 }, { x, y + 1 }, { x + 1, y + 1 },
+                    { x - 1, y },                   { x + 1, y },
+                    { x - 1, y - 1 }, { x, y - 1 }, { x + 1, y - 1 } };
+    };
+    auto pawnPotential = [turn](pint coord, set<pint>& coords) -> void {
+        int x = coord.first, y = coord.second;
+        if (turn)
+            coords = { { x - 1, y + 1 }, { x, y + 1 }, { x + 1, y + 1 }, { x, y + 2 } };
+        else
+            coords = { { x - 1, y - 1 }, { x, y - 1 }, { x + 1, y - 1 }, { x, y - 2 } };
         };
-    auto validateKnight = [&](Tile* temp) {
-        int r, c;
-        int return_count = 0;
-
-        r = temp->m_row;
-        c = temp->m_col;
-
-        if (r - 2 >= 0 && c - 1 >= 0)
-        {
-            if (m_board[r - 2][c - 1]->m_white_piece != temp->m_white_piece || !m_board[r - 2][c - 1]->m_has_piece)
-            {
-                m_valid_moves[m_valid_n++] = m_board[r - 2][c - 1]->m_tile_num;
-                return_count = 1;
-            }
-        }
-
-        if (r - 2 >= 0 && c + 1 <= 7)
-        {
-            if (m_board[r - 2][c + 1]->m_white_piece != temp->m_white_piece || !m_board[r - 2][c + 1]->m_has_piece)
-            {
-                m_valid_moves[m_valid_n++] = m_board[r - 2][c + 1]->m_tile_num;
-                return_count = 1;
-            }
-        }
-
-        if (r - 1 >= 0 && c - 2 >= 0)
-        {
-            if (m_board[r - 1][c - 2]->m_white_piece != temp->m_white_piece || !m_board[r - 1][c - 2]->m_has_piece)
-            {
-                m_valid_moves[m_valid_n++] = m_board[r - 1][c - 2]->m_tile_num;
-                return_count = 1;
-            }
-        }
-
-        if (r - 1 >= 0 && c + 2 <= 7)
-        {
-            if (m_board[r - 1][c + 2]->m_white_piece != temp->m_white_piece || !m_board[r - 1][c + 2]->m_has_piece)
-            {
-                m_valid_moves[m_valid_n++] = m_board[r - 1][c + 2]->m_tile_num;
-                return_count = 1;
-            }
-        }
-
-        if (r + 2 <= 7 && c + 1 <= 7)
-        {
-            if (m_board[r + 2][c + 1]->m_white_piece != temp->m_white_piece || !m_board[r + 2][c + 1]->m_has_piece)
-            {
-                m_valid_moves[m_valid_n++] = m_board[r + 2][c + 1]->m_tile_num;
-                return_count = 1;
-            }
-        }
-
-        if (r + 2 <= 7 && c - 1 >= 0)
-        {
-            if (m_board[r + 2][c - 1]->m_white_piece != temp->m_white_piece || !m_board[r + 2][c - 1]->m_has_piece)
-            {
-                m_valid_moves[m_valid_n++] = m_board[r + 2][c - 1]->m_tile_num;
-                return_count = 1;
-            }
-        }
-
-        if (r + 1 <= 7 && c - 2 >= 0)
-        {
-            if (m_board[r + 1][c - 2]->m_white_piece != temp->m_white_piece || !m_board[r + 1][c - 2]->m_has_piece)
-            {
-                m_valid_moves[m_valid_n++] = m_board[r + 1][c - 2]->m_tile_num;
-                return_count = 1;
-            }
-        }
-
-        if (r + 1 <= 7 && c + 2 <= 7)
-        {
-            if (m_board[r + 1][c + 2]->m_white_piece != temp->m_white_piece || !m_board[r + 1][c + 2]->m_has_piece)
-            {
-                m_valid_moves[m_valid_n++] = m_board[r + 1][c + 2]->m_tile_num;
-                return_count = 1;
-            }
-        }
+    auto knightPotential = [](pint coord, set<pint>& coords) -> void {
+        int x = coord.first, y = coord.second;
+        coords = { { x - 2, y + 1 }, { x - 1, y + 2 }, { x + 1, y + 2 }, { x + 2, y + 1 },
+                   { x - 2, y - 1 }, { x - 1, y - 2 }, { x + 1, y - 2 }, { x + 2, y - 1 } };
         };
-    auto validateKing = [&](Tile* temp) {
-        int r, c;
-        int return_count = 0;
-
-        r = temp->m_row;
-        c = temp->m_col;
-
-        if (r - 1 >= 0)
-        {
-            if (!m_board[r - 1][c]->m_has_piece || m_board[r - 1][c]->m_white_piece != temp->m_white_piece)
-            {
-                m_valid_moves[m_valid_n++] = m_board[r - 1][c]->m_tile_num;
-                return_count = 1;
-            }
-        }
-
-        if (r + 1 <= 7)
-        {
-            if (!m_board[r + 1][c]->m_has_piece || m_board[r + 1][c]->m_white_piece != temp->m_white_piece)
-            {
-                m_valid_moves[m_valid_n++] = m_board[r + 1][c]->m_tile_num;
-                return_count = 1;
-            }
-        }
-
-        if (c - 1 >= 0)
-        {
-            if (!m_board[r][c - 1]->m_has_piece || m_board[r][c - 1]->m_white_piece != temp->m_white_piece)
-            {
-                m_valid_moves[m_valid_n++] = m_board[r][c - 1]->m_tile_num;
-                return_count = 1;
-            }
-        }
-
-        if (c + 1 <= 7)
-        {
-            if (!m_board[r][c + 1]->m_has_piece || m_board[r][c + 1]->m_white_piece != temp->m_white_piece)
-            {
-                m_valid_moves[m_valid_n++] = m_board[r][c + 1]->m_tile_num;
-                return_count = 1;
-            }
-        }
-
-        if (r - 1 >= 0 && c - 1 >= 0)
-        {
-            if (!m_board[r - 1][c - 1]->m_has_piece || m_board[r - 1][c - 1]->m_white_piece != temp->m_white_piece)
-            {
-                m_valid_moves[m_valid_n++] = m_board[r - 1][c - 1]->m_tile_num;
-                return_count = 1;
-            }
-        }
-
-        if (r - 1 >= 0 && c + 1 <= 7)
-        {
-            if (!m_board[r - 1][c + 1]->m_has_piece || m_board[r - 1][c + 1]->m_white_piece != temp->m_white_piece)
-            {
-                m_valid_moves[m_valid_n++] = m_board[r - 1][c + 1]->m_tile_num;
-                return_count = 1;
-            }
-        }
-
-        if (r + 1 <= 7 && c - 1 >= 0)
-        {
-            if (!m_board[r + 1][c - 1]->m_has_piece || m_board[r + 1][c - 1]->m_white_piece != temp->m_white_piece)
-            {
-                m_valid_moves[m_valid_n++] = m_board[r + 1][c - 1]->m_tile_num;
-                return_count = 1;
-            }
-        }
-
-        if (r + 1 <= 7 && c + 1 <= 7)
-        {
-            if (!m_board[r + 1][c + 1]->m_has_piece || m_board[r + 1][c + 1]->m_white_piece != temp->m_white_piece)
-            {
-                m_valid_moves[m_valid_n++] = m_board[r + 1][c + 1]->m_tile_num;
-                return_count = 1;
-            }
-        }
-        };
-    auto validateQueen = [&](Tile* temp) {
-        int r, c;
-
-        int return_count = 0;
-
-        r = temp->m_row;
-        c = temp->m_col;
-        while (r-- > 0)
-        {
-            if (!m_board[r][c]->m_has_piece)
-            {
-                m_valid_moves[m_valid_n++] = m_board[r][c]->m_tile_num;
-                return_count = 1;
-            }
-
-            else if (m_board[r][c]->m_white_piece == temp->m_white_piece)
-                break;
-
-            else if (m_board[r][c]->m_white_piece != temp->m_white_piece)
-            {
-                m_valid_moves[m_valid_n++] = m_board[r][c]->m_tile_num;
-                return_count = 1;
-                break;
-            }
-        }
-
-        r = temp->m_row;
-        c = temp->m_col;
-        while (r++ < 7)
-        {
-            if (!m_board[r][c]->m_has_piece)
-            {
-                m_valid_moves[m_valid_n++] = m_board[r][c]->m_tile_num;
-                return_count = 1;
-            }
-
-            else if (m_board[r][c]->m_white_piece == temp->m_white_piece)
-                break;
-
-            else if (m_board[r][c]->m_white_piece != temp->m_white_piece)
-            {
-                m_valid_moves[m_valid_n++] = m_board[r][c]->m_tile_num;
-                return_count = 1;
-                break;
-            }
-        }
-
-        r = temp->m_row;
-        c = temp->m_col;
-        while (c++ < 7)
-        {
-            if (!m_board[r][c]->m_has_piece)
-            {
-                m_valid_moves[m_valid_n++] = m_board[r][c]->m_tile_num;
-                return_count = 1;
-            }
-
-            else if (m_board[r][c]->m_white_piece == temp->m_white_piece)
-                break;
-
-            else if (m_board[r][c]->m_white_piece != temp->m_white_piece)
-            {
-                m_valid_moves[m_valid_n++] = m_board[r][c]->m_tile_num;
-                return_count = 1;
-                break;
-            }
-        }
-
-        r = temp->m_row;
-        c = temp->m_col;
-        while (c-- > 0)
-        {
-            if (!m_board[r][c]->m_has_piece)
-            {
-                m_valid_moves[m_valid_n++] = m_board[r][c]->m_tile_num;
-                return_count = 1;
-            }
-
-            else if (m_board[r][c]->m_white_piece == temp->m_white_piece)
-                break;
-
-            else if (m_board[r][c]->m_white_piece != temp->m_white_piece)
-            {
-                m_valid_moves[m_valid_n++] = m_board[r][c]->m_tile_num;
-                return_count = 1;
-                break;
-            }
-        }
-
-        r = temp->m_row;
-        c = temp->m_col;
-        while (r-- > 0 && c++ < 7)
-        {
-            if (!m_board[r][c]->m_has_piece)
-            {
-                m_valid_moves[m_valid_n++] = m_board[r][c]->m_tile_num;
-                return_count = 1;
-            }
-
-            else if (m_board[r][c]->m_white_piece == temp->m_white_piece)
-                break;
-
-            else if (m_board[r][c]->m_white_piece != temp->m_white_piece)
-            {
-                m_valid_moves[m_valid_n++] = m_board[r][c]->m_tile_num;
-                return_count = 1;
-                break;
-            }
-        }
-
-        r = temp->m_row;
-        c = temp->m_col;
-        while (r-- > 0 && c-- > 0)
-        {
-            if (!m_board[r][c]->m_has_piece)
-            {
-                m_valid_moves[m_valid_n++] = m_board[r][c]->m_tile_num;
-                return_count = 1;
-            }
-
-            else if (m_board[r][c]->m_white_piece == temp->m_white_piece)
-                break;
-
-            else if (m_board[r][c]->m_white_piece != temp->m_white_piece)
-            {
-                m_valid_moves[m_valid_n++] = m_board[r][c]->m_tile_num;
-                return_count = 1;
-                break;
-            }
-        }
-
-        r = temp->m_row;
-        c = temp->m_col;
-        while (r++ < 7 && c++ < 7)
-        {
-            if (!m_board[r][c]->m_has_piece)
-            {
-                m_valid_moves[m_valid_n++] = m_board[r][c]->m_tile_num;
-                return_count = 1;
-            }
-
-            else if (m_board[r][c]->m_white_piece == temp->m_white_piece)
-                break;
-
-            else if (m_board[r][c]->m_white_piece != temp->m_white_piece)
-            {
-                m_valid_moves[m_valid_n++] = m_board[r][c]->m_tile_num;
-                return_count = 1;
-                break;
-            }
-        }
-
-        r = temp->m_row;
-        c = temp->m_col;
-        while (r++ < 7 && c-->0)
-        {
-            if (!m_board[r][c]->m_has_piece)
-            {
-                m_valid_moves[m_valid_n++] = m_board[r][c]->m_tile_num;
-                return_count = 1;
-            }
-
-            else if (m_board[r][c]->m_white_piece == temp->m_white_piece)
-                break;
-
-            else if (m_board[r][c]->m_white_piece != temp->m_white_piece)
-            {
-                m_valid_moves[m_valid_n++] = m_board[r][c]->m_tile_num;
-                return_count = 1;
-                break;
-            }
-        }
-        };
-    auto validateBishop = [&](Tile* temp) {
-        int r, c;
-        int return_count = 0;
-
-        r = temp->m_row;
-        c = temp->m_col;
-        while (r-- > 0 && c++ < 7)
-        {
-            if (!m_board[r][c]->m_has_piece)
-            {
-                m_valid_moves[m_valid_n++] = m_board[r][c]->m_tile_num;
-                return_count = 1;
-            }
-
-            else if (m_board[r][c]->m_white_piece == temp->m_white_piece)
-                break;
-
-            else if (m_board[r][c]->m_white_piece != temp->m_white_piece)
-            {
-                m_valid_moves[m_valid_n++] = m_board[r][c]->m_tile_num;
-                return_count = 1;
-                break;
-            }
-        }
-
-        r = temp->m_row;
-        c = temp->m_col;
-        while (r-- > 0 && c-- > 0)
-        {
-            if (!m_board[r][c]->m_has_piece)
-            {
-                m_valid_moves[m_valid_n++] = m_board[r][c]->m_tile_num;
-                return_count = 1;
-            }
-
-            else if (m_board[r][c]->m_white_piece == temp->m_white_piece)
-                break;
-
-            else if (m_board[r][c]->m_white_piece != temp->m_white_piece)
-            {
-                m_valid_moves[m_valid_n++] = m_board[r][c]->m_tile_num;
-                return_count = 1;
-                break;
-            }
-        }
-
-        r = temp->m_row;
-        c = temp->m_col;
-        while (r++ < 7 && c++ < 7)
-        {
-            if (!m_board[r][c]->m_has_piece)
-            {
-                m_valid_moves[m_valid_n++] = m_board[r][c]->m_tile_num;
-                return_count = 1;
-            }
-
-            else if (m_board[r][c]->m_white_piece == temp->m_white_piece)
-                break;
-
-            else if (m_board[r][c]->m_white_piece != temp->m_white_piece)
-            {
-                m_valid_moves[m_valid_n++] = m_board[r][c]->m_tile_num;
-                return_count = 1;
-                break;
-            }
-        }
-
-        r = temp->m_row;
-        c = temp->m_col;
-        while (r++ < 7 && c-->0)
-        {
-            if (!m_board[r][c]->m_has_piece)
-            {
-                m_valid_moves[m_valid_n++] = m_board[r][c]->m_tile_num;
-                return_count = 1;
-            }
-
-            else if (m_board[r][c]->m_white_piece == temp->m_white_piece)
-                break;
-
-            else if (m_board[r][c]->m_white_piece != temp->m_white_piece)
-            {
-                m_valid_moves[m_valid_n++] = m_board[r][c]->m_tile_num;
-                return_count = 1;
-                break;
-            }
-        }
-        };
-
-    switch(temp->m_piece_name)
+    switch (piece)
     {
-    case 'P': validatePawn(temp);
-              break;
-
-    case 'R': validateRook(temp);
-              break;
-
-    case 'N': validateKnight(temp);
-              break;
-
-    case 'K': validateKing(temp);
-              break;
-
-    case 'Q': validateQueen(temp);
-              break;
-
-    case 'B': validateBishop(temp);
-              break;
-
-    }
-
-    dyeOrange();
-    return return_count;
+    case 'P':  // pawn
+        pawnPotential(from, potenial_moves);
+        for (auto coord : potenial_moves)
+            addMove(coord);
+    break;
+    case 'N':  // knight
+        knightPotential(from, potenial_moves);
+        for (auto coord : potenial_moves)
+            addMove(coord);
+    break;
+    case 'K':  // king
+        kingPotential(from, potenial_moves);
+        for (auto coord : potenial_moves)
+            addMove(coord);
+    break;
+    case 'B':  // bishop
+        onDiagonals(from, addMove);
+    break;
+    case 'R':  // rook
+        onPerp(from, addMove);
+    break;
+    case 'Q':  // queen
+        onPerp(from, addMove);
+        onDiagonals(from, addMove);
+    };
 }
+// FIX: we also need to add castling, transformation, en passant,
+// and different chekings, at least three:
+// stalemate, checkmate, check
+// that will output the info to status bar

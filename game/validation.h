@@ -7,15 +7,16 @@ class Tile;
 class Validation{
 
     Board& m_board;
+    std::set<Tile*> m_valid_moves;
     void findValid(Tile* from);
 
 public:
     Validation(Board* board) : m_board(*board) {};
-
-    std::set<Tile*> m_valid_moves{ nullptr };
-   
-    void showPossible(Tile * from);
-    void hidePossible();
+ 
+    void showValid(Tile * from);
+    void hideValid();
+    bool isValid(Tile * tile);
+    bool empty();
 };
 
 #endif // VALIDATION_H

@@ -2,8 +2,8 @@
 #include "tile.h"
 #include "board.h"
 
-Tile::Tile(Board* mother_board = 0, Qt::WindowFlags f = Qt::WindowFlags()) :
-    QLabel(mother_board, f)
+Tile::Tile(Board* mother_board = 0) :
+    QLabel(mother_board, Qt::WindowFlags())
 {};
 
 void Tile::mousePressEvent(QMouseEvent *event)
@@ -20,22 +20,28 @@ void Tile::setPiece(char elem, bool color)
         clear();
         dyeNormal();
     }
-    else if (this->m_white_piece){  // if color is white
+    else if (color){  // if color is white
         QPixmap piece;
         switch(elem)
         {
-            case 'P': piece = QPixmap(":/pawn_white");
-                      break;
-            case 'R': piece = QPixmap(":/rook_white");
-                      break;
-            case 'N': piece = QPixmap(":/knight_white");
-                      break;
-            case 'K': piece = QPixmap(":/king_white");
-                      break;
-            case 'Q': piece = QPixmap(":/queen_white");
-                      break;
-            case 'B': piece = QPixmap(":/bishop_white");
-                      break;
+            case 'P': 
+                piece = QPixmap(":/pawn_white");
+            break;
+            case 'R': 
+                piece = QPixmap(":/rook_white");
+            break;
+            case 'N': 
+                piece = QPixmap(":/knight_white");
+            break;
+            case 'K': 
+                piece = QPixmap(":/king_white");
+                ((Board*)parent())->m_white_king = this;
+            break;
+            case 'Q': 
+                piece = QPixmap(":/queen_white");
+            break;
+            case 'B': 
+                piece = QPixmap(":/bishop_white");
         }
         setPixmap(piece.scaled(width(), height()));
     }
@@ -54,6 +60,7 @@ void Tile::setPiece(char elem, bool color)
         break;
         case 'K': 
             piece = QPixmap(":/king_black");
+            ((Board*)parent())->m_black_king = this;
         break;
         case 'Q': 
             piece = QPixmap(":/queen_black");

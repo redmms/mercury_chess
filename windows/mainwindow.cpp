@@ -10,6 +10,8 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
     ui->mainToolBar->hide();
     Board* board = new Board(ui->board_background);
+    QObject::connect(board, &Board::newStatus, this, &MainWindow::changeStatus);
+    ui->statusBar->showMessage("Ready? Go!", 0);
 }
 
 MainWindow::~MainWindow()
@@ -17,4 +19,6 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-
+void MainWindow::changeStatus(QString status){
+    ui->statusBar->showMessage(status, 0);
+}

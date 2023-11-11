@@ -17,6 +17,8 @@ public:
     MainWindow(QWidget *parent = 0);
     ~MainWindow();
 
+private slots:
+    void changeStatus(QString status);
 };
 
 #endif // MAINWINDOW_H

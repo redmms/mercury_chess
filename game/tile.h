@@ -10,11 +10,9 @@ class Tile: public QLabel
     Q_OBJECT
    
     void mousePressEvent(QMouseEvent* event); 
-    // FIX: should be connected to a 
-    // slot in the board class
 
 public:
-    Tile(Board* mother_board, Qt::WindowFlags f);
+    Tile(Board* mother_board);
 
     std::pair<int, int> m_coord = std::pair( 0, 0 );
     int m_tile_num = 0;
