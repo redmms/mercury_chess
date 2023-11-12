@@ -48,8 +48,8 @@ void Validation::findValid(Tile *from_tile)
     const pint king = color ? m_board.m_white_king->m_coord : m_board.m_black_king->m_coord;
     const pint from = from_tile->m_coord;
     int X, Y;
-    bool first_evaluation = true, from_align_king, nothing_between;
-    pint add;
+    bool first_evaluation = true, may_exposure = false;
+    pint add, prev_dir = {0, 0};
     set <pint> potenial_moves;
 
     auto inBoard = [](pintr coord) -> bool {
@@ -103,13 +103,6 @@ void Validation::findValid(Tile *from_tile)
     auto underAttack = [&](pintr coord) -> bool {
 		return false;
 		};    // FIX
-    //auto afterFrom = [king, from](pintr coord) -> bool {
-    //    int xmin = king.first, xmax = from.first;
-    //    int ymin = king.second, ymax = from.second;
-    //    if (xmin > xmax) swap(xmin, xmax);
-    //    if (ymin > ymax) swap(ymin, ymax);
-    //    return coord.first < xmin || coord.first > xmax || coord.second < ymin || coord.second > ymax;
-    //};
     auto threatens = [&](pintr coord) {
         char name = pieceName(coord);
         return differentColor(coord) && (name == 'R' || name == 'B' || name == 'Q');
@@ -118,34 +111,42 @@ void Validation::findValid(Tile *from_tile)
         // there's some rook, bishop or queen.
         // We shouldn't be afraid of a pawn or knight, or other king. 
         };  
-    auto anotherLine = [&from, &king](pintr coord){
-    // checks that coord tile is not on the same line with king tile and from tile with the least operations possible
+    auto notAlignKing = [&from, &king](pintr coord){
+    // checks that "coord" tile is not on the same line with "king" tile and "from" 
+    // tile, with the least operations possible
         return (from.first - coord.first) * (coord.second - king.second) != 
                (from.second - coord.second) * (coord.first - king.first);           
     };
     auto exposureKing = [&](pintr coord) -> bool {
-        auto bordersBetween = [king, from](pintr coord) -> bool {
-            return coord != king && coord != from;
-            };
-        if (first_evaluation){
-            X = from.first - king.first,
-            Y = from.second - king.second;
-            from_align_king = abs(X) == abs(Y) || !X || !Y;
-            add = findDirection(king, from);
-            nothing_between = !runThrough(king, add, occupied, bordersBetween);
-            first_evaluation = false;
-        }
         if (piece == 'K')
             return underAttack(coord);
         // if the piece is King itself then we need to make another checking
-        if (from_align_king && nothing_between && anotherLine(coord)) { // can add check that anotherLine with previous coord,
-        // there's no need to check it for every tile in the line;
-            auto bordersAfter = [&](pintr coor) {
-                return inBoard(coor) && (!occupied(coor) || differentColor(coor)); 
-                };
-            return runThrough(from, add, threatens, bordersAfter);
+        // FIX: we can save m_valid_moves for every tile clicked, so that if 
+        // user will click it 100 times, there will be only 1 evaluation
+        if (first_evaluation){
+            X = from.first - king.first,
+            Y = from.second - king.second;
+            bool from_align_king = abs(X) == abs(Y) || !X || !Y;
+            if (from_align_king){
+                add = findDirection(king, from);
+                auto bordersBetween = [king, from](pintr coord) -> bool {
+                    return coord != king && coord != from;  // whitout "if(from_align_king)"
+// checking this will lead to borders violation sometimess (only if "from" tile 
+// is not aligned with "king" tile), be carefull
+                    };
+                bool nothing_between = !runThrough(king, add, occupied, bordersBetween);
+                auto bordersAfter = [&](pintr coor) {
+                    return inBoard(coor) && (!occupied(coor) || differentColor(coor));
+                    };
+                bool occurs_threat = runThrough(from, add, threatens, bordersAfter);
+                may_exposure = from_align_king && nothing_between && occurs_threat;
+            }
+            first_evaluation = false;
         }
-        return false;
+        pint dir = findDirection(from, coord);
+        bool another_dir = dir != prev_dir;
+        prev_dir = dir;
+        return may_exposure && another_dir && notAlignKing(coord);
         };
     auto canMoveTo = [&](pintr coord) -> bool {
         return inBoard(coord) && (!occupied(coord) || differentColor(coord)) &&
