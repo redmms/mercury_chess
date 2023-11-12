@@ -36,6 +36,9 @@ bool Validation::empty()
     return m_valid_moves.empty();
 }
 
+
+// FIX: in underAttack: change onPerp and onDiagonals so that it will check 
+// differentColor(
 void Validation::findValid(Tile *from_tile)
 {
     // NOTE: for the purpose of this code, we consider that m_board goes [x][y]
@@ -52,14 +55,55 @@ void Validation::findValid(Tile *from_tile)
     pint add, prev_dir = {0, 0};
     set <pint> potenial_moves;
 
+
+    // Various cycles and move patterns:
+    auto runThrough = [&](pint coord, pintr add, lambda stop_cond, lambda borders_cond) -> bool {
+        // here range is (from, to] or (from, to), depending on stop_cond
+        coord.first += add.first, coord.second += add.second;
+        while (borders_cond(coord)) {
+            if (stop_cond(coord))
+                return true;
+            coord.first += add.first, coord.second += add.second;
+        }
+        return false;
+        };
+    auto onDiagonals = [&](pintr coord, lambda stop_cond, lambda borders_cond) -> bool {
+        bool b1 = runThrough(coord, { 1,  1 }, stop_cond, borders_cond),
+            b2 = runThrough(coord, { 1, -1 }, stop_cond, borders_cond),
+            b3 = runThrough(coord, { -1,  1 }, stop_cond, borders_cond),
+            b4 = runThrough(coord, { -1, -1 }, stop_cond, borders_cond);
+        return b1 || b2 || b3 || b4;
+        };
+    auto onPerp = [&](pintr coord, lambda stop_cond, lambda borders_cond) -> bool {
+        bool b1 = runThrough(coord, { 0,  1 }, stop_cond, borders_cond),
+            b2 = runThrough(coord, { 0,  -1 }, stop_cond, borders_cond),
+            b3 = runThrough(coord, { 1,  0 }, stop_cond, borders_cond),
+            b4 = runThrough(coord, { -1, 0 }, stop_cond, borders_cond);
+        return b1 || b2 || b3 || b4;
+        };
+    auto kingPotential = [](pintr coord, set<pint>& coords) -> void {
+        int x = coord.first, y = coord.second;
+        coords = { { x - 1, y + 1 }, { x, y + 1 }, { x + 1, y + 1 },
+                   { x - 1, y },                   { x + 1, y },
+                   { x - 1, y - 1 }, { x, y - 1 }, { x + 1, y - 1 } };
+        };
+    auto knightPotential = [](pintr coord, set<pint>& coords) -> void {
+        int x = coord.first, y = coord.second;
+        coords = { { x - 2, y + 1 }, { x - 1, y + 2 }, { x + 1, y + 2 }, { x + 2, y + 1 },
+                   { x - 2, y - 1 }, { x - 1, y - 2 }, { x + 1, y - 2 }, { x + 2, y - 1 } };
+        };
+
+
+    // Aliases for shortness
     auto inBoard = [](pintr coord) -> bool {
         return coord.first >= 0 && coord.first < 8 && coord.second >= 0 && coord.second < 8;
         };
     auto occupied = [this](pintr coord) -> bool {
         return m_board[coord.first][coord.second]->m_piece_name != 'e';
         };
-    auto differentColor = [this, color, occupied](pintr coord) -> bool {
-        return m_board[coord.first][coord.second]->m_white_piece != color && occupied(coord);
+    auto differentColor = [this, turn, occupied](pintr coord) -> bool {
+    // may be realized differently, wit either turn or color
+        return m_board[coord.first][coord.second]->m_white_piece != turn && occupied(coord);
         };
     auto pieceName = [this](pintr coord) -> char {
         return m_board[coord.first][coord.second]->m_piece_name;
@@ -68,61 +112,56 @@ void Validation::findValid(Tile *from_tile)
         m_valid_moves.emplace(m_board[coord.first][coord.second]);  // FIX: should be insert or emplace?
         // because m_board[x][y] does already exist, it doesn't have to be created
         };
-    auto runThrough = [&](pint coord, pintr add, lambda stop_cond, lambda borders_cond) -> bool {
-        // here range is (from, to] or (from, to), depending on stop_cond
-        coord.first += add.first, coord.second += add.second;
-        while(borders_cond(coord)){
-            if (stop_cond(coord))
-                return true;
-            coord.first += add.first, coord.second += add.second;
-        }
-        return false;
-        };
-    auto onDiagonals = [&](pintr coord, lambda stop_cond) -> bool {
-        bool b1 = runThrough(coord, {  1,  1 }, stop_cond, inBoard),
-             b2 = runThrough(coord, {  1, -1 }, stop_cond, inBoard),
-             b3 = runThrough(coord, { -1,  1 }, stop_cond, inBoard),
-             b4 = runThrough(coord, { -1, -1 }, stop_cond, inBoard);
-        return b1 || b2 || b3 || b4;
-        };
-    auto onPerp = [&](pintr coord, lambda stop_cond) -> bool {
-        bool b1 = runThrough(coord, { 0,  1  }, stop_cond, inBoard),
-             b2 = runThrough(coord, { 0,  -1 }, stop_cond, inBoard),
-             b3 = runThrough(coord, { 1,  0  }, stop_cond, inBoard),
-             b4 = runThrough(coord, { -1, 0  }, stop_cond, inBoard);
-        return b1 || b2 || b3 || b4;
-        };
-    auto findDirection = [&](pintr beg, pintr end) -> pint {
+
+
+    // Usefull formulas:
+    auto findDirection = [](pintr beg, pintr end) -> pint {
         int X = end.first - beg.first;
         int Y = end.second - beg.second;
         pint add{ X > 0 ? 1 : -1,  Y > 0 ? 1 : -1 };
         if (!Y) add.second = 0;
         else if (!X) add.first = 0;
         return add;
-    };
+        };
+    auto notAlignKing = [&from, &king](pintr coord) {
+        // checks that "coord" tile is not on the same line with "king" tile and "from" 
+        // tile, with the least operations possible
+        return (from.first - coord.first) * (coord.second - king.second) !=
+            (from.second - coord.second) * (coord.first - king.first);
+        };
+    
+
+    // For king:
+    auto bordersAfter = [&](pintr coor) {
+        return inBoard(coor) && (!occupied(coor) || differentColor(coor));
+        };
     auto underAttack = [&](pintr coord) -> bool {
-		return false;
-		};    // FIX
-    auto threatens = [&](pintr coord) {
-        char name = pieceName(coord);
-        return differentColor(coord) && (name == 'R' || name == 'B' || name == 'Q');
-        //return "RBQ"sv.contains(pieceName(coord)); } // C++23
-        // this line means that on the same line with king and the piece
-        // there's some rook, bishop or queen.
-        // We shouldn't be afraid of a pawn or knight, or other king. 
-        };  
-    auto notAlignKing = [&from, &king](pintr coord){
-    // checks that "coord" tile is not on the same line with "king" tile and "from" 
-    // tile, with the least operations possible
-        return (from.first - coord.first) * (coord.second - king.second) != 
-               (from.second - coord.second) * (coord.first - king.first);           
-    };
+        int x = coord.first, y = coord.second;
+		set <pint> need_check; 
+        kingPotential(coord, need_check);
+        for (auto move: need_check)
+            if (inBoard(move) && pieceName(move) == 'K' && differentColor(move))
+                return true;
+        knightPotential(coord, need_check);
+        for (auto move : need_check)
+            if (inBoard(move) && pieceName(move) == 'N' && differentColor(move))
+                return true;
+        int k = color ? 1 : -1;
+        need_check = {{x - 1, y + k}, {x + 1, y + k}};
+        for (auto move : need_check)
+            if (inBoard(move) && pieceName(move) == 'P' && differentColor(move))
+                return true;
+        auto checkPerp = [&](pintr coord){
+                return differentColor(coord) && (pieceName(coord) == 'R' || pieceName(coord) == 'Q');
+                };
+        if (onPerp(coord, checkPerp, bordersAfter))
+            return true;
+        auto checkDiagonals = [&](pintr coord) {
+            return differentColor(coord) && (pieceName(coord) == 'B' || pieceName(coord) == 'Q');
+            };
+        return onDiagonals(coord, checkDiagonals, bordersAfter);
+		};
     auto exposureKing = [&](pintr coord) -> bool {
-        if (piece == 'K')
-            return underAttack(coord);
-        // if the piece is King itself then we need to make another checking
-        // FIX: we can save m_valid_moves for every tile clicked, so that if 
-        // user will click it 100 times, there will be only 1 evaluation
         if (first_evaluation){
             X = from.first - king.first,
             Y = from.second - king.second;
@@ -135,10 +174,15 @@ void Validation::findValid(Tile *from_tile)
 // is not aligned with "king" tile), be carefull
                     };
                 bool nothing_between = !runThrough(king, add, occupied, bordersBetween);
-                auto bordersAfter = [&](pintr coor) {
-                    return inBoard(coor) && (!occupied(coor) || differentColor(coor));
+                auto threatensToKing = [&](pintr coord) -> bool {
+                    char name = pieceName(coord);
+                    return differentColor(coord) && (name == 'R' || name == 'B' || name == 'Q');
+                    //return "RBQ"sv.contains(pieceName(coord)); } // C++23
+                    // this line means that on the same line with king and the piece
+                    // there's some rook, bishop or queen.
+                    // We shouldn't be afraid of a pawn or knight, or other king. 
                     };
-                bool occurs_threat = runThrough(from, add, threatens, bordersAfter);
+                bool occurs_threat = runThrough(from, add, threatensToKing, bordersAfter);
                 may_exposure = from_align_king && nothing_between && occurs_threat;
             }
             first_evaluation = false;
@@ -148,16 +192,15 @@ void Validation::findValid(Tile *from_tile)
         prev_dir = dir;
         return may_exposure && another_dir && notAlignKing(coord);
         };
+    auto canMoveKingTo = [&](pintr coord) -> bool {
+        return inBoard(coord) && (!occupied(coord) || differentColor(coord)) &&
+            pieceName(coord) != 'K' && !underAttack(coord);
+        };
+
+    // For knight, rook, bishop and queen:
     auto canMoveTo = [&](pintr coord) -> bool {
         return inBoard(coord) && (!occupied(coord) || differentColor(coord)) &&
-               pieceName(coord) != 'K' && !exposureKing(coord);
-    };
-    auto pawnCanEat = [&](pintr coord) -> bool {
-        return inBoard(coord) && differentColor(coord) &&
             pieceName(coord) != 'K' && !exposureKing(coord);
-    };
-    auto pawnCanMove = [&](pintr coord) -> bool {
-        return inBoard(coord) && !occupied(coord) && !exposureKing(coord);
         };
     auto addMove = [&](pintr coord) -> bool {
         if (canMoveTo(coord)) {
@@ -168,6 +211,16 @@ void Validation::findValid(Tile *from_tile)
         }
         else
             return true; // break cycle
+        };
+
+
+    // For pawn:
+    auto pawnCanEat = [&](pintr coord) -> bool {
+        return inBoard(coord) && differentColor(coord) &&
+            pieceName(coord) != 'K' && !exposureKing(coord);
+        };
+    auto pawnCanMove = [&](pintr coord) -> bool {
+        return inBoard(coord) && !occupied(coord) && !exposureKing(coord);
         };
     auto addPawnMoves = [&](pintr coord) -> void {
         int x = coord.first, y = coord.second;
@@ -183,17 +236,7 @@ void Validation::findValid(Tile *from_tile)
         if (move = { x + 1, y + 1 * k }; pawnCanEat(move))
             addValid(move);
         };
-    auto kingPotential = [](pintr coord, set<pint>& coords) -> void {
-        int x = coord.first, y = coord.second;
-        coords =    { { x - 1, y + 1 }, { x, y + 1 }, { x + 1, y + 1 },
-                      { x - 1, y },                   { x + 1, y },
-                      { x - 1, y - 1 }, { x, y - 1 }, { x + 1, y - 1 } };
-    };
-    auto knightPotential = [](pintr coord, set<pint>& coords) -> void {
-        int x = coord.first, y = coord.second;
-        coords = { { x - 2, y + 1 }, { x - 1, y + 2 }, { x + 1, y + 2 }, { x + 2, y + 1 },
-                   { x - 2, y - 1 }, { x - 1, y - 2 }, { x + 1, y - 2 }, { x + 2, y - 1 } };
-        };
+
     switch (piece)
     {
     case 'P':  // pawn
@@ -207,20 +250,24 @@ void Validation::findValid(Tile *from_tile)
     case 'K':  // king
         kingPotential(from, potenial_moves);
         for (auto coord : potenial_moves)
-            addMove(coord);
+            if (canMoveKingTo(coord))
+                addValid(coord);
     break;
     case 'B':  // bishop
-        onDiagonals(from, addMove);
+        onDiagonals(from, addMove, inBoard);
     break;
     case 'R':  // rook
-        onPerp(from, addMove);
+        onPerp(from, addMove, inBoard);
     break;
     case 'Q':  // queen
-        onPerp(from, addMove);
-        onDiagonals(from, addMove);
+        onPerp(from, addMove, inBoard);
+        onDiagonals(from, addMove, inBoard);
     };
 }
 // FIX: we also need to add castling, transformation, en passant,
 // and different chekings, at least three:
 // stalemate, checkmate, check
 // that will output the info to status bar
+
+// FIX: we can save m_valid_moves for every tile clicked, so that if 
+// user will click it 100 times, there will be only 1 evaluation

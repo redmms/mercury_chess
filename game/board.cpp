@@ -43,6 +43,9 @@ void Board::reactOnClick(Tile* tile) {
         m_white_turn = !m_white_turn;
         emit newStatus(m_white_turn ? "White turn" : "Black turn");
     }
+    else{
+        emit newStatus("Invalid move");
+        }
 }
 
 void Board::drawLetters() {
