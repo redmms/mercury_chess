@@ -1,7 +1,8 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
-
 #include <QMainWindow>
+#include "enums.h"
+enum endnum : int;
 
 namespace Ui {
     class MainWindow;
@@ -19,6 +20,7 @@ public:
 
 private slots:
     void changeStatus(QString status);
+    void endSlot(endnum end_type);
 };
 
 #endif // MAINWINDOW_H

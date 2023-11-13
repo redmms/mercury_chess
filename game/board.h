@@ -1,6 +1,7 @@
 #pragma once
 #include "tile.h"
 #include "validation.h"
+enum endnum : int;
 
 class Board : public QLabel {
 	Q_OBJECT
@@ -15,7 +16,7 @@ class Board : public QLabel {
 
 public:
     Board(QLabel* background);
-
+    
     Tile* m_tiles[8][8] = { { NULL } };
     bool m_white_turn = true;
     Tile* m_from_tile = nullptr;
@@ -28,6 +29,7 @@ public:
     
 signals:
     void newStatus(QString status);
+    void theEnd(endnum end_type);
 
 private slots:
     void reactOnClick(Tile* tile);

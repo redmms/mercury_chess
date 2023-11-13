@@ -1,6 +1,8 @@
 #pragma once
 #include "board.h"
 #include <QGridLayout>
+#include "enums.h"
+
 
 
 Board::Board(QLabel* background = 0) :
@@ -27,7 +29,7 @@ void Board::reactOnClick(Tile* tile) {
             m_valid.showValid(tile);
         }
     }
-    else if (tile->m_white_piece == m_white_turn && tile->m_piece_name != 'e') { 
+    else if (tile != m_from_tile && tile->m_white_piece == m_white_turn && tile->m_piece_name != 'e') {
     // if the second click
     // is on the piece of same color then pick it instead
         m_valid.hideValid();
@@ -41,11 +43,36 @@ void Board::reactOnClick(Tile* tile) {
         m_from_tile->setPiece('e', 0);
         m_from_tile = nullptr;
         m_white_turn = !m_white_turn;
+        Tile* king = m_white_turn ? m_white_king : m_black_king;
+        if (m_valid.inCheck(king)){
+            if (m_valid.inCheckmate(king)){
+                if (m_white_turn){
+                    emit newStatus("Black win");
+                    emit theEnd(endnum::black_wins);
+                    return;
+                }
+                else{
+                    emit newStatus("White win");
+                    emit theEnd(endnum::white_wins);
+                    return;
+                }
+            }
+            else{
+                emit newStatus("Check! Save your king");
+                return;
+                }
+        }
+        else if(m_valid.inStalemate(m_white_turn)){
+            emit newStatus("Draw");
+            emit theEnd(endnum::draw);
+            return;
+        }
+        // FIX: here should be checks of stalemate, check, and checkmate
         emit newStatus(m_white_turn ? "White turn" : "Black turn");
     }
     else{
         emit newStatus("Invalid move");
-        }
+    }
 }
 
 void Board::drawLetters() {
