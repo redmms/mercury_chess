@@ -1,6 +1,7 @@
 #pragma once
 #include "tile.h"
 #include "board.h"
+#include "local_types.h"
 
 Tile::Tile(Board* mother_board = 0) :
     QLabel(mother_board, Qt::WindowFlags())
@@ -13,8 +14,8 @@ void Tile::mousePressEvent(QMouseEvent *event)
 
 void Tile::setPiece(char elem, bool color)
 {
-    m_white_piece = color;
-    m_piece_name = elem;
+    piece_color = color;
+    piece_name = elem;
 
     if (elem == 'e') {
         clear();
@@ -35,7 +36,7 @@ void Tile::setPiece(char elem, bool color)
             break;
             case 'K': 
                 piece = QPixmap(":/king_white");
-                ((Board*)parent())->m_white_king = this;
+                ((Board*)parent())->white_king = this;
             break;
             case 'Q': 
                 piece = QPixmap(":/queen_white");
@@ -60,7 +61,7 @@ void Tile::setPiece(char elem, bool color)
         break;
         case 'K': 
             piece = QPixmap(":/king_black");
-            ((Board*)parent())->m_black_king = this;
+            ((Board*)parent())->black_king = this;
         break;
         case 'Q': 
             piece = QPixmap(":/queen_black");
@@ -79,7 +80,7 @@ void Tile::setPiece(char elem, bool color)
 
 void Tile::dyeNormal()
 {
-    if(m_white_tile)
+    if(tile_color)
         setStyleSheet("QLabel {background-color: rgb(120, 120, 90);}:hover{background-color: rgb(170,85,127);}");
     // FIX: all rgb colors should be fields of the Board class int the future, 
     // when functionality will be added

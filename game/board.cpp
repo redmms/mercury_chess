@@ -1,12 +1,10 @@
 #pragma once
 #include "board.h"
 #include <QGridLayout>
-#include "enums.h"
-
-
+#include "local_types.h"
 
 Board::Board(QLabel* background = 0) :
-    m_tile_size(background->width() / 9)
+    tile_size(background->width() / 9)
 {
     setGeometry(background->geometry());   // replace ui board, by this class
     setStyleSheet("background: rgb(170, 170, 120);");
@@ -19,34 +17,34 @@ Board::Board(QLabel* background = 0) :
 };
 
 void Board::reactOnClick(Tile* tile) {
-    if (m_from_tile == nullptr) { // if it's first click then pick the piece and 
+    if (from_tile == nullptr) { // if it's first click then pick the piece and 
     // show valid moves
-        if (m_white_turn != tile->m_white_piece || tile->m_piece_name == 'e')
+        if (turn != tile->piece_color || tile->piece_name == 'e')
             return;
         // turn for black, but white try to move, or vice versa, or tile is empty
         else {
-            m_from_tile = tile;
-            m_valid.showValid(tile);
+            from_tile = tile;
+            valid.showValid(tile);
         }
     }
-    else if (tile != m_from_tile && tile->m_white_piece == m_white_turn && tile->m_piece_name != 'e') {
+    else if (tile != from_tile && tile->piece_color == turn && tile->piece_name != 'e') {
     // if the second click
     // is on the piece of same color then pick it instead
-        m_valid.hideValid();
-        m_from_tile = tile;
-        m_valid.showValid(tile);
+        valid.hideValid();
+        from_tile = tile;
+        valid.showValid(tile);
     }
-    else if (m_valid.isValid(tile)) { // if it's the second click and move is valid
+    else if (valid.isValid(tile)) { // if it's the second click and move is valid
     //then move pieces
-        m_valid.hideValid();
-        tile->setPiece(m_from_tile->m_piece_name, m_from_tile->m_white_piece);       
-        m_from_tile->setPiece('e', 0);
-        m_from_tile = nullptr;
-        m_white_turn = !m_white_turn;
-        Tile* king = m_white_turn ? m_white_king : m_black_king;
-        if (m_valid.inCheck(king)){
-            if (m_valid.inCheckmate(king)){
-                if (m_white_turn){
+        valid.hideValid();
+        tile->setPiece(from_tile->piece_name, from_tile->piece_color);       
+        from_tile->setPiece('e', 0);
+        from_tile = nullptr;
+        turn = !turn;
+        Tile* king = turn ? white_king : black_king;
+        if (valid.inCheck(king)){
+            if (valid.inCheckmate(king)){
+                if (turn){
                     emit newStatus("Black win");
                     emit theEnd(endnum::black_wins);
                     return;
@@ -62,13 +60,13 @@ void Board::reactOnClick(Tile* tile) {
                 return;
                 }
         }
-        else if(m_valid.inStalemate(m_white_turn)){
+        else if(valid.inStalemate(turn)){
             emit newStatus("Draw");
             emit theEnd(endnum::draw);
             return;
         }
         // FIX: here should be checks of stalemate, check, and checkmate
-        emit newStatus(m_white_turn ? "White turn" : "Black turn");
+        emit newStatus(turn ? "White turn" : "Black turn");
     }
     else{
         emit newStatus("Invalid move");
@@ -76,14 +74,14 @@ void Board::reactOnClick(Tile* tile) {
 }
 
 void Board::drawLetters() {
-    int width = m_tile_size, height = m_tile_size/2,
-        x = m_tile_size / 2, y = this->height() - height;
+    int width = tile_size, height = tile_size/2,
+        x = tile_size / 2, y = this->height() - height;
     for (char ch : "abcdefgh") {
         QLabel* letter = new QLabel(this);
         letter->setGeometry(x, y, width, height);
         letter->setText(QString(ch));
         QFont font = letter->font();
-        font.setPointSize(m_tile_size / 4);
+        font.setPointSize(tile_size / 4);
         letter->setFont(font);
         letter->setAlignment(Qt::AlignCenter);
         x += width;
@@ -94,7 +92,7 @@ void Board::drawLetters() {
         letter->setGeometry(x, y, width, height);
         letter->setText(QString(ch));
         QFont font = letter->font();
-        font.setPointSize(m_tile_size / 4);
+        font.setPointSize(tile_size / 4);
         letter->setFont(font);
         letter->setAlignment(Qt::AlignCenter);
         x += width;
@@ -102,14 +100,14 @@ void Board::drawLetters() {
 }
 
 void Board::drawNumbers() {
-    int width = m_tile_size / 2, height = m_tile_size,
-        x = 0, y = m_tile_size / 2;
+    int width = tile_size / 2, height = tile_size,
+        x = 0, y = tile_size / 2;
     for (char ch : "87654321") {
         QLabel* letter = new QLabel(this);
         letter->setGeometry(x, y, width, height);
         letter->setText(QString(ch));
         QFont font = letter->font();
-        font.setPointSize(m_tile_size / 4);
+        font.setPointSize(tile_size / 4);
         letter->setFont(font);
         letter->setAlignment(Qt::AlignCenter);
         y += height;
@@ -120,7 +118,7 @@ void Board::drawNumbers() {
         letter->setGeometry(x, y, width, height);
         letter->setText(QString(ch));
         QFont font = letter->font();
-        font.setPointSize(m_tile_size / 4);
+        font.setPointSize(tile_size / 4);
         letter->setFont(font);
         letter->setAlignment(Qt::AlignCenter);
         y += height;
@@ -129,52 +127,60 @@ void Board::drawNumbers() {
 
 void Board::drawTiles()
 {
-    int indent = m_tile_size / 2;
+    int indent = tile_size / 2;
     int hor = indent;
     int ver = indent;
     for (int y = 7; y >= 0; y--){
         for (int x = 0; x < 8; x++){
-            m_tiles[x][y] = new Tile(this);
-            m_tiles[x][y]->m_white_tile = !((x + y) % 2);
-            m_tiles[x][y]->m_tile_num = y * 8 + x;
+            tiles[x][y] = new Tile(this);
+            tiles[x][y]->tile_color = !((x + y) % 2);
+            tiles[x][y]->num = y * 8 + x;
             // is this field really needed?
 // Yes, it is otherwise you can't connect the tile pointer to it's 
 // index, when tileClicked signal is emitted
 // and also we can't use gridlayout because its index goes
 // upside down
-            m_tiles[x][y]->m_coord = {x, y}; 
-            m_tiles[x][y]->setGeometry(hor, ver, m_tile_size, m_tile_size);
-            m_tiles[x][y]->dyeNormal();
-            QObject::connect(m_tiles[x][y], &Tile::tileClicked, this, &Board::reactOnClick);
-            hor += m_tile_size;
+            tiles[x][y]->coord = {x, y}; 
+            tiles[x][y]->setGeometry(hor, ver, tile_size, tile_size);
+            tiles[x][y]->dyeNormal();
+            QObject::connect(tiles[x][y], &Tile::tileClicked, this, &Board::reactOnClick);
+            hor += tile_size;
         }
         hor = indent;
-        ver += m_tile_size;
+        ver += tile_size;
     }
 
     //black pawns
     for (int x = 0; x < 8; x++)
-        m_tiles[x][6]->setPiece('P', 0);
+        tiles[x][6]->setPiece('P', 0);
 
     //white pawns
     for (int x = 0; x < 8; x++)
-        m_tiles[x][1]->setPiece('P', 1);
+        tiles[x][1]->setPiece('P', 1);
 
-    m_tiles[0][7]->setPiece('R', 0);
-    m_tiles[1][7]->setPiece('N', 0);
-    m_tiles[2][7]->setPiece('B', 0);
-    m_tiles[3][7]->setPiece('Q', 0);
-    m_tiles[4][7]->setPiece('K', 0);
-    m_tiles[5][7]->setPiece('B', 0);
-    m_tiles[6][7]->setPiece('N', 0);
-    m_tiles[7][7]->setPiece('R', 0);
+    tiles[0][7]->setPiece('R', 0);
+    tiles[1][7]->setPiece('N', 0);
+    tiles[2][7]->setPiece('B', 0);
+    tiles[3][7]->setPiece('Q', 0);
+    tiles[4][7]->setPiece('K', 0);
+    tiles[5][7]->setPiece('B', 0);
+    tiles[6][7]->setPiece('N', 0);
+    tiles[7][7]->setPiece('R', 0);
 
-    m_tiles[0][0]->setPiece('R', 1);
-    m_tiles[1][0]->setPiece('N', 1);
-    m_tiles[2][0]->setPiece('B', 1);
-    m_tiles[3][0]->setPiece('Q', 1);
-    m_tiles[4][0]->setPiece('K', 1);
-    m_tiles[5][0]->setPiece('B', 1);
-    m_tiles[6][0]->setPiece('N', 1);
-    m_tiles[7][0]->setPiece('R', 1);
+    tiles[0][0]->setPiece('R', 1);
+    tiles[1][0]->setPiece('N', 1);
+    tiles[2][0]->setPiece('B', 1);
+    tiles[3][0]->setPiece('Q', 1);
+    tiles[4][0]->setPiece('K', 1);
+    tiles[5][0]->setPiece('B', 1);
+    tiles[6][0]->setPiece('N', 1);
+    tiles[7][0]->setPiece('R', 1);
+}
+
+void Board::moveVirtually(scoord from, scoord to)
+{
+    last_move.first = {tiles[from.x][from.y], tiles[from.x][from.y]->piece_color, tiles[from.x][from.y]->piece_name};
+    last_move.second = {tiles[to.x][to.y], tiles[to.x][to.y]->piece_color, tiles[to.x][to.y]->piece_name};
+    tiles[to.x][to.y]->piece_color = tiles[from.x][from.y]->piece_color;
+    tiles[to.x][to.y]->piece_name = tiles[from.x][from.y]->piece_name;
 }

@@ -1,13 +1,16 @@
 #pragma once
 #include "tile.h"
 #include "validation.h"
+#include "local_types.h"
 enum endnum : int;
+//struct virtu;
+//struct scoord;
 
 class Board : public QLabel {
 	Q_OBJECT
 
-    Validation m_valid = Validation(this);
-    int m_tile_size;
+    Validation valid = Validation(this);
+    int tile_size;
 
     void drawLetters();
     void drawNumbers();
@@ -17,14 +20,17 @@ class Board : public QLabel {
 public:
     Board(QLabel* background);
     
-    Tile* m_tiles[8][8] = { { NULL } };
-    bool m_white_turn = true;
-    Tile* m_from_tile = nullptr;
-    Tile* m_white_king = nullptr;
-    Tile* m_black_king = nullptr;
+    Tile* tiles[8][8] = { { NULL } };
+    bool turn = true;  // true for white turn;
+    Tile* from_tile = nullptr;
+    Tile* white_king = nullptr;
+    Tile* black_king = nullptr;
+    std::pair <virtu, virtu> last_move;
+
+    void moveVirtually(scoord from, scoord to);
 
     auto operator [](int i) {
-        return m_tiles[i];
+        return tiles[i];
     }
     
 signals:

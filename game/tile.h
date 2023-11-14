@@ -2,8 +2,10 @@
 #define TILE_H
 #include <QLabel>
 #include <QDebug>
-#include <utility>
+#include "local_types.h"
+
 class Board;
+//struct scoord;
 
 class Tile: public QLabel
 {
@@ -14,11 +16,11 @@ class Tile: public QLabel
 public:
     Tile(Board* mother_board);
 
-    std::pair<int, int> m_coord = std::pair( 0, 0 );
-    int m_tile_num = 0;
-    bool m_white_tile = false;
-    char m_piece_name = 'e'; // "e" for "empty"
-    bool m_white_piece = false;
+    scoord coord;
+    int num = 0;
+    bool tile_color = false;
+    char piece_name = 'e'; // "e" for "empty"
+    bool piece_color = false;
 
     void setPiece(char elem, bool color);
     void dyeNormal();

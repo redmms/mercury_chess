@@ -1,7 +1,7 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 #include <QMainWindow>
-#include "enums.h"
+#include "local_types.h"
 enum endnum : int;
 
 namespace Ui {
