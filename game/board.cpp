@@ -38,35 +38,36 @@ void Board::reactOnClick(Tile* tile) {
     //then move pieces
         valid.hideValid();
         tile->setPiece(from_tile->piece_name, from_tile->piece_color);       
-        from_tile->setPiece('e', 0);
+        from_tile->setPiece('e', 0); // could be extracted into move(Tile* from, Tile* to), or with scoord from, scoord to
         from_tile = nullptr;
         turn = !turn;
         Tile* king = turn ? white_king : black_king;
         if (valid.inCheck(king)){
+            check = true;
             if (valid.inCheckmate(king)){
                 if (turn){
-                    emit newStatus("Black win");
+                    emit newStatus("Black wins");
                     emit theEnd(endnum::black_wins);
                     return;
                 }
                 else{
-                    emit newStatus("White win");
+                    emit newStatus("White wins");
                     emit theEnd(endnum::white_wins);
                     return;
                 }
             }
             else{
-                emit newStatus("Check! Save your king");
+                emit newStatus("Check! Protect His Majesty!");
                 return;
                 }
         }
         else if(valid.inStalemate(turn)){
-            emit newStatus("Draw");
-            emit theEnd(endnum::draw);
+            emit newStatus("Draw by stalemate");
+            emit theEnd(endnum::stalemate);
             return;
         }
-        // FIX: here should be checks of stalemate, check, and checkmate
-        emit newStatus(turn ? "White turn" : "Black turn");
+        check = false;
+        emit newStatus(turn ? "White's turn" : "Black's turn");
     }
     else{
         emit newStatus("Invalid move");
@@ -183,4 +184,15 @@ void Board::moveVirtually(scoord from, scoord to)
     last_move.second = {tiles[to.x][to.y], tiles[to.x][to.y]->piece_color, tiles[to.x][to.y]->piece_name};
     tiles[to.x][to.y]->piece_color = tiles[from.x][from.y]->piece_color;
     tiles[to.x][to.y]->piece_name = tiles[from.x][from.y]->piece_name;
+}
+
+void Board::revertLast()
+{
+    virtu from = last_move.first;
+    virtu to = last_move.second;
+    from.tile->piece_name = from.name;
+    from.tile->piece_color = from.color;
+    to.tile->piece_name = to.name;
+    to.tile->piece_color = to.color;
+    last_move = {};
 }

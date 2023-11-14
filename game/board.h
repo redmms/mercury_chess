@@ -26,8 +26,10 @@ public:
     Tile* white_king = nullptr;
     Tile* black_king = nullptr;
     std::pair <virtu, virtu> last_move;
+    bool check = false;
 
     void moveVirtually(scoord from, scoord to);
+    void revertLast();
 
     auto operator [](int i) {
         return tiles[i];

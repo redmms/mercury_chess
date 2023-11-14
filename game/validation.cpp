@@ -216,9 +216,9 @@ bool Validation::underAttack(scoord coord)
 
 void Validation::findValid(Tile *from_tile)
 {
-    // NOTE: for the purpose of this code, we consider that board goes [x][y]
+    // NOTE: for the use of this code, we consider that board goes [x][y]
     // instead of [i][j] that is equal to [y][x];
-    // and we also consider that white piece are on the 0 line and black on the 
+    // and we also consider that white pieces are on the 0 line and black on the 
     // 7 line
     const bool turn = board.turn;
     const char piece = from_tile->piece_name;
@@ -298,11 +298,20 @@ void Validation::findValid(Tile *from_tile)
         return inBoard(coord) && (!occupied(coord) || differentColor(coord)) &&
             pieceName(coord) != 'K' && !underAttack(coord);
         };
+    auto letKingDie = [&](scoord coord){
+        if (board.check){
+            board.moveVirtually(from, coord);
+            bool check_remains = underAttack(king);
+            board.revertLast();
+            return check_remains;
+        }
+        return false;
+    };
 
     // For knight, rook, bishop and queen:
     auto canMoveTo = [&](scoord coord) -> bool {
         return inBoard(coord) && (!occupied(coord) || differentColor(coord)) &&
-            pieceName(coord) != 'K' && !exposureKing(coord);
+            pieceName(coord) != 'K' && !exposureKing(coord) && !letKingDie(coord);
         };
     auto addMove = [&](scoord coord) -> bool {
         if (canMoveTo(coord)) {
@@ -318,10 +327,12 @@ void Validation::findValid(Tile *from_tile)
     // For pawn:
     auto pawnCanEat = [&](scoord coord) -> bool {
         return inBoard(coord) && differentColor(coord) &&
-            pieceName(coord) != 'K' && !exposureKing(coord);
+            pieceName(coord) != 'K' && !exposureKing(coord) &&
+            !letKingDie(coord);
         };
     auto pawnCanMove = [&](scoord coord) -> bool {
-        return inBoard(coord) && !occupied(coord) && !exposureKing(coord);
+        return inBoard(coord) && !occupied(coord) && !exposureKing(coord) && 
+               !letKingDie(coord);
         };
     auto addPawnMoves = [&](scoord coord) -> void {
         int x = coord.x, y = coord.y;
