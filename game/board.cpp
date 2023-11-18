@@ -2,13 +2,27 @@
 #include "board.h"
 #include <QGridLayout>
 #include "local_types.h"
+#include <string>
+#include <QEventLoop>
+#include <QTimer>
 
 Board::Board(QLabel* background = 0) :
     tile_size(background->width() / 9)
 {
-    setGeometry(background->geometry());   // replace ui board, by this class
-    setStyleSheet("background: rgb(170, 170, 120);");
-    background->parentWidget()->layout()->replaceWidget(background, this);
+    setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+    setMinimumSize(396, 396);
+    setMaximumSize(396, 396);
+    setStyleSheet("Board{"
+                       "background: rgb(170, 170, 120);" 
+                       "border-radius: 14;"
+                  "}"
+                  "Tile{"
+                        "border-radius: 7;"
+                   "}"
+                   );
+    setToolTip("Think thoroughly");
+
+    background->parentWidget()->layout()->replaceWidget(background, this); // replace ui board, by this class
     background->~QLabel();
 
     drawLetters();
@@ -27,7 +41,7 @@ void Board::reactOnClick(Tile* tile) {
             valid.showValid(tile);
         }
     }
-    else if (tile != from_tile && tile->piece_color == turn && tile->piece_name != 'e') {
+    else if (tile != from_tile && turn == tile->piece_color && tile->piece_name != 'e') {
     // if the second click
     // is on the piece of same color then pick it instead
         valid.hideValid();
@@ -36,43 +50,35 @@ void Board::reactOnClick(Tile* tile) {
     }
     else if (valid.isValid(tile)) { // if it's the second click and move is valid
     //then move pieces
-        valid.hideValid();
-        tile->setPiece(from_tile->piece_name, from_tile->piece_color);       
-        from_tile->setPiece('e', 0); // could be extracted into move(Tile* from, Tile* to), or with scoord from, scoord to
+        if (Tile* rook; valid.canCastle(from_tile, tile, &rook))
+            castleKing(from_tile, tile, rook);
+        else if (valid.canPass(from_tile, tile))
+            passPawn(from_tile, tile);
+        else
+            moveNormally(from_tile, tile);
+
+        if(valid.canPromote(tile, tile))
+            openPromotion(tile);  // waits until the signal from a tile received
+
         from_tile = nullptr;
         turn = !turn;
-        Tile* king = turn ? white_king : black_king;
-        if (valid.inCheck(king)){
-            check = true;
-            if (valid.inCheckmate(king)){
-                if (turn){
-                    emit newStatus("Black wins");
-                    emit theEnd(endnum::black_wins);
-                    return;
-                }
-                else{
-                    emit newStatus("White wins");
-                    emit theEnd(endnum::white_wins);
-                    return;
-                }
-            }
-            else{
-                emit newStatus("Check! Protect His Majesty!");
-                return;
-                }
-        }
-        else if(valid.inStalemate(turn)){
-            emit newStatus("Draw by stalemate");
+
+        if (valid.inCheck(turn))
+            if (valid.inStalemate(turn))  // check + stalemate == checkmate
+                emit theEnd(turn ? endnum::black_wins : endnum::white_wins);
+            else
+                emit newStatus(setatus::check); 
+        else if(valid.inStalemate(turn))
             emit theEnd(endnum::stalemate);
-            return;
-        }
-        check = false;
-        emit newStatus(turn ? "White's turn" : "Black's turn");
+        else
+            emit newStatus(setatus::new_turn);
+
+        valid.reactOnMove(from_tile, tile);
     }
-    else{
-        emit newStatus("Invalid move");
-    }
+    else
+        emit newStatus(setatus::invalid_move);
 }
+
 
 void Board::drawLetters() {
     int width = tile_size, height = tile_size/2,
@@ -135,7 +141,6 @@ void Board::drawTiles()
         for (int x = 0; x < 8; x++){
             tiles[x][y] = new Tile(this);
             tiles[x][y]->tile_color = !((x + y) % 2);
-            tiles[x][y]->num = y * 8 + x;
             // is this field really needed?
 // Yes, it is otherwise you can't connect the tile pointer to it's 
 // index, when tileClicked signal is emitted
@@ -178,21 +183,97 @@ void Board::drawTiles()
     tiles[7][0]->setPiece('R', 1);
 }
 
-void Board::moveVirtually(scoord from, scoord to)
+void Board::openPromotion(Tile* from)
 {
-    last_move.first = {tiles[from.x][from.y], tiles[from.x][from.y]->piece_color, tiles[from.x][from.y]->piece_name};
-    last_move.second = {tiles[to.x][to.y], tiles[to.x][to.y]->piece_color, tiles[to.x][to.y]->piece_name};
-    tiles[to.x][to.y]->piece_color = tiles[from.x][from.y]->piece_color;
-    tiles[to.x][to.y]->piece_name = tiles[from.x][from.y]->piece_name;
+    QEventLoop loop;
+    QString sheet = "QLabel{background: white;}:hover{background-color: rgb(170,85,127);}";
+    QRect geo = from->geometry();
+    std::string pieces = "QRBN";
+    int k = turn ? tile_size : -tile_size;
+    for (int i = 0; i < 4; i++){
+        menu[i] = new Tile(this);
+        menu[i]->setGeometry(geo);
+        menu[i]->move(geo.x(), geo.y() + k * i);
+        menu[i]->setStyleSheet(sheet);
+        menu[i]->setPiece(pieces[i], turn);
+        menu[i]->raise();
+        menu[i]->show();
+        connect(menu[i], &Tile::tileClicked, this, &Board::promotePawn);
+        connect(this, &Board::promotionEnd, &loop, &QEventLoop::quit);
+    }
+    for (int x = 0; x < 8; x++){
+        for (int y = 0; y < 8; y++){
+            tiles[x][y]->setEnabled(false);
+            }
+    }
+    loop.exec();
 }
 
-void Board::revertLast()
+void Board::saveMove(Tile* from, Tile* to, pove& move)
 {
-    virtu from = last_move.first;
-    virtu to = last_move.second;
+    move.first = { from, from->piece_color, from->piece_name };
+    move.second = { to, to->piece_color, to->piece_name };
+}
+
+void Board::revertMove(pove& move)
+{
+    virtu from = move.first;
+    virtu to = move.second;
     from.tile->piece_name = from.name;
     from.tile->piece_color = from.color;
     to.tile->piece_name = to.name;
     to.tile->piece_color = to.color;
-    last_move = {};
+    move = {};
 }
+
+void Board::moveVirtually(Tile* from, Tile* to)
+{
+    saveMove(from, to, virtual_move);
+    to->piece_color = from->piece_color;
+    to->piece_name = from->piece_name;
+    from->piece_name = 'e';
+}
+
+void Board::moveNormally(Tile* from, Tile* to)
+{
+    valid.hideValid();
+    saveMove(from, to, last_move); // should be used before moving
+    to->setPiece(from->piece_name, from->piece_color);
+    from->setPiece('e', 0);
+}
+
+void Board::castleKing(Tile* king, Tile* destination, Tile* rook)
+{
+    valid.hideValid();
+    moveNormally(king, destination);
+    int k = destination->coord.x - king->coord.x > 0 ? -1 : 1; 
+    // the rook is always on the left or tight side of king after castling
+    int x = destination->coord.x + k;
+    int y = destination->coord.y;
+    moveNormally(rook, tiles[x][y]);
+}
+
+void Board::passPawn(Tile* from, Tile* to)
+{
+    moveNormally(from, to);
+    tiles[to->coord.x][from->coord.y]->setPiece('e', 0);
+}
+
+void Board::promotePawn(Tile* tile)
+{
+    last_move.second.tile->setPiece(tile->piece_name, tile->piece_color);
+    for (int i = 0; i < 4; i++) {
+        menu[i]->~Tile();
+        menu[i] = 0;
+    }
+    for (int x = 0; x < 8; x++) {
+        for (int y = 0; y < 8; y++) {
+            tiles[x][y]->setEnabled(true);
+        }
+    }
+    emit promotionEnd();
+}
+
+
+
+

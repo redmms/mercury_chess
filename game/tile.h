@@ -17,7 +17,6 @@ public:
     Tile(Board* mother_board);
 
     scoord coord;
-    int num = 0;
     bool tile_color = false;
     char piece_name = 'e'; // "e" for "empty"
     bool piece_color = false;

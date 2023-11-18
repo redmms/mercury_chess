@@ -1,12 +1,36 @@
 #pragma once
 #include "validation.h"
 #include "board.h"
+#include "tile.h"
 #include "local_types.h"
 using namespace std;
-//using pint = std::pair<int, int>;
-//using pintr = const pint&;
 using lambda = function<bool(scoord)>;
+using checker = function<bool(scoord, bool&)>;
 using func = bool (*)(scoord);
+
+Validation::Validation(Board* mother_board) :
+    board(*mother_board),
+    theTile([this](scoord coord) -> Tile* {
+        return board[coord.x][coord.y];
+    }),
+    inBoard( [](scoord coord) -> bool {
+        return coord.x >= 0 && coord.x < 8 && coord.y >= 0 && coord.y < 8;
+        }),
+    occupied( [&](scoord coord) -> bool {
+        return theTile(coord)->piece_name != 'e';
+        }),
+    differentColor([&](scoord coord) -> bool {
+        // may be realized differently, with either turn or color
+        return theTile(coord)->piece_color != board.turn && occupied(coord);
+        }),
+    pieceName([&](scoord coord) -> char {
+        return theTile(coord)->piece_name;
+        }),
+    addValid([&](scoord coord) -> void {
+        valid_moves.emplace(theTile(coord));  // FIX: should be insert or emplace?
+        // because board[x][y] does already exist, it doesn't have to be created
+        })
+    {}
 
 void Validation::showValid(Tile * from)
 {
@@ -36,51 +60,24 @@ bool Validation::empty()
     return valid_moves.empty();
 }
 
-bool Validation::inCheck(Tile* king)
+bool Validation::inCheck(bool color)
 {
-    return underAttack(king->coord);
+    Tile* king = color ? board.white_king : board.black_king;
+    return (check = underAttack(king->coord));
 }
 
-bool Validation::inCheckmate(Tile* king)
+bool Validation::inCheckmate(bool color)
 {   
-    return false;
-   // bool check = inCheck(king); // don't want extra operations
-    findValid(king);
-    if (!empty())
-        return false;
-    else{
-        //for
-        // надо как-то заполнить новый сэт координат между королем и угрозой
-        // но для этого надо знать где угроза, и точно ли она одна? Ничто не мешает 
-        // быть нескольким угрозам одновременно, особенно если съели пешку или т.п. ИЛи мешает?
-        // если съедена пешка это может добавить только одну угрозу, однако, вражеский нападающий может открыть
-        // собой другую угрозу.
-    }
-        
-    // then check if somebody can protect him.
-    // FIX: make a full version of underAttack, that will take a color as a parameter,
-    // and will return a set of all attacking tiles
-    // then check for every tile in between king and the threatening pieces of an enemy
-    // that they are not under attack of king's friend pieces, otherwise check
-    // if they can move here with a usual canMoveTo check, and if can return false; 
-    // and probably it's better to save somewhere the possible move to save the king;
-    // Though no chess game show it as I know
-    // And make a lambda underAttack, that will show method underAttack with certain 
-    // arguments
-
-    valid_moves.clear();
+    Tile* king = color ? board.white_king : board.black_king;
+    return (check = underAttack(king->coord)) && inStalemate(king->piece_color);
 }
 
 bool Validation::inStalemate(bool color)
 {
-    // FIX: better to dispose of extra variables in future
     for (int x = 0; x < 8; x++) {
         for (int y = 0; y < 8; y++) {
-            Tile* tile = board[x][y];
-            char name = tile->piece_name;
-            bool piece_color = tile->piece_color;
-            if (name != 'e' && piece_color == color){
-                findValid(tile);
+            if (occupied({x, y}) && !differentColor({x, y})){
+                findValid(theTile({x, y}));
                 if (!empty()){
                     valid_moves.clear();
                     return false;
@@ -89,52 +86,6 @@ bool Validation::inStalemate(bool color)
         }
     }
     return true;
-}
-
-bool Validation::runThrough(scoord coord, scoord add, lambda stop_cond, lambda borders_cond)
-{
-    // here range is (from, to] or (from, to), depending on stop_cond
-    coord.x += add.x, coord.y += add.y;
-    while (borders_cond(coord)) {
-        if (stop_cond(coord))
-            return true;
-        coord.x += add.x, coord.y += add.y;
-    }
-    return false;
-}
-
-bool Validation::onDiagonals(scoord coord, lambda stop_cond, lambda borders_cond)
-{
-    bool b1 = runThrough(coord, { 1,  1 }, stop_cond, borders_cond),
-        b2 = runThrough(coord, { 1, -1 }, stop_cond, borders_cond),
-        b3 = runThrough(coord, { -1,  1 }, stop_cond, borders_cond),
-        b4 = runThrough(coord, { -1, -1 }, stop_cond, borders_cond);
-    return b1 || b2 || b3 || b4;
-}
-
-bool Validation::fastDiagonals(scoord coord, lambda stop_cond, lambda borders_cond)
-{
-    return runThrough(coord, { 1,  1 }, stop_cond, borders_cond) ||
-           runThrough(coord, { 1, -1 }, stop_cond, borders_cond) ||
-           runThrough(coord, { -1,  1 }, stop_cond, borders_cond) ||
-           runThrough(coord, { -1, -1 }, stop_cond, borders_cond);
-}
-
-bool Validation::onPerp(scoord coord, lambda stop_cond, lambda borders_cond)
-{
-    bool b1 = runThrough(coord, { 0,  1 }, stop_cond, borders_cond),
-        b2 = runThrough(coord, { 0,  -1 }, stop_cond, borders_cond),
-        b3 = runThrough(coord, { 1,  0 }, stop_cond, borders_cond),
-        b4 = runThrough(coord, { -1, 0 }, stop_cond, borders_cond);
-    return b1 || b2 || b3 || b4;
-}
-
-bool Validation::fastPerp(scoord coord, lambda stop_cond, lambda borders_cond)
-{
-    return runThrough(coord, { 0,  1 }, stop_cond, borders_cond) ||
-           runThrough(coord, { 0,  -1 }, stop_cond, borders_cond) ||
-           runThrough(coord, { 1,  0 }, stop_cond, borders_cond) ||
-           runThrough(coord, { -1, 0 }, stop_cond, borders_cond);
 }
 
 void Validation::kingPotential(scoord coord, list<scoord>& coords)
@@ -157,31 +108,54 @@ bool Validation::notAlignKing(scoord coord, scoord king, scoord from) {
     // tile, with the least operations possible
     return (from.x - coord.x) * (coord.y - king.y) !=
         (from.y - coord.y) * (coord.x - king.x);
-};
+}
 
 bool Validation::underAttack(scoord coord)
 {
     // FIX: better make it return threatening tile
-    // and even better to return all threatening tile
+    // and even better to return all threatening tiles,
+    // but only if we need to add arrows for several possible moves like in chess.com
     bool turn = board.turn;
+   
+    auto fastThrough = [&](scoord coord, scoord add, checker stop_cond, lambda borders_cond, bool& result) {
+        // here range is (from, to] or (from, to), depending on stop_cond
+        result = false;
+        coord.x += add.x, coord.y += add.y;
+        while (borders_cond(coord)) {
+            if (stop_cond(coord, result))
+                return true;
+            coord.x += add.x, coord.y += add.y;
+        }
+        return false;
+        };
+    auto fastPerp = [&](scoord coord, checker stop_cond, lambda borders_cond, bool& result){
+        return fastThrough(coord, { 0,  1 }, stop_cond, borders_cond, result) ||
+            fastThrough(coord, { 0,  -1 }, stop_cond, borders_cond, result) ||
+            fastThrough(coord, { 1,  0 }, stop_cond, borders_cond, result) ||
+            fastThrough(coord, { -1, 0 }, stop_cond, borders_cond, result);
+    };
+    auto fastDiagonals = [&](scoord coord, checker stop_cond, lambda borders_cond, bool& result){
+        return fastThrough(coord, { 1,  1 }, stop_cond, borders_cond, result) ||
+            fastThrough(coord, { 1, -1 }, stop_cond, borders_cond, result) ||
+            fastThrough(coord, { -1,  1 }, stop_cond, borders_cond, result) ||
+            fastThrough(coord, { -1, -1 }, stop_cond, borders_cond, result);
+    };
 
-    // Aliases for shortness
-    auto inBoard = [](scoord coord) -> bool {
-        return coord.x >= 0 && coord.x < 8 && coord.y >= 0 && coord.y < 8;
-        };
-    auto occupied = [this](scoord coord) -> bool {
-        return board[coord.x][coord.y]->piece_name != 'e';
-        };
-    auto differentColor = [this, turn, occupied](scoord coord) -> bool {
-        // may be realized differently, wit either turn or color
-        return board[coord.x][coord.y]->piece_color != turn && occupied(coord);
-        };
-    auto pieceName = [this](scoord coord) -> char {
-        return board[coord.x][coord.y]->piece_name;
-        };
+        /*
+        if (canMoveTo(coord)) {
+            let_die = letKingDie(coord);
+            if (!let_die)
+                addValid(coord);
+                // don't add to valid_moves, but continue the cycle,
+                // threat may be somewhere next on the line
+            if (occupied(coord))
+                return true; // add move but stop, we can eat but cannot go next
+		    return false; // continue
+        }
+        else
+            return true; // break cycle
+        };*/
 
-
-    int x = coord.x, y = coord.y;
     list <scoord> need_check;
     kingPotential(coord, need_check);
     for (auto move : need_check)
@@ -193,25 +167,57 @@ bool Validation::underAttack(scoord coord)
         if (inBoard(move) && pieceName(move) == 'N' && differentColor(move))
             return true;
 
+    int x = coord.x, y = coord.y;
     int k = turn ? 1 : -1;
     need_check = { {x - 1, y + k}, {x + 1, y + k} };
     for (auto move : need_check)
         if (inBoard(move) && pieceName(move) == 'P' && differentColor(move))
             return true;
 
-    auto checkPerp = [&](scoord coord) {
-        return differentColor(coord) && (pieceName(coord) == 'R' || pieceName(coord) == 'Q');
+    auto bordersPerp = [&](scoord coord) {
+        return inBoard(coord) && (!occupied(coord) || differentColor(coord));
         };
-    auto bordersAfter = [&](scoord coor) {
-        return inBoard(coor) && (!occupied(coor) || differentColor(coor));
+    auto checkPerp = [&](scoord coord, bool& result) {
+        if (differentColor(coord)){
+            if (pieceName(coord) == 'R' || pieceName(coord) == 'Q'){
+                result = true;
+            }
+            else {
+                result = false;
+            }
+            return true;
+        }
+        else if (bordersPerp(coord))
+            return false;
+        else{
+            result = false;
+            return true;
+            }
         };
-    if (fastPerp(coord, checkPerp, bordersAfter))
+    bool result;
+    fastPerp(coord, checkPerp, bordersPerp, result);
+    if (result)
         return true;
-
-    auto checkDiagonals = [&](scoord coord) {
-        return differentColor(coord) && (pieceName(coord) == 'B' || pieceName(coord) == 'Q');
+    
+    auto checkDiagonals = [&](scoord coord, bool& result) {
+        if (differentColor(coord)){
+            if (pieceName(coord) == 'B' || pieceName(coord) == 'Q') {
+                result = true;
+            }
+            else {
+                result = false;
+            }
+            return true;
+        }
+        else if (bordersPerp(coord))
+            return false;
+        else {
+            result = false;
+            return true;
+        }
         };
-    return fastDiagonals(coord, checkDiagonals, bordersAfter);
+    fastDiagonals(coord, checkDiagonals, bordersPerp, result);
+    return result;
 }
 
 void Validation::findValid(Tile *from_tile)
@@ -230,27 +236,41 @@ void Validation::findValid(Tile *from_tile)
     scoord add;
     list <scoord> potenial_moves;
 
-    // Aliases for shortness
-    auto inBoard = [](scoord coord) -> bool {
-        return coord.x >= 0 && coord.x < 8 && coord.y >= 0 && coord.y < 8;
+
+    // Direction cycles:
+    auto runThrough = [&](scoord coord, scoord add, lambda stop_cond, lambda borders_cond)
+        {
+            // here range is (from, to] or (from, to), depending on stop_cond
+            coord.x += add.x, coord.y += add.y;
+            while (borders_cond(coord)) {
+                if (stop_cond(coord))
+                    return true;
+                coord.x += add.x, coord.y += add.y;
+            }
+            return false;
         };
-    auto occupied = [this](scoord coord) -> bool {
-        return board[coord.x][coord.y]->piece_name != 'e';
+    auto onDiagonals = [&](scoord coord, lambda stop_cond, lambda borders_cond)
+        {
+            bool b1 = runThrough(coord, { 1,  1 }, stop_cond, borders_cond),
+                b2 = runThrough(coord, { 1, -1 }, stop_cond, borders_cond),
+                b3 = runThrough(coord, { -1,  1 }, stop_cond, borders_cond),
+                b4 = runThrough(coord, { -1, -1 }, stop_cond, borders_cond);
+            return b1 || b2 || b3 || b4;
         };
-    auto differentColor = [this, turn, occupied](scoord coord) -> bool {
-    // may be realized differently, wit either turn or color
-        return board[coord.x][coord.y]->piece_color != turn && occupied(coord);
-        };
-    auto pieceName = [this](scoord coord) -> char {
-        return board[coord.x][coord.y]->piece_name;
-        };
-    auto addValid = [this](scoord coord) -> void {
-        valid_moves.emplace(board[coord.x][coord.y]);  // FIX: should be insert or emplace?
-        // because board[x][y] does already exist, it doesn't have to be created
+    auto onPerp = [&](scoord coord, lambda stop_cond, lambda borders_cond)
+        {
+            bool b1 = runThrough(coord, { 0,  1 }, stop_cond, borders_cond),
+                b2 = runThrough(coord, { 0,  -1 }, stop_cond, borders_cond),
+                b3 = runThrough(coord, { 1,  0 }, stop_cond, borders_cond),
+                b4 = runThrough(coord, { -1, 0 }, stop_cond, borders_cond);
+            return b1 || b2 || b3 || b4;
         };
 
     // Usefull formulas:
     auto findDirection = [](scoord beg, scoord end) -> scoord {
+        // if two tiles are on the same diagonal or perpendicular
+        // it will return unit vector, which can be used as increments for cycles, 
+        // otherwise it's undefined behavior
         int X = end.x - beg.x;
         int Y = end.y - beg.y;
         scoord add{ X > 0 ? 1 : -1,  Y > 0 ? 1 : -1 };
@@ -299,23 +319,34 @@ void Validation::findValid(Tile *from_tile)
             pieceName(coord) != 'K' && !underAttack(coord);
         };
     auto letKingDie = [&](scoord coord){
-        if (board.check){
-            board.moveVirtually(from, coord);
+        if (check){
+            board.moveVirtually(theTile(from), theTile(coord));
             bool check_remains = underAttack(king);
-            board.revertLast();
+            board.revertMove(board.virtual_move);
             return check_remains;
         }
         return false;
+    };
+    auto castlingPotential = [&](std::list<scoord>& coords){
+        if (color)
+            coords = {{2, 0}, {6, 0}}; 
+        else
+            coords = {{2, 7}, {6, 7}};
     };
 
     // For knight, rook, bishop and queen:
     auto canMoveTo = [&](scoord coord) -> bool {
         return inBoard(coord) && (!occupied(coord) || differentColor(coord)) &&
-            pieceName(coord) != 'K' && !exposureKing(coord) && !letKingDie(coord);
+            pieceName(coord) != 'K' && !exposureKing(coord);
         };
     auto addMove = [&](scoord coord) -> bool {
+        bool let_die;
         if (canMoveTo(coord)) {
-            addValid(coord);
+            let_die = letKingDie(coord);
+            if (!let_die)
+                addValid(coord);
+                // don't add to valid_moves, but continue the cycle,
+                // threat may be somewhere next on the line
             if (occupied(coord))
                 return true; // add move but stop, we can eat but cannot go next
 		    return false; // continue
@@ -326,9 +357,9 @@ void Validation::findValid(Tile *from_tile)
 
     // For pawn:
     auto pawnCanEat = [&](scoord coord) -> bool {
-        return inBoard(coord) && differentColor(coord) &&
-            pieceName(coord) != 'K' && !exposureKing(coord) &&
-            !letKingDie(coord);
+        return inBoard(coord) && !exposureKing(coord) && !letKingDie(coord) && 
+        (!occupied(coord) && canPass(from_tile, theTile(coord)) || differentColor(coord) &&
+            pieceName(coord) != 'K');
         };
     auto pawnCanMove = [&](scoord coord) -> bool {
         return inBoard(coord) && !occupied(coord) && !exposureKing(coord) && 
@@ -357,7 +388,7 @@ void Validation::findValid(Tile *from_tile)
     case 'N':  // knight
         knightPotential(from, potenial_moves);
         for (auto coord : potenial_moves)
-            if (canMoveTo(coord))
+            if (canMoveTo(coord) && !letKingDie(coord))
                 addValid(coord);
     break;
     case 'K':  // king
@@ -365,6 +396,11 @@ void Validation::findValid(Tile *from_tile)
         for (auto coord : potenial_moves)
             if (canMoveKingTo(coord))
                 addValid(coord);
+        castlingPotential(potenial_moves);
+        Tile* rook_stub;
+        for (auto coord : potenial_moves)
+            if (canCastle(from_tile, theTile(coord), &rook_stub))
+                addValid(coord);       
     break;
     case 'B':  // bishop
         onDiagonals(from, addMove, inBoard);
@@ -378,18 +414,49 @@ void Validation::findValid(Tile *from_tile)
     };
 }
 
+bool Validation::canCastle(Tile* from, Tile* to, Tile** rook)
+{
+    std::list<int> castling_side;
+    if (board.turn && from->piece_name == 'K' && !has_moved[1])
+        castling_side = { 0, 2 };
+    else if (!board.turn && from->piece_name == 'K' && !has_moved[4])
+        castling_side = { 3, 5 };
+    for (int i : castling_side)
+        if (to->coord == castling_destination[i] && !has_moved[i]) {
+            for (auto coord : should_be_free[i])
+                if (board[coord.x][coord.y]->piece_name != 'e')
+                    return false;
+            for (auto coord : should_be_safe[i])
+                if (underAttack(coord))
+                    return false;
+            scoord rook_coord = rooks_kings[i];
+            *rook = board[rook_coord.x][rook_coord.y];
+            return true;
+        }
+    return false;
+}
 
-// FIX: we also need to add castling, transformation, en passant,
+bool Validation::canPass(Tile* from, Tile* to)
+{
+    virtu opp_from = board.last_move.first;
+    virtu opp_to = board.last_move.second;
+    return (opp_from.name == 'P' &&
+        opp_from.color != from->piece_color &&
+        abs(opp_to.tile->coord.y - opp_from.tile->coord.y) == 2 &&
+        opp_from.tile->coord.x == to->coord.x &&
+        from->coord.y == opp_to.tile->coord.y);
+}
 
-// FIX: when king is under check add to valid_moves only that moves, that will protect 
-// him.
-// Possibly, we can add method willProtect(const set<scoord>& threats, set<move> valid_moves)
-// where move is pair<int8_t, int8_t> with two numbers of tiles (k, or n in future)
+bool Validation::canPromote(Tile* pawn, Tile* destination)
+{
+    return pawn->piece_name == 'P' && destination->coord.y == (board.turn ? 7 : 0);
+}
 
-//!notAlignKing;
-//
-//if coord !notAlignKing (thus it align king)
-//
-//than return true, it can be added to valid,
-//or return false, it's not checkmate
-// also check that king cannot move and thus escape the threat
+void Validation::reactOnMove(Tile* from, Tile* to)
+{
+    check = false;
+    for (int i = 0; i < 6; i++)
+        if (from->coord == rooks_kings[i] || to->coord == rooks_kings[i])
+            has_moved[i] = true;
+
+}

@@ -44,6 +44,11 @@ void Tile::setPiece(char elem, bool color)
             case 'B': 
                 piece = QPixmap(":/bishop_white");
         }
+        if (piece.isNull()) {
+            qDebug() << "Can't get acces to pieces images. Use pseudonames "
+                        "for the files. Add them again to .qrc file if you've changed the project's"
+                        "structure.";
+        }
         setPixmap(piece.scaled(width(), height()));
     }
     else{  // if color is black
@@ -71,7 +76,7 @@ void Tile::setPiece(char elem, bool color)
         }
         if (piece.isNull()) {
             qDebug() << "Can't get acces to pieces images. Use pseudonames "
-                        "for the files. Add them to .qrc file if you've changed the project's"
+                        "for the files. Add them again to .qrc file if you've changed the project's"
                         "structure.";
         }
         setPixmap(piece.scaled(this->width(), this->height()));
@@ -81,9 +86,9 @@ void Tile::setPiece(char elem, bool color)
 void Tile::dyeNormal()
 {
     if(tile_color)
-        setStyleSheet("QLabel {background-color: rgb(120, 120, 90);}:hover{background-color: rgb(170,85,127);}");
+        setStyleSheet("QLabel {background: rgb(120, 120, 90);}:hover{background-color: rgb(170,85,127);}");
     // FIX: all rgb colors should be fields of the Board class int the future, 
     // when functionality will be added
     else
-        setStyleSheet("QLabel {background-color: rgb(211, 211, 158);}:hover{background-color: rgb(170,95,127);}");
+        setStyleSheet("QLabel {background: rgb(211, 211, 158);}:hover{background-color: rgb(170,95,127);}");
 }
