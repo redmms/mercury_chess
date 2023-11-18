@@ -13,13 +13,12 @@ Board::Board(QLabel* background = 0) :
     setMinimumSize(396, 396);
     setMaximumSize(396, 396);
     setStyleSheet("Board{"
-                       "background: rgb(170, 170, 120);" 
-                       "border-radius: 14;"
-                  "}"
+                  "background: rgb(170, 170, 125);"
+                  "border: 1 solid #704717;"
+                  "border-radius: 14px;}"
                   "Tile{"
-                        "border-radius: 7;"
-                   "}"
-                   );
+                  "border-radius: 7;}");
+
     setToolTip("Think thoroughly");
 
     background->parentWidget()->layout()->replaceWidget(background, this); // replace ui board, by this class

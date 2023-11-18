@@ -10,9 +10,17 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
     ui->mainToolBar->hide();
+
+    avatar_effect->setBlurRadius(20);
+    avatar_effect->setOffset(0, 0);
+    avatar_effect->setColor(Qt::green);
+    ui->user_avatar->setGraphicsEffect(avatar_effect);
+
     board = new Board(ui->board_background);
+
     QObject::connect(board, &Board::newStatus, this, &MainWindow::statusSlot);
     QObject::connect(board, &Board::theEnd, this, &MainWindow::endSlot);
+
     showStatus("Ready? Go!");
 }
 
@@ -41,7 +49,16 @@ void MainWindow::statusSlot(setatus status){
             showStatus("Check! Protect His Majesty!");
         break;
         case new_turn:
-            showStatus(board->turn ? "White's turn" : "Black's turn");
+            if (board->turn){
+                showStatus("White's turn");
+                ui->user_avatar->setGraphicsEffect(avatar_effect);
+                ui->opponent_avatar->setGraphicsEffect(0);
+            }
+            else{
+                showStatus("Black's turn");
+                ui->opponent_avatar->setGraphicsEffect(avatar_effect);
+                ui->user_avatar->setGraphicsEffect(0);
+            }
         break;
         case invalid_move:
             showStatus("Invalid move");

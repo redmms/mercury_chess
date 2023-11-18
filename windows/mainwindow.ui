@@ -265,6 +265,9 @@
   <property name="toolTip">
    <string/>
   </property>
+  <property name="layoutDirection">
+   <enum>Qt::LeftToRight</enum>
+  </property>
   <property name="autoFillBackground">
    <bool>true</bool>
   </property>
@@ -283,7 +286,7 @@
      <rect>
       <x>20</x>
       <y>20</y>
-      <width>894</width>
+      <width>914</width>
       <height>610</height>
      </rect>
     </property>
@@ -514,6 +517,97 @@ border-radius: 14px;
          <height>150</height>
         </size>
        </property>
+       <property name="palette">
+        <palette>
+         <active>
+          <colorrole role="Button">
+           <brush brushstyle="SolidPattern">
+            <color alpha="255">
+             <red>116</red>
+             <green>163</green>
+             <blue>68</blue>
+            </color>
+           </brush>
+          </colorrole>
+          <colorrole role="Base">
+           <brush brushstyle="SolidPattern">
+            <color alpha="255">
+             <red>116</red>
+             <green>163</green>
+             <blue>68</blue>
+            </color>
+           </brush>
+          </colorrole>
+          <colorrole role="Window">
+           <brush brushstyle="SolidPattern">
+            <color alpha="255">
+             <red>116</red>
+             <green>163</green>
+             <blue>68</blue>
+            </color>
+           </brush>
+          </colorrole>
+         </active>
+         <inactive>
+          <colorrole role="Button">
+           <brush brushstyle="SolidPattern">
+            <color alpha="255">
+             <red>116</red>
+             <green>163</green>
+             <blue>68</blue>
+            </color>
+           </brush>
+          </colorrole>
+          <colorrole role="Base">
+           <brush brushstyle="SolidPattern">
+            <color alpha="255">
+             <red>116</red>
+             <green>163</green>
+             <blue>68</blue>
+            </color>
+           </brush>
+          </colorrole>
+          <colorrole role="Window">
+           <brush brushstyle="SolidPattern">
+            <color alpha="255">
+             <red>116</red>
+             <green>163</green>
+             <blue>68</blue>
+            </color>
+           </brush>
+          </colorrole>
+         </inactive>
+         <disabled>
+          <colorrole role="Button">
+           <brush brushstyle="SolidPattern">
+            <color alpha="255">
+             <red>116</red>
+             <green>163</green>
+             <blue>68</blue>
+            </color>
+           </brush>
+          </colorrole>
+          <colorrole role="Base">
+           <brush brushstyle="SolidPattern">
+            <color alpha="255">
+             <red>116</red>
+             <green>163</green>
+             <blue>68</blue>
+            </color>
+           </brush>
+          </colorrole>
+          <colorrole role="Window">
+           <brush brushstyle="SolidPattern">
+            <color alpha="255">
+             <red>116</red>
+             <green>163</green>
+             <blue>68</blue>
+            </color>
+           </brush>
+          </colorrole>
+         </disabled>
+        </palette>
+       </property>
        <property name="font">
         <font>
          <pointsize>12</pointsize>
@@ -526,8 +620,9 @@ border-radius: 14px;
         <bool>false</bool>
        </property>
        <property name="styleSheet">
-        <string notr="true">background: green;
-border-radius: 10;</string>
+        <string notr="true">background: #74a344;
+border: 1px solid green;
+border-radius: 14;</string>
        </property>
        <property name="html">
         <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
@@ -589,9 +684,9 @@ li.checked::marker { content: &quot;\2612&quot;; }
           <colorrole role="Window">
            <brush brushstyle="SolidPattern">
             <color alpha="255">
-             <red>128</red>
-             <green>132</green>
-             <blue>55</blue>
+             <red>170</red>
+             <green>170</green>
+             <blue>125</blue>
             </color>
            </brush>
           </colorrole>
@@ -600,27 +695,27 @@ li.checked::marker { content: &quot;\2612&quot;; }
           <colorrole role="Button">
            <brush brushstyle="SolidPattern">
             <color alpha="255">
-             <red>64</red>
-             <green>65</green>
-             <blue>66</blue>
+             <red>170</red>
+             <green>170</green>
+             <blue>125</blue>
             </color>
            </brush>
           </colorrole>
           <colorrole role="Base">
            <brush brushstyle="SolidPattern">
             <color alpha="255">
-             <red>46</red>
-             <green>47</green>
-             <blue>48</blue>
+             <red>170</red>
+             <green>170</green>
+             <blue>125</blue>
             </color>
            </brush>
           </colorrole>
           <colorrole role="Window">
            <brush brushstyle="SolidPattern">
             <color alpha="255">
-             <red>46</red>
-             <green>47</green>
-             <blue>48</blue>
+             <red>170</red>
+             <green>170</green>
+             <blue>125</blue>
             </color>
            </brush>
           </colorrole>
@@ -638,18 +733,18 @@ li.checked::marker { content: &quot;\2612&quot;; }
           <colorrole role="Base">
            <brush brushstyle="SolidPattern">
             <color alpha="255">
-             <red>128</red>
-             <green>132</green>
-             <blue>55</blue>
+             <red>170</red>
+             <green>170</green>
+             <blue>125</blue>
             </color>
            </brush>
           </colorrole>
           <colorrole role="Window">
            <brush brushstyle="SolidPattern">
             <color alpha="255">
-             <red>128</red>
-             <green>132</green>
-             <blue>55</blue>
+             <red>170</red>
+             <green>170</green>
+             <blue>125</blue>
             </color>
            </brush>
           </colorrole>
@@ -665,6 +760,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
        <property name="styleSheet">
         <string notr="true">QLabel{
 background: rgb(170, 170, 125);
+border: 1 solid #A86F2E;
 border-radius: 14px;
 }</string>
        </property>
