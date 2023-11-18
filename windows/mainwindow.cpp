@@ -17,7 +17,7 @@ MainWindow::MainWindow(QWidget *parent) :
     avatar_effect->setColor(Qt::green);
     ui->user_avatar->setGraphicsEffect(avatar_effect);
 
-    QPixmap image(":\profile");
+    QPixmap image(":\\profile");
     QPixmap  pix(100,100);
     pix.fill(Qt::transparent);
     QPainter painter(&pix);

@@ -103,18 +103,15 @@ void Validation::knightPotential(scoord coord, list<scoord>& coords)
                { x - 2, y - 1 }, { x - 1, y - 2 }, { x + 1, y - 2 }, { x + 2, y - 1 } };
 }
 
-bool Validation::notAlignKing(scoord coord, scoord king, scoord from) {
-    // checks that "coord" tile is not on the same line with "king" tile and "from" 
-    // tile, with the least operations possible
-    return (from.x - coord.x) * (coord.y - king.y) !=
-        (from.y - coord.y) * (coord.x - king.x);
-}
-
 bool Validation::underAttack(scoord coord)
 {
     // FIX: better make it return threatening tile
     // and even better to return all threatening tiles,
     // but only if we need to add arrows for several possible moves like in chess.com
+
+    // FIX: fastThrough could be simplified, stop_cond and borders_cond could
+    // merged into one checker (with [&] apparently, it seems to be the simplest way to do it)
+    // FIX: and than extra { and comments could be deleted
     bool turn = board.turn;
    
     auto fastThrough = [&](scoord coord, scoord add, checker stop_cond, lambda borders_cond, bool& result) {
@@ -129,16 +126,16 @@ bool Validation::underAttack(scoord coord)
         return false;
         };
     auto fastPerp = [&](scoord coord, checker stop_cond, lambda borders_cond, bool& result){
-        return fastThrough(coord, { 0,  1 }, stop_cond, borders_cond, result) ||
-            fastThrough(coord, { 0,  -1 }, stop_cond, borders_cond, result) ||
-            fastThrough(coord, { 1,  0 }, stop_cond, borders_cond, result) ||
-            fastThrough(coord, { -1, 0 }, stop_cond, borders_cond, result);
+        for (auto dir : perp_dir)
+            if (fastThrough(coord, dir, stop_cond, borders_cond, result))
+                return true;
+        return false;
     };
     auto fastDiagonals = [&](scoord coord, checker stop_cond, lambda borders_cond, bool& result){
-        return fastThrough(coord, { 1,  1 }, stop_cond, borders_cond, result) ||
-            fastThrough(coord, { 1, -1 }, stop_cond, borders_cond, result) ||
-            fastThrough(coord, { -1,  1 }, stop_cond, borders_cond, result) ||
-            fastThrough(coord, { -1, -1 }, stop_cond, borders_cond, result);
+        for (auto dir : diag_dir)
+            if (fastThrough(coord, dir, stop_cond, borders_cond, result))
+                return true;
+        return false;
     };
 
         /*
@@ -251,19 +248,17 @@ void Validation::findValid(Tile *from_tile)
         };
     auto onDiagonals = [&](scoord coord, lambda stop_cond, lambda borders_cond)
         {
-            bool b1 = runThrough(coord, { 1,  1 }, stop_cond, borders_cond),
-                b2 = runThrough(coord, { 1, -1 }, stop_cond, borders_cond),
-                b3 = runThrough(coord, { -1,  1 }, stop_cond, borders_cond),
-                b4 = runThrough(coord, { -1, -1 }, stop_cond, borders_cond);
-            return b1 || b2 || b3 || b4;
+            bool res = false;
+            for (scoord dir : diag_dir)
+                res |= runThrough(coord, dir, stop_cond, borders_cond);
+            return res;
         };
     auto onPerp = [&](scoord coord, lambda stop_cond, lambda borders_cond)
         {
-            bool b1 = runThrough(coord, { 0,  1 }, stop_cond, borders_cond),
-                b2 = runThrough(coord, { 0,  -1 }, stop_cond, borders_cond),
-                b3 = runThrough(coord, { 1,  0 }, stop_cond, borders_cond),
-                b4 = runThrough(coord, { -1, 0 }, stop_cond, borders_cond);
-            return b1 || b2 || b3 || b4;
+        bool res = false;
+        for (scoord dir : perp_dir)
+            res |= runThrough(coord, dir, stop_cond, borders_cond);
+        return res;
         };
 
     // Usefull formulas:
@@ -278,19 +273,27 @@ void Validation::findValid(Tile *from_tile)
         else if (!X) add.x = 0;
         return add;
         };    
+    auto notAlignKing = [&](scoord coord, scoord king, scoord from) {
+        // checks that "coord" tile is not on the same line with "king" tile and "from"
+        // tile, with the least operations possible
+        return (from.x - coord.x) * (coord.y - king.y) !=
+            (from.y - coord.y) * (coord.x - king.x);
+    };
 
     // For king:
     auto exposureKing = [&](scoord coord) -> bool {
+        // FIX: how will it work if the king is already under check?
         if (first_evaluation){
             X = from.x - king.x,
             Y = from.y - king.y;
-            bool froalign_king = abs(X) == abs(Y) || !X || !Y;
-            if (froalign_king){
+            bool from_aligns_king = abs(X) == abs(Y) || !X || !Y;
+            if (from_aligns_king){
                 add = findDirection(king, from);
                 auto bordersBetween = [king, from](scoord coord) -> bool {
-                    return coord != king && coord != from/*(coord.x != king.x || coord.y != king.y) && (coord.x != from.x || coord.y != from.y)*/;  // whitout "if(froalign_king)"
-// checking this will lead to borders violation sometimess (only if "from" tile 
-// is not aligned with "king" tile), be carefull
+                    return coord != king && coord != from;
+            // whitout "if(from_align_king)"
+            // checking this will lead to borders violation sometimess (only if "from" tile
+            // is not aligned with "king" tile), e.g. for knight; be carefull
                     };
                 bool nothing_between = !runThrough(king, add, occupied, bordersBetween);
                 auto threatensToKing = [&](scoord coord) -> bool {
@@ -303,16 +306,17 @@ void Validation::findValid(Tile *from_tile)
                     };
                 auto bordersAfter = [&](scoord coor) {
                     return inBoard(coor) && (!occupied(coor) || differentColor(coor));
+                    // FIX: may work wrong
+                    // should use checker instead of lambda;
+                    // otherwise it will run through opponents pieces, even if the first
+                    // piece in the line is not a threat
                     };
                 bool occurs_threat = runThrough(from, add, threatensToKing, bordersAfter);
-                may_exposure = froalign_king && nothing_between && occurs_threat;
+                may_exposure = from_aligns_king && nothing_between && occurs_threat;
             }
             first_evaluation = false;
         }
-        //scoord dir = findDirection(from, coord);
-        //bool another_dir = dir != prev_dir;
-        //prev_dir = dir;
-        return may_exposure /*&& another_dir */ && notAlignKing(coord, king, from);
+        return may_exposure && notAlignKing(coord, king, from);
         };
     auto canMoveKingTo = [&](scoord coord) -> bool {
         return inBoard(coord) && (!occupied(coord) || differentColor(coord)) &&
@@ -328,6 +332,7 @@ void Validation::findValid(Tile *from_tile)
         return false;
     };
     auto castlingPotential = [&](std::list<scoord>& coords){
+        // adds coords of potential castling destination for king to the list
         if (color)
             coords = {{2, 0}, {6, 0}}; 
         else
@@ -371,7 +376,7 @@ void Validation::findValid(Tile *from_tile)
         int k = turn ? 1 : -1;
         if (move = { x, y + 1 * k }; pawnCanMove(move)) {
             addValid(move);
-            if (move = { x, y + 2 * k }; (turn ? from.y == 1 : from.y == 6) && pawnCanMove(move))  // FIX: add en passant
+            if (move = { x, y + 2 * k }; (turn ? from.y == 1 : from.y == 6) && pawnCanMove(move))
                 addValid(move);
         }
         if (move = { x - 1, y + 1 * k }; pawnCanEat(move))
@@ -379,6 +384,10 @@ void Validation::findValid(Tile *from_tile)
         if (move = { x + 1, y + 1 * k }; pawnCanEat(move))
             addValid(move);
         };
+
+    auto canMoveKnightTo = [&](scoord coord){
+        return canMoveTo(coord) && !letKingDie(coord);
+       };
 
     switch (piece)
     {
@@ -388,7 +397,7 @@ void Validation::findValid(Tile *from_tile)
     case 'N':  // knight
         knightPotential(from, potenial_moves);
         for (auto coord : potenial_moves)
-            if (canMoveTo(coord) && !letKingDie(coord))
+            if (canMoveKnightTo(coord))
                 addValid(coord);
     break;
     case 'K':  // king
@@ -424,13 +433,12 @@ bool Validation::canCastle(Tile* from, Tile* to, Tile** rook)
     for (int i : castling_side)
         if (to->coord == castling_destination[i] && !has_moved[i]) {
             for (auto coord : should_be_free[i])
-                if (board[coord.x][coord.y]->piece_name != 'e')
+                if (theTile(coord)->piece_name != 'e')
                     return false;
             for (auto coord : should_be_safe[i])
                 if (underAttack(coord))
                     return false;
-            scoord rook_coord = rooks_kings[i];
-            *rook = board[rook_coord.x][rook_coord.y];
+            *rook = theTile(rooks_kings[i]);
             return true;
         }
     return false;

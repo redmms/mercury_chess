@@ -7,9 +7,11 @@
 class Board;
 class Tile;
 
-class Validation{
-    Board& board;
+class Validation
+{
+    Board& board; 
     std::set<Tile*> valid_moves;
+    bool check = false;
     bool has_moved[6]{ false };
     scoord rooks_kings[6]{ {0,0}, {4, 0}, {7, 0}, {0, 7}, {4, 7}, {7, 7} };
     scoord castling_destination[6]{ {2, 0}, {-1, -1}, {6, 0}, {2, 7}, {-1, -1}, {6, 7} };
@@ -29,23 +31,20 @@ class Validation{
         {},
         {{4, 7}, {5, 7}, {6, 7}}
     };
-    bool check = false;
+    std::list<scoord> perp_dir{{ 0,  1 }, { 0,  -1 }, { 1,  0 },  { -1, 0 }};
+    std::list<scoord> diag_dir{{ 1,  1 }, { 1, -1 },  { -1,  1 }, { -1, -1 }};
     
-    // Aliases for shortness
-    std::function <Tile*(scoord)> theTile;
+    std::function<Tile*(scoord)> theTile;
     std::function<bool(scoord)> inBoard;
     std::function<bool(scoord)> occupied;
     std::function<bool(scoord)> differentColor;
     std::function<char(scoord)> pieceName;
     std::function<void(scoord)> addValid;
 
-    bool notAlignKing(scoord coord, scoord king, scoord from); // FIX: can't it be hiden or is
-// it used several times?
-
-    void findValid(Tile* from);
     void kingPotential(scoord coord, std::list<scoord>& coords);
     void knightPotential(scoord coord, std::list<scoord>& coords);
     bool underAttack(scoord coord);
+    void findValid(Tile* from);
 
 public:
     Validation(Board* mother_board);
