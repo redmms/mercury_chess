@@ -26,6 +26,8 @@ public:
 private slots:
     void statusSlot(setatus status);
     void endSlot(endnum end_type);
+    void on_draw_button_clicked();
+    void on_resign_button_clicked();
 };
 
 #endif // MAINWINDOW_H
