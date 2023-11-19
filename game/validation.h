@@ -6,6 +6,8 @@
 #include "local_types.h"
 class Board;
 class Tile;
+using lambda = std::function<bool(scoord)>;
+using checker = std::function<bool(scoord, bool&)>;
 
 class Validation
 {
@@ -40,6 +42,9 @@ class Validation
     std::function<bool(scoord)> differentColor;
     std::function<char(scoord)> pieceName;
     std::function<void(scoord)> addValid;
+    std::function<void(scoord, scoord, checker, bool&)> fastThrough;
+    std::function<bool(scoord, checker, const std::list<scoord>&)> fastLine;
+    std::function<bool(scoord, lambda, lambda, bool&)> enemyFinder;
 
     void kingPotential(scoord coord, std::list<scoord>& coords);
     void knightPotential(scoord coord, std::list<scoord>& coords);

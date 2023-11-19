@@ -4,6 +4,7 @@
 #include "..\game\board.h"
 #include "..\game\local_types.h"
 #include <QPainter>
+#include <QGraphicsEffect>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -15,7 +16,7 @@ MainWindow::MainWindow(QWidget *parent) :
     avatar_effect->setBlurRadius(20);
     avatar_effect->setOffset(0, 0);
     avatar_effect->setColor(Qt::green);
-    ui->user_avatar->setGraphicsEffect(avatar_effect);
+    //ui->user_avatar->setGraphicsEffect(avatar_effect);
 
     QPixmap image(":\\profile");
     QPixmap  pix(100,100);
@@ -69,12 +70,12 @@ void MainWindow::statusSlot(setatus status){
             if (board->turn){
                 showStatus("White's turn");
                 ui->user_avatar->setGraphicsEffect(avatar_effect);
-                ui->opponent_avatar->setGraphicsEffect(0);
+                this->update();
             }
             else{
                 showStatus("Black's turn");
                 ui->opponent_avatar->setGraphicsEffect(avatar_effect);
-                ui->user_avatar->setGraphicsEffect(0);
+                this->update();
             }
         break;
         case invalid_move:

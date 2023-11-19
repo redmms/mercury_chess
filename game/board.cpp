@@ -59,9 +59,7 @@ void Board::reactOnClick(Tile* tile) {
         if(valid.canPromote(tile, tile))
             openPromotion(tile);  // waits until the signal from a tile received
 
-        from_tile = nullptr;
         turn = !turn;
-
         if (valid.inCheck(turn))
             if (valid.inStalemate(turn))  // check + stalemate == checkmate
                 emit theEnd(turn ? endnum::black_wins : endnum::white_wins);
@@ -72,7 +70,8 @@ void Board::reactOnClick(Tile* tile) {
         else
             emit newStatus(setatus::new_turn);
 
-        valid.reactOnMove(from_tile, tile);
+        valid.reactOnMove(from_tile, tile);       
+        from_tile = nullptr;
     }
     else
         emit newStatus(setatus::invalid_move);

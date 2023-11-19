@@ -29,8 +29,8 @@ enum setatus : int {
 };
 
 struct scoord{
-    int x;
-    int y;
+    int x = 0;
+    int y = 0;
     
     bool operator != (const scoord right) const {
         return x != right.x && y != right.y;
