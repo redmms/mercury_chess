@@ -172,21 +172,6 @@ bool Validation::underAttack(scoord coord)
         };
     return fastLine(coord, checkDiag, diag_dir);
 }
-/*
-if (canMoveTo(coord)) {
-    let_die = letKingDie(coord);
-    if (!let_die)
-        addValid(coord);
-        // don't add to valid_moves, but continue the cycle,
-        // threat may be somewhere next on the line
-    if (occupied(coord))
-        return true; // add move but stop, we can eat but cannot go next
-    return false; // continue
-}
-else
-    return true; // break cycle
-};*/
-
 
 void Validation::findValid(Tile *from_tile)
 {
@@ -251,7 +236,7 @@ void Validation::findValid(Tile *from_tile)
             (from.y - coord.y) * (coord.x - king.x);
     };
 
-    // For king:
+    // Lambdas about king:
     auto exposureKing = [&](scoord coord) -> bool {
         // FIX: how will it work if the king is already under check?
         if (first_evaluation){
@@ -277,10 +262,6 @@ void Validation::findValid(Tile *from_tile)
                     };
                 auto bordersAfter = [&](scoord coord) {
                     return inBoard(coord) && (!occupied(coord) || differentColor(coord));
-                    // FIX: may work wrong
-                    // should use checker instead of lambda;
-                    // otherwise it will run through opponents pieces, even if the first
-                    // piece in the line is not a threat
                     };
                 auto checkerAfter = [&](scoord coord, bool& result) -> bool{
                     return enemyFinder(coord, threatensToKing, bordersAfter, result);
@@ -292,10 +273,6 @@ void Validation::findValid(Tile *from_tile)
             first_evaluation = false;
         }
         return may_exposure && notAlignKing(coord, king, from);
-        };
-    auto canMoveKingTo = [&](scoord coord) -> bool {
-        return inBoard(coord) && (!occupied(coord) || differentColor(coord)) &&
-            pieceName(coord) != 'K' && !underAttack(coord);
         };
     auto letKingDie = [&](scoord coord){
         if (check){
@@ -314,11 +291,32 @@ void Validation::findValid(Tile *from_tile)
             coords = {{2, 7}, {6, 7}};
     };
 
-    // For knight, rook, bishop and queen:
+    // Checker conditions:
+    // For knight, rook, bishop and queen
     auto canMoveTo = [&](scoord coord) -> bool {
         return inBoard(coord) && (!occupied(coord) || differentColor(coord)) &&
             pieceName(coord) != 'K' && !exposureKing(coord);
         };
+    // For knight
+    auto canMoveKnightTo = [&](scoord coord){
+        return canMoveTo(coord) && !letKingDie(coord);
+       };
+    // For king
+    auto canMoveKingTo = [&](scoord coord) -> bool {
+        return inBoard(coord) && (!occupied(coord) || differentColor(coord)) &&
+            pieceName(coord) != 'K' && !underAttack(coord);
+        };
+    // For pawn
+    auto pawnCanEat = [&](scoord coord) -> bool {
+        return inBoard(coord) && !exposureKing(coord) && !letKingDie(coord) &&
+        (!occupied(coord) && canPass(from_tile, theTile(coord)) || differentColor(coord) &&
+            pieceName(coord) != 'K');
+        };
+    auto pawnCanMove = [&](scoord coord) -> bool {
+        return inBoard(coord) && !occupied(coord) && !exposureKing(coord);
+        };
+
+    // Adding coords to this->valid_moves;
     auto addMove = [&](scoord coord) -> bool {  // FIX: should be reread
         bool let_die;
         if (canMoveTo(coord)) {
@@ -333,16 +331,6 @@ void Validation::findValid(Tile *from_tile)
         }
         else
             return true; // break cycle
-        };
-
-    // For pawn:
-    auto pawnCanEat = [&](scoord coord) -> bool {
-        return inBoard(coord) && !exposureKing(coord) && !letKingDie(coord) && 
-        (!occupied(coord) && canPass(from_tile, theTile(coord)) || differentColor(coord) &&
-            pieceName(coord) != 'K');
-        };
-    auto pawnCanMove = [&](scoord coord) -> bool {
-        return inBoard(coord) && !occupied(coord) && !exposureKing(coord);
         };
     auto addPawnMoves = [&](scoord coord) -> void {
         int x = coord.x, y = coord.y;
@@ -360,10 +348,6 @@ void Validation::findValid(Tile *from_tile)
         if (move = { x + 1, y + 1 * k }; pawnCanEat(move) && !letKingDie(move))
             addValid(move);
         };
-
-    auto canMoveKnightTo = [&](scoord coord){
-        return canMoveTo(coord) && !letKingDie(coord);
-       };
 
     switch (piece)
     {

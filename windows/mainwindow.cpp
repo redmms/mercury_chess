@@ -16,7 +16,7 @@ MainWindow::MainWindow(QWidget *parent) :
     avatar_effect->setBlurRadius(20);
     avatar_effect->setOffset(0, 0);
     avatar_effect->setColor(Qt::green);
-    //ui->user_avatar->setGraphicsEffect(avatar_effect);
+    ui->user_avatar->setGraphicsEffect(avatar_effect);
 
     QPixmap image(":\\profile");
     QPixmap  pix(100,100);
@@ -24,7 +24,7 @@ MainWindow::MainWindow(QWidget *parent) :
     QPainter painter(&pix);
     painter.setBrush(Qt::color1);
     painter.drawRoundedRect(0,0,100,100,14,14);
-    QBitmap map = pix.createMaskFromColor(Qt::transparent);  // Создать маску изображения
+    QBitmap map = pix.createMaskFromColor(Qt::transparent);
     ui->user_avatar->setMask(map);
     ui->user_avatar->setPixmap(image);
     ui->opponent_avatar->setMask(map);
@@ -91,7 +91,7 @@ void MainWindow::on_draw_button_clicked()
 {
     // send some signal to the opponent's computer, that will be received by some slot
     // that will open a dialog window : draw or not;
-    // but that window will stop time for 3 seconds;
+    // but that window will stop chess timer for 3 seconds;
 }
 
 
