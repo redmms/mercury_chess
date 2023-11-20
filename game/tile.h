@@ -3,15 +3,26 @@
 #include <QLabel>
 #include <QDebug>
 #include "local_types.h"
-
+#include <QMap>
+#include <QColor>
+#include <map>
+#include <string>
 class Board;
 //struct scoord;
 
 class Tile: public QLabel
 {
     Q_OBJECT
-   
+
+    QColor black{120, 120, 90};
+    QColor white{211, 211, 158};
+    QColor selected = Qt::green;
+    QColor valid = Qt::yellow;
+    QColor hover{170, 85, 127};
+    std::map<std::string, std::map<int, QString>> css_colors;
+
     void mousePressEvent(QMouseEvent* event); 
+    QColor mixColors(QColor color_a, QColor color_b, float b_coef);
 
 public:
     Tile(Board* mother_board);
@@ -23,6 +34,8 @@ public:
 
     void setPiece(char elem, bool color);
     void dyeNormal();
+    void dyeSelected();
+    void dyeValid();
 
 signals:
     void tileClicked(Tile* tile);

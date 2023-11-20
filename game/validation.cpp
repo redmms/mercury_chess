@@ -62,8 +62,8 @@ void Validation::showValid(Tile * from)
     findValid(from);
     if (!valid_moves.empty()) {
         for (auto tile : valid_moves)
-            tile->setStyleSheet("background: orange;");
-        from->setStyleSheet("background: green;");
+            tile->dyeValid();
+        from->dyeSelected();
     }
 }
 

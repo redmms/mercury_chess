@@ -12,16 +12,12 @@ Board::Board(QLabel* background = 0) :
     setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
     setMinimumSize(396, 396);
     setMaximumSize(396, 396);
-    setStyleSheet("Board{"
-                  "background: rgb(170, 170, 125);"
-                  "border: 1 solid black;" // #704717
-                  "border-radius: 14px;}"
-                  "Tile{"
-                  "border-radius: 7;}");
+    setStyleSheet(board_css);
 
     setToolTip("Think thoroughly");
 
-    background->parentWidget()->layout()->replaceWidget(background, this); // replace ui board, by this class
+    background->parentWidget()->layout()->replaceWidget(background, this);
+    // replace ui board, by this class
     background->~QLabel();
 
     drawLetters();
@@ -184,15 +180,14 @@ void Board::drawTiles()
 void Board::openPromotion(Tile* from)
 {
     QEventLoop loop;
-    QString sheet = "QLabel{background: white;}:hover{background-color: rgb(170,85,127);}";
     QRect geo = from->geometry();
-    std::string pieces = "QRBN";
+    std::string pieces = "QNRB";
     int k = turn ? tile_size : -tile_size;
     for (int i = 0; i < 4; i++){
         menu[i] = new Tile(this);
         menu[i]->setGeometry(geo);
         menu[i]->move(geo.x(), geo.y() + k * i);
-        menu[i]->setStyleSheet(sheet);
+        menu[i]->setStyleSheet(promo_css);
         menu[i]->setPiece(pieces[i], turn);
         menu[i]->raise();
         menu[i]->show();

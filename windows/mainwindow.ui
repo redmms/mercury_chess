@@ -276,7 +276,6 @@
 background-color: qlineargradient(x1: 0,y1: 0, x2: 1, y2: 1, stop: 0 #C78D50, stop: 1 #634b30 );
 border: 1 solid #54381E;
 border-radius: 14px;
-text-shadow: 1px 1px 0px #2f6627;
 
 }:pressed{
 background-color: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 1, stop: 0 #634b30, stop: 1 #C78D50 );
@@ -924,7 +923,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
        <property name="styleSheet">
         <string notr="true">QLabel{
 background: rgb(170, 170, 125);
-border: 1 solid #A86F2E;
+border: 1 solid black /*#A86F2E*/;
 border-radius: 14px;
 }</string>
        </property>

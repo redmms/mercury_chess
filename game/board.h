@@ -27,6 +27,18 @@ public:
     pove last_move;
     pove virtual_move;
     Tile* menu[4];
+    const QString& board_css =
+            "Board{"
+                "background: rgb(170, 170, 125);"
+                "border: 1 solid black;" // #704717
+                "border-radius: 14px;}"
+             "Tile{"
+                "border-radius: 7;}";
+    const QString& promo_css =
+            "QLabel{"
+                "background: white;}:"
+            "hover{"
+                "background: rgb(170,85,127);}";
 
     void saveMove(Tile* from, Tile* to, pove& move);
     void revertMove(pove& move);
