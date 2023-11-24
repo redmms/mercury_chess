@@ -25,7 +25,7 @@ class Tile: public QLabel
     QColor mixColors(QColor color_a, QColor color_b, float b_coef);
 
 public:
-    Tile(Board* mother_board);
+    Tile(Board* mother_board = 0, scoord coord = {0, 0});
 
     scoord coord;
     bool tile_color = false;

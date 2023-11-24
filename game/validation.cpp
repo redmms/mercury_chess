@@ -226,7 +226,7 @@ void Validation::findValid(Tile *from_tile)
         int Y = end.y - beg.y;
         scoord add{ X > 0 ? 1 : -1,  Y > 0 ? 1 : -1 };
         if (!Y) add.y = 0;
-        else if (!X) add.x = 0;
+        if (!X) add.x = 0;
         return add;
         };    
     auto notAlignKing = [&](scoord coord, scoord king, scoord from) {
@@ -250,6 +250,8 @@ void Validation::findValid(Tile *from_tile)
             // whitout "if(from_align_king)"
             // checking this will lead to borders violation sometimess (only if "from" tile
             // is not aligned with "king" tile), e.g. for knight; be carefull
+            // also cycle may potentially leave the borders if from is equal king 
+            // (the moving piece is king)
                     };
                 bool nothing_between = !runThrough(king, add, occupied, bordersBetween);
                 auto threatensToKing = [&](scoord coord) -> bool {
@@ -277,7 +279,8 @@ void Validation::findValid(Tile *from_tile)
     auto letKingDie = [&](scoord coord){
         if (check){
             board.moveVirtually(from_tile, theTile(coord));
-            bool check_remains = underAttack(king);
+            bool check_remains = 
+                pieceName(coord) == 'K' ? underAttack(coord) : underAttack(king);
             board.revertMove(board.virtual_move);
             return check_remains;
         }
@@ -299,12 +302,13 @@ void Validation::findValid(Tile *from_tile)
         };
     // For knight
     auto canMoveKnightTo = [&](scoord coord){
-        return canMoveTo(coord) && !letKingDie(coord);
+        return inBoard(coord) && (!occupied(coord) || differentColor(coord)) &&
+            pieceName(coord) != 'K' && !exposureKing(coord) && !letKingDie(coord);
        };
     // For king
     auto canMoveKingTo = [&](scoord coord) -> bool {
         return inBoard(coord) && (!occupied(coord) || differentColor(coord)) &&
-            pieceName(coord) != 'K' && !underAttack(coord);
+            pieceName(coord) != 'K' && !underAttack(coord) && !letKingDie(coord);
         };
     // For pawn
     auto pawnCanEat = [&](scoord coord) -> bool {

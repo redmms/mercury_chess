@@ -35,12 +35,7 @@ class Validation
     };
     std::list<scoord> perp_dir{{ 0,  1 }, { 0,  -1 }, { 1,  0 },  { -1, 0 }};
     std::list<scoord> diag_dir{{ 1,  1 }, { 1, -1 },  { -1,  1 }, { -1, -1 }};
-    
-    std::function<Tile*(scoord)> theTile;
-    std::function<bool(scoord)> inBoard;
-    std::function<bool(scoord)> occupied;
-    std::function<bool(scoord)> differentColor;
-    std::function<char(scoord)> pieceName;
+
     std::function<void(scoord)> addValid;
     std::function<void(scoord, scoord, checker, bool&)> fastThrough;
     std::function<bool(scoord, checker, const std::list<scoord>&)> fastLine;
@@ -54,6 +49,12 @@ class Validation
 public:
     Validation(Board* mother_board);
  
+    std::function<Tile*(scoord)> theTile;
+    std::function<bool(scoord)> inBoard;
+    std::function<bool(scoord)> occupied;
+    std::function<bool(scoord)> differentColor;
+    std::function<char(scoord)> pieceName;
+
     void showValid(Tile * from);
     void hideValid();
     bool isValid(Tile * move);

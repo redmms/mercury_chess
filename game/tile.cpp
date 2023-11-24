@@ -4,8 +4,10 @@
 #include "local_types.h"
 #include <iostream>
 
-Tile::Tile(Board* mother_board = 0) :
-   QLabel(mother_board, Qt::WindowFlags())
+Tile::Tile(Board* mother_board, scoord tile_coord) :
+   QLabel(mother_board, Qt::WindowFlags()),
+   coord(tile_coord),
+   tile_color((coord.x + coord.y) % 2)
 {
     css_colors["normal"][0] = black.name(QColor::HexRgb);
     css_colors["normal"][1] = white.name(QColor::HexRgb);
@@ -15,6 +17,11 @@ Tile::Tile(Board* mother_board = 0) :
     css_colors["valid"][1] = mixColors(white, valid, 0.5).name(QColor::HexRgb);
     css_colors["hover"][0] = hover.name(QColor::HexRgb);
     css_colors["hover"][1] = hover.name(QColor::HexRgb);
+
+    dyeNormal();
+    auto size = mother_board->tile_size;
+    setGeometry(size/2 + coord.x * size, size/2 + (7 - coord.y) * size,
+                size, size); // size/2 is the indent from the left upper corner
 }
 
 void Tile::mousePressEvent(QMouseEvent *event)
@@ -38,30 +45,31 @@ void Tile::setPiece(char elem, bool color)
     if (elem == 'e') {
         clear();
         dyeNormal();
+        return;
     }
     QString add = color ? "white" : "black";
     QPixmap piece;
     switch (elem)
     {
     case 'P':
-        piece = QPixmap(":/pawn_" + add);
+        piece = QPixmap(":images/pawn_" + add);
         break;
     case 'R':
-        piece = QPixmap(":/rook_" + add);
+        piece = QPixmap(":images/rook_" + add);
         break;
     case 'N':
-        piece = QPixmap(":/knight_" + add);
+        piece = QPixmap(":images/knight_" + add);
         break;
     case 'K':
-        piece = QPixmap(":/king_" + add);
+        piece = QPixmap(":images/king_" + add);
         if (color) ((Board*)parent())->white_king = this;
         else ((Board*)parent())->black_king = this;
         break;
     case 'Q':
-        piece = QPixmap(":/queen_" + add);
+        piece = QPixmap(":images/queen_" + add);
         break;
     case 'B':
-        piece = QPixmap(":/bishop_" + add);
+        piece = QPixmap(":images/bishop_" + add);
     }
     if (piece.isNull()) {
         qDebug() << "Can't get acces to pieces images. Use pseudonames "

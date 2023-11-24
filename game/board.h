@@ -8,17 +8,19 @@ enum endnum : int;
 class Board : public QLabel {
 	Q_OBJECT
 
-    Validation valid = Validation(this);
-    int tile_size;
-
     void drawLetters();
     void drawNumbers();
     void drawTiles();
     void openPromotion(Tile* from);
 
+friend class Tile;
+protected:
+    int tile_size;
+
 public:
     Board(QLabel* background);
     
+    Validation valid = Validation(this);
     Tile* tiles[8][8] = { { NULL } };
     bool turn = true;  // true for white turn;
     Tile* from_tile = nullptr;  // always actualized in Tile::setPiece()
@@ -27,15 +29,15 @@ public:
     pove last_move;
     pove virtual_move;
     Tile* menu[4];
-    const QString& board_css =
+    QString board_css =
             "Board{"
                 "background: rgb(170, 170, 125);"
                 "border: 1 solid black;" // #704717
                 "border-radius: 14px;}"
              "Tile{"
                 "border-radius: 7;}";
-    const QString& promo_css =
-            "QLabel{"
+    QString promo_css =
+            "Tile{"
                 "background: white;}:"
             "hover{"
                 "background: rgb(170,85,127);}";
@@ -52,7 +54,7 @@ public:
     }
     
 signals:
-    void newStatus(setatus status);
+    void newStatus(tatus status);
     void theEnd(endnum end_type);
     void promotionEnd();
     void hasMoved(Tile* from, Tile* to);

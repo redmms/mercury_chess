@@ -22,9 +22,13 @@ enum endnum : int {
     insufficient_material
 };
 
-enum setatus : int {
+enum tatus : int {
     check,
     new_turn,
+    eaten_by_opp,
+    eaten_by_user,
+    castling,
+    promotion,
     invalid_move
 };
 

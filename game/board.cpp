@@ -23,7 +23,7 @@ Board::Board(QLabel* background = 0) :
     drawLetters();
     drawNumbers();
     drawTiles();
-};
+}
 
 void Board::reactOnClick(Tile* tile) {
     if (from_tile == nullptr) { // if it's first click then pick the piece and 
@@ -45,32 +45,42 @@ void Board::reactOnClick(Tile* tile) {
     }
     else if (valid.isValid(tile)) { // if it's the second click and move is valid
     //then move pieces
-        if (Tile* rook; valid.canCastle(from_tile, tile, &rook))
+        tatus emit_status = tatus::new_turn;
+        if (valid.differentColor(tile->coord))
+            emit_status = turn ? tatus::eaten_by_user : tatus::eaten_by_opp;
+
+        if (Tile* rook; valid.canCastle(from_tile, tile, &rook)){
             castleKing(from_tile, tile, rook);
-        else if (valid.canPass(from_tile, tile))
+            emit_status = tatus::castling;
+        }
+        else if (valid.canPass(from_tile, tile)){
             passPawn(from_tile, tile);
+            emit_status = turn ? tatus::eaten_by_user : tatus::eaten_by_opp;
+        }
         else
             moveNormally(from_tile, tile);
 
-        if(valid.canPromote(tile, tile))
+        if(valid.canPromote(tile, tile)){
             openPromotion(tile);  // waits until the signal from a tile received
+            emit_status = tatus::promotion;
+        }
 
         turn = !turn;
         if (valid.inCheck(turn))
             if (valid.inStalemate(turn))  // check + stalemate == checkmate
                 emit theEnd(turn ? endnum::black_wins : endnum::white_wins);
             else
-                emit newStatus(setatus::check); 
+                emit newStatus(tatus::check);
         else if(valid.inStalemate(turn))
             emit theEnd(endnum::stalemate);
         else
-            emit newStatus(setatus::new_turn);
+            emit newStatus(emit_status);
 
         valid.reactOnMove(from_tile, tile);       
         from_tile = nullptr;
     }
     else
-        emit newStatus(setatus::invalid_move);
+        emit newStatus(tatus::invalid_move);
 }
 
 
@@ -128,26 +138,11 @@ void Board::drawNumbers() {
 
 void Board::drawTiles()
 {
-    int indent = tile_size / 2;
-    int hor = indent;
-    int ver = indent;
     for (int y = 7; y >= 0; y--){
         for (int x = 0; x < 8; x++){
-            tiles[x][y] = new Tile(this);
-            tiles[x][y]->tile_color = !((x + y) % 2);
-            // is this field really needed?
-// Yes, it is otherwise you can't connect the tile pointer to it's 
-// index, when tileClicked signal is emitted
-// and also we can't use gridlayout because its index goes
-// upside down
-            tiles[x][y]->coord = {x, y}; 
-            tiles[x][y]->setGeometry(hor, ver, tile_size, tile_size);
-            tiles[x][y]->dyeNormal();
+            tiles[x][y] = new Tile(this, {x, y});
             QObject::connect(tiles[x][y], &Tile::tileClicked, this, &Board::reactOnClick);
-            hor += tile_size;
         }
-        hor = indent;
-        ver += tile_size;
     }
 
     //black pawns
@@ -180,25 +175,20 @@ void Board::drawTiles()
 void Board::openPromotion(Tile* from)
 {
     QEventLoop loop;
-    QRect geo = from->geometry();
     std::string pieces = "QNRB";
-    int k = turn ? tile_size : -tile_size;
-    for (int i = 0; i < 4; i++){
-        menu[i] = new Tile(this);
-        menu[i]->setGeometry(geo);
-        menu[i]->move(geo.x(), geo.y() + k * i);
+    scoord coord = from->coord;
+    for (int i = 0; i < 4; i++, coord.y += turn ? -1 : 1){
+        menu[i] = new Tile(this, coord);
         menu[i]->setStyleSheet(promo_css);
         menu[i]->setPiece(pieces[i], turn);
         menu[i]->raise();
         menu[i]->show();
         connect(menu[i], &Tile::tileClicked, this, &Board::promotePawn);
-        connect(this, &Board::promotionEnd, &loop, &QEventLoop::quit);
+        connect(this, &Board::promotionEnd, &loop, &QEventLoop::quit);    
     }
-    for (int x = 0; x < 8; x++){
-        for (int y = 0; y < 8; y++){
-            tiles[x][y]->setEnabled(false);
-            }
-    }
+    for (int x = 0; x < 8; x++)
+        for (int y = 0; y < 8; y++)
+            tiles[x][y]->setEnabled(false);   
     loop.exec();
 }
 
@@ -259,11 +249,9 @@ void Board::promotePawn(Tile* tile)
         menu[i]->~Tile();
         menu[i] = 0;
     }
-    for (int x = 0; x < 8; x++) {
-        for (int y = 0; y < 8; y++) {
+    for (int x = 0; x < 8; x++)
+        for (int y = 0; y < 8; y++)
             tiles[x][y]->setEnabled(true);
-        }
-    }
     emit promotionEnd();
 }
 

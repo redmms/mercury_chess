@@ -1,0 +1,30 @@
+<RCC>
+    <qresource prefix="/images">
+        <file alias="bishop_black">images/bishop_black.svg</file>
+        <file alias="bishop_white">images/bishop_white.svg</file>
+        <file alias="exp">images/exp.png</file>
+        <file alias="king_black">images/king_black.svg</file>
+        <file alias="king_white">images/king_white.svg</file>
+        <file alias="knight_black">images/knight_black.svg</file>
+        <file alias="knight_white">images/knight_white.svg</file>
+        <file alias="pawn_black">images/pawn_black.svg</file>
+        <file alias="pawn_white">images/pawn_white.svg</file>
+        <file alias="profile">images/profile.png</file>
+        <file alias="queen_black">images/queen_black.svg</file>
+        <file alias="queen_white">images/queen_white.svg</file>
+        <file alias="rook_black">images/rook_black.svg</file>
+        <file alias="rook_white">images/rook_white.svg</file>
+    </qresource>
+    <qresource prefix="/sounds">
+        <file alias="move">sounds/nice/wav/move.wav</file>
+        <file alias="user_eaten">sounds/nice/wav/eaten_by_opp.wav</file>
+        <file alias="promotion">sounds/nice/wav/promotion.wav</file>
+        <file alias="opp_eaten">sounds/nice/wav/eaten_by_user.wav</file>
+        <file alias="castling">sounds/nice/wav/castling.wav</file>
+        <file alias="check">sounds/nice/wav/check.wav</file>
+        <file alias="win">sounds/nice/wav/win.wav</file>
+        <file alias="invalid">sounds/nice/wav/invalid_move.wav</file>
+        <file alias="lose">sounds/nice/wav/lose.wav</file>
+        <file alias="draw">sounds/nice/wav/the_end_close_the_board.wav</file>
+    </qresource>
+</RCC>
