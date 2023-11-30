@@ -26,5 +26,6 @@
         <file alias="invalid">sounds/nice/wav/invalid_move.wav</file>
         <file alias="lose">sounds/nice/wav/lose.wav</file>
         <file alias="draw">sounds/nice/wav/the_end_close_the_board.wav</file>
+        <file alias="check_to_opp">sounds/nice/wav/check_to_opp.wav</file>
     </qresource>
 </RCC>

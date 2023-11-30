@@ -5,6 +5,11 @@
 #include "..\game\local_types.h"
 #include <QPainter>
 #include <QGraphicsEffect>
+#include <QTabWidget>
+#include <QBitmap>
+#include <QTabBar>
+#include <QFileDialog>
+#include <QMessageBox>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -25,6 +30,9 @@ MainWindow::MainWindow(QWidget *parent) :
     sounds["check"] = new QSoundEffect;
     sounds["check"]->setSource(QUrl::fromLocalFile(":/sounds/check"));
     sounds["check"]->setVolume(0.7);
+    sounds["check_to_opp"] = new QSoundEffect;
+    sounds["check_to_opp"]->setSource(QUrl::fromLocalFile(":/sounds/check_to_opp"));
+    sounds["check_to_opp"]->setVolume(0.7);
     sounds["invalid move"] = new QSoundEffect;
     sounds["invalid move"]->setSource(QUrl::fromLocalFile(":/sounds/invalid"));
     sounds["lose"] = new QSoundEffect;
@@ -36,25 +44,35 @@ MainWindow::MainWindow(QWidget *parent) :
     sounds["draw"] = new QSoundEffect;
     sounds["draw"]->setSource(QUrl::fromLocalFile(":/sounds/draw"));
 
+    settings->setValue("user_name", "Player1");
+    settings->setValue("opp_name", "Player2");
+
     ui->setupUi(this);
     ui->mainToolBar->hide();
+    ui->tabWidget->tabBar()->hide();
+    for (int i = 0, tab_count = ui->tabWidget->count(); i < tab_count; i++)
+        ui->tabWidget->widget(i)->setStyleSheet("QTabWidget::tab > QWidget > QWidget{background: #75752d;}");
+    // fix the background color for tabs. There's some bug in Designer
 
     avatar_effect->setBlurRadius(20);
     avatar_effect->setOffset(0, 0);
     avatar_effect->setColor(Qt::green);
     ui->user_avatar->setGraphicsEffect(avatar_effect);
 
-    QPixmap image(":images/profile"); // round the avatars' corners
-    QPixmap  pix(100,100);
+    auto mask_size = ui->user_avatar->width();
+    QPixmap  pix(mask_size,mask_size); // initialize a mask for avatar's rounded corners
     pix.fill(Qt::transparent);
     QPainter painter(&pix);
     painter.setBrush(Qt::color1);
-    painter.drawRoundedRect(0,0,100,100,14,14);
-    QBitmap map = pix.createMaskFromColor(Qt::transparent);
-    ui->user_avatar->setMask(map);
-    ui->user_avatar->setPixmap(image);
-    ui->opponent_avatar->setMask(map);
-    ui->opponent_avatar->setPixmap(image);
+    painter.drawRoundedRect(0,0,mask_size,mask_size,14,14);
+    pic_map = pix.createMaskFromColor(Qt::transparent);
+
+    ui->user_avatar->setMask(pic_map);
+    ui->user_avatar->setPixmap(user_pic);
+    ui->opponent_avatar->setMask(pic_map);
+    ui->opponent_avatar->setPixmap(opp_pic);
+    ui->profile_avatar->setMask(pic_map); // picture in the settings
+    ui->profile_avatar->setPixmap(user_pic);
 
     board = new Board(ui->board_background);
 
@@ -89,44 +107,49 @@ void MainWindow::endSlot(endnum end_type)
             showStatus("Black wins by white's resignation");
             // FIX: do something else;
     }
+    board->setEnabled(false);
+    ui->draw_button->disconnect();
+    ui->resign_button->disconnect();
 }
 
 void MainWindow::statusSlot(tatus status){
+
     switch(status){
         case tatus::check:
-            sounds["check"]->play();
-            switchGlow();
-            showStatus("Check! Protect His Majesty!");
+            if(board->turn){
+                sounds["check"]->play();
+                showStatus("Check! Protect His Majesty!");
+            }
+            else{
+                sounds["check_to_opp"]->play();
+                showStatus("You are a fearless person!");
+            }
         break;
         case tatus::eaten_by_opp:
             sounds["eaten by opp"]->play();
-            switchGlow();
             showStatus(board->turn ? "White's turn" : "Black's turn");
         break;
         case tatus:: eaten_by_user:
             sounds["eaten by user"]->play();
-            switchGlow();
             showStatus(board->turn ? "White's turn" : "Black's turn");
         break;
         case tatus::new_turn:
             sounds["move"]->play();
-            switchGlow();
             showStatus(board->turn ? "White's turn" : "Black's turn");
         break;
         case tatus::invalid_move:
             sounds["invalid move"]->play();
             showStatus("Invalid move");
-        break;
+        return; // will not switch glow effect
         case tatus::castling:
             sounds["castling"]->play();
-            switchGlow();
             showStatus(board->turn ? "White's turn" : "Black's turn");
         break;
         case tatus::promotion:
             sounds["promotion"]->play();
-            switchGlow();
             showStatus(board->turn ? "White's turn" : "Black's turn");
     }
+    switchGlow();
 }
 
 void MainWindow::showStatus(const QString& status){
@@ -156,5 +179,54 @@ void MainWindow::on_draw_button_clicked()
 void MainWindow::on_resign_button_clicked()
 {
     endSlot(endnum::white_resignation);
+}
+
+
+void MainWindow::on_actionProfile_triggered()
+{
+    ui->tabWidget->setCurrentIndex(3);
+}
+
+
+void MainWindow::on_change_photo_button_clicked()
+{
+    // open dialog window to choose a photo
+    QString avatar_address = QFileDialog::getOpenFileName(this, "Open File",
+                                                      QString("Choose a photo for avatar. Avatar picture will be square at least 95x95 pixel picture."),
+                                                      tr("Images (*.png *.jpg *.jpeg *.pgm)"));
+    user_pic = QPixmap(avatar_address);
+    QSize user_size = ui->user_avatar->size();
+    QSize profile_size = ui->profile_avatar->size();
+    ui->user_avatar->setPixmap(user_pic.scaled(user_size));
+    ui->profile_avatar->setPixmap(user_pic.scaled(profile_size));
+}
+
+void MainWindow::on_change_name_button_clicked()
+{
+    QString new_name = ui->name_edit->text();
+    settings->setValue("user_name", new_name);
+    ui->name_edit->clear();
+    ui->user_name->setText(new_name);
+    ui->profile_name->setText(new_name);
+
+    QMessageBox msgBox;
+    msgBox.setWindowTitle("Notification");
+    msgBox.setText("Nickname has been changed");
+    msgBox.setIcon(QMessageBox::Information);
+    msgBox.addButton("Ok", QMessageBox::AcceptRole);
+//    connect(&msgBox, &QMessageBox::accepted, &msgBox, &QMessageBox::close);
+    msgBox.exec();
+}
+
+
+void MainWindow::on_back_from_settings_clicked()
+{
+    ui->tabWidget->setCurrentIndex(1);
+}
+
+
+void MainWindow::on_actionWith_friend_triggered()
+{
+    ui->tabWidget->setCurrentIndex(4);
 }
 

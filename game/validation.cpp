@@ -255,12 +255,10 @@ void Validation::findValid(Tile *from_tile)
                     };
                 bool nothing_between = !runThrough(king, add, occupied, bordersBetween);
                 auto threatensToKing = [&](scoord coord) -> bool {
-                    char name = pieceName(coord);
-                    return differentColor(coord) && (name == 'R' || name == 'B' || name == 'Q');
-                    // return "RBQ"sv.contains(pieceName(coord)); } // C++23
-                    // this line means that on the same line with king and the piece
-                    // there's some rook, bishop or queen.
-                    // We shouldn't be afraid of a pawn or knight, or other king. 
+                        char name = pieceName(coord);
+                        return (abs(X) == abs(Y)
+                                ? differentColor(coord) && (name == 'B' || name == 'Q')
+                                : differentColor(coord) && (name == 'R' || name == 'Q'));
                     };
                 auto bordersAfter = [&](scoord coord) {
                     return inBoard(coord) && (!occupied(coord) || differentColor(coord));

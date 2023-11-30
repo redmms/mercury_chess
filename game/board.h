@@ -24,8 +24,8 @@ public:
     Tile* tiles[8][8] = { { NULL } };
     bool turn = true;  // true for white turn;
     Tile* from_tile = nullptr;  // always actualized in Tile::setPiece()
-    Tile* white_king = nullptr;  // dito
-    Tile* black_king = nullptr;
+    Tile* white_king = nullptr;  // ditto
+    Tile* black_king = nullptr;  // ditto
     pove last_move;
     pove virtual_move;
     Tile* menu[4];
@@ -57,7 +57,7 @@ signals:
     void newStatus(tatus status);
     void theEnd(endnum end_type);
     void promotionEnd();
-    void hasMoved(Tile* from, Tile* to);
+    //void hasMoved(Tile* from, Tile* to);
 
 private slots:
     void reactOnClick(Tile* tile);

@@ -3,6 +3,9 @@
 #include "board.h"
 #include "local_types.h"
 #include <iostream>
+#include <QImage>
+#include <QSvgRenderer>
+#include <QPainter>
 
 Tile::Tile(Board* mother_board, scoord tile_coord) :
    QLabel(mother_board, Qt::WindowFlags()),
@@ -48,35 +51,43 @@ void Tile::setPiece(char elem, bool color)
         return;
     }
     QString add = color ? "white" : "black";
-    QPixmap piece;
+    QString piece;
     switch (elem)
     {
     case 'P':
-        piece = QPixmap(":images/pawn_" + add);
+        piece = QString(":images/pawn_" + add);
         break;
     case 'R':
-        piece = QPixmap(":images/rook_" + add);
+        piece = QString(":images/rook_" + add);
         break;
     case 'N':
-        piece = QPixmap(":images/knight_" + add);
+        piece = QString(":images/knight_" + add);
         break;
     case 'K':
-        piece = QPixmap(":images/king_" + add);
+        piece = QString(":images/king_" + add);
         if (color) ((Board*)parent())->white_king = this;
         else ((Board*)parent())->black_king = this;
         break;
     case 'Q':
-        piece = QPixmap(":images/queen_" + add);
+        piece = QString(":images/queen_" + add);
         break;
     case 'B':
-        piece = QPixmap(":images/bishop_" + add);
+        piece = QString(":images/bishop_" + add);
     }
     if (piece.isNull()) {
         qDebug() << "Can't get acces to pieces images. Use pseudonames "
             "for the files. Add them again to .qrc file if you've changed the project's"
             "structure.";
     }
-    setPixmap(piece.scaled(width(), height()));
+
+    QSvgRenderer svgRenderer(piece);  // FIX: should be done once in the constructor
+    // but at the moment speed is OK
+    QSize imageSize(100, 100);
+    QImage image(imageSize, QImage::Format_ARGB32);
+    image.fill(Qt::transparent);
+    QPainter painter(&image);
+    svgRenderer.render(&painter);
+    setPixmap(QPixmap::fromImage(image).scaled(width(), height()));
 }
 
 void Tile::dyeNormal()
