@@ -18,7 +18,7 @@ protected:
     int tile_size;
 
 public:
-    Board(QLabel* background);
+    Board(QLabel* background/*, bool side*/);
     
     Validation valid = Validation(this);
     Tile* tiles[8][8] = { { NULL } };

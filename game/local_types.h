@@ -19,10 +19,13 @@ enum endnum : int {
     black_resignation,
     stalemate,
     repetition,
-    insufficient_material
+    insufficient_material,
+    white_out_of_time,
+    black_out_of_time
 };
 
 enum tatus : int {
+    draw_suggestion,
     check,
     new_turn,
     eaten_by_opp,

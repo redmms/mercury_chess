@@ -427,5 +427,4 @@ void Validation::reactOnMove(Tile* from, Tile* to)
     for (int i = 0; i < 6; i++)
         if (from->coord == rooks_kings[i] || to->coord == rooks_kings[i])
             has_moved[i] = true;
-
 }
