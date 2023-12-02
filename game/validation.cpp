@@ -247,7 +247,7 @@ void Validation::findValid(Tile *from_tile)
                 add = findDirection(king, from);
                 auto bordersBetween = [king, from](scoord coord) -> bool {
                     return coord != king && coord != from;
-            // whitout "if(from_align_king)"
+            // whithout "if(from_align_king)"
             // checking this will lead to borders violation sometimess (only if "from" tile
             // is not aligned with "king" tile), e.g. for knight; be carefull
             // also cycle may potentially leave the borders if from is equal king 

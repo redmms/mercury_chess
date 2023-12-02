@@ -11,6 +11,8 @@
 #include <QMessageBox>
 #include <cstdlib>
 #include <ctime>
+#include <math.h>
+#include <QObject>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -58,7 +60,8 @@ MainWindow::MainWindow(QWidget *parent) :
 
     QSettings::setDefaultFormat(QSettings::IniFormat); // personal preference
    // settings.beginGroup("names");
-    settings.setValue("user_name", "LazyPlayer" + QString::number(std::rand()));
+    settings.setValue("user_name", "Lazy" +
+                      QString::number(std::rand() % (int) std::pow(10, max_nickname_length - 4)));
     settings.setValue("opp_name", "Player2");
     settings.setValue("time_setup", 0);
   //  settings.endGroup();
@@ -73,13 +76,13 @@ MainWindow::MainWindow(QWidget *parent) :
     QPainter painter(&pix);
     painter.setBrush(Qt::color1);
     painter.drawRoundedRect(0,0,mask_size,mask_size,14,14);
-    pic_map = pix.createMaskFromColor(Qt::transparent);
+    pic_mask = pix.createMaskFromColor(Qt::transparent);
 
-    ui->user_avatar->setMask(pic_map);
+    ui->user_avatar->setMask(pic_mask);
     ui->user_name->setText(settings.value("user_name").toString());
-    ui->opponent_avatar->setMask(pic_map);
+    ui->opponent_avatar->setMask(pic_mask);
     ui->opponent_name->setText(settings.value("opp_name").toString());
-    ui->profile_avatar->setMask(pic_map); // picture in the settings
+    ui->profile_avatar->setMask(pic_mask); // picture in the settings
     ui->profile_avatar->setPixmap(user_pic);
     ui->profile_name->setText(settings.value("user_name").toString());
 
@@ -107,6 +110,17 @@ void MainWindow::startGame(bool side, int time) // side true for user - white
     else
         board = new Board(ui->board_background/*, side*/);
 
+    if (clock != nullptr){
+        clock->~QObject();
+        //clock->~QObject();
+        clock = nullptr;
+    }
+
+    ui->user_avatar->setPixmap(user_pic);
+    ui->opponent_avatar->setPixmap(opp_pic);
+    last_tab = ui->tabWidget->currentWidget();
+    ui->tabWidget->setCurrentWidget(ui->game_tab);
+
     if (side){
         ui->user_avatar->setGraphicsEffect(avatar_effect);
         clock = new ChessClock(this, ui->opponent_timer, ui->user_timer, time);
@@ -129,11 +143,6 @@ void MainWindow::startGame(bool side, int time) // side true for user - white
 
     connect(ui->resign_button, &QPushButton::clicked, this, &MainWindow::on_resign_button_clicked);
     connect(ui->draw_button, &QPushButton::clicked, this, &MainWindow::on_draw_button_clicked);
-
-    ui->user_avatar->setPixmap(user_pic);
-    ui->opponent_avatar->setPixmap(opp_pic);
-    last_tab = ui->tabWidget->currentWidget();
-    ui->tabWidget->setCurrentWidget(ui->game_tab);
 
     showStatus("Ready? Go!");
     clock->startTimer();
@@ -197,15 +206,15 @@ void MainWindow::endSlot(endnum end_type)  // FIX: white_wins and black_wins enu
     msg_box.setIcon(QMessageBox::Information);
     msg_box.addButton("Ok", QMessageBox::AcceptRole);
     msg_box.addButton("Back to the main menu", QMessageBox::RejectRole);
-    QObject::connect(&msg_box, &QMessageBox::rejected, [this](){
+    connect(&msg_box, &QMessageBox::rejected, [this](){
         last_tab = ui->tabWidget->currentWidget();
         ui->tabWidget->setCurrentWidget(ui->friend_connect_tab);
     });
     msg_box.exec();
 }
 
-void MainWindow::statusSlot(tatus status){
-
+void MainWindow::statusSlot(tatus status)
+{
     switch(status){
         case tatus::check:
             if(board->turn){
@@ -249,7 +258,7 @@ void MainWindow::showStatus(const QString& status){
     ui->statusBar->showMessage(status, 0);
 }
 
-void MainWindow::switchGlow()
+void MainWindow::switchGlow() // FIX: should be changed for different sides
 {
     if (board->turn){
         ui->user_avatar->setGraphicsEffect(avatar_effect);
@@ -286,21 +295,30 @@ void MainWindow::on_change_photo_button_clicked()
     QString avatar_address = QFileDialog::getOpenFileName(this, "Open File",
                                                       QString("Choose a photo for avatar. Avatar picture will be square at least 95x95 pixel picture."),
                                                       tr("Images (*.png *.jpg *.jpeg *.pgm)"));
-    user_pic = QPixmap(avatar_address);
     QSize user_size = ui->user_avatar->size();
-    QSize profile_size = ui->profile_avatar->size();
-    ui->user_avatar->setPixmap(user_pic.scaled(user_size));
-    ui->profile_avatar->setPixmap(user_pic.scaled(profile_size));
+    user_pic = QPixmap(avatar_address).scaled(user_size);
+    ui->user_avatar->setPixmap(user_pic);
+    ui->profile_avatar->setPixmap(user_pic);
 }
 
 void MainWindow::on_change_name_button_clicked()
 {
     QString new_name = ui->name_edit->text();
-    settings.setValue("user_name", new_name);
     ui->name_edit->clear();
-    ui->user_name->setText(new_name);
-    ui->profile_name->setText(new_name);
-
+    if (new_name.size() <= max_nickname_length) {
+        settings.setValue("user_name", new_name);
+        ui->user_name->setText(new_name);
+        ui->profile_name->setText(new_name);
+    } else {
+        QMessageBox msg_box;
+        msg_box.setWindowTitle("So huge!");
+        msg_box.setText("This nickname is too long. Maximum length is " +
+                        QString::number(max_nickname_length) );
+        msg_box.setIcon(QMessageBox::Warning);
+        msg_box.addButton("Ok", QMessageBox::AcceptRole);
+        msg_box.addButton("Hate you, but Ok", QMessageBox::RejectRole);
+        msg_box.exec();
+    }
 //    QMessageBox msgBox;
 //    msgBox.setWindowTitle("Notification");
 //    msgBox.setText("Nickname has been changed");
@@ -339,8 +357,21 @@ void MainWindow::on_guest_button_clicked()
 
 void MainWindow::on_send_invite_button_clicked()
 {
-    last_tab = ui->tabWidget->currentWidget();
-    ui->tabWidget->setCurrentWidget(ui->game_tab);
-    startGame(match_side, settings.value("time_setup").toInt());
+    int chosen_time = settings.value("time_setup").toInt();
+    if (chosen_time){
+        last_tab = ui->tabWidget->currentWidget();
+        ui->tabWidget->setCurrentWidget(ui->game_tab);
+        startGame(match_side, settings.value("time_setup").toInt());
+    }
+    else{
+        QMessageBox msg_box;
+        msg_box.setWindowTitle("Set up match timer");
+        msg_box.setText("You need to choose initial time for chess clock.");
+        msg_box.setIcon(QMessageBox::Warning);
+        msg_box.addButton("Ok", QMessageBox::AcceptRole);
+        msg_box.addButton("Hate you, but Ok", QMessageBox::RejectRole);
+        msg_box.exec();
+    }
+
 }
 

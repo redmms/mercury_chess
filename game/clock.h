@@ -21,7 +21,8 @@ class ChessClock : public QObject
     int max_time;
 
 public:
-    explicit ChessClock(QObject* parent, QLabel* _black_label, QLabel* _white_label, int _max_time);
+    ChessClock(QObject* parent, QLabel* _black_label, QLabel* _white_label, int _max_time);
+    ~ChessClock();
 
     void stopTimer();
 

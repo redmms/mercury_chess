@@ -18,7 +18,7 @@ class Tile: public QLabel
     QColor white{211, 211, 158};
     QColor selected = Qt::green;
     QColor valid = Qt::yellow;
-    QColor hover{170, 85, 127};
+    QColor hover{185, 108, 146};    //{170, 85, 127};
     std::map<std::string, std::map<int, QString>> css_colors;
 
     void mousePressEvent(QMouseEvent* event); 

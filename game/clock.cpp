@@ -21,6 +21,13 @@ ChessClock::ChessClock(QObject* parent, QLabel* _black_label, QLabel* _white_lab
     white_label->setText(zero_time.addMSecs(max_time).toString("mm:ss"));
 }
 
+ChessClock::~ChessClock()
+{
+    black_timer->~QTimer();
+    white_timer->~QTimer();
+    sec_counter->~QTimer();
+}
+
 void ChessClock::stopTimer()
 {
     black_timer->stop();

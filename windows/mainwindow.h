@@ -28,9 +28,10 @@ class MainWindow : public QMainWindow
     QGraphicsDropShadowEffect * avatar_effect = new QGraphicsDropShadowEffect;
     QPixmap user_pic = QPixmap(":images/profile");
     QPixmap opp_pic = QPixmap(":images/profile");
-    QBitmap pic_map;
+    QBitmap pic_mask;
     QWidget* last_tab;
     bool match_side = true;
+    const int max_nickname_length = 12;
 
     void showStatus(const QString& status);  // FIX: will const& cause problems or not?
     void switchGlow();

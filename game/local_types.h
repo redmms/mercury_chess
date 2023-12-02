@@ -40,7 +40,7 @@ struct scoord{
     int y = 0;
     
     bool operator != (const scoord right) const {
-        return x != right.x && y != right.y;
+        return x != right.x || y != right.y;
     }
     bool operator == (const scoord right) const {
         return x == right.x && y == right.y;
