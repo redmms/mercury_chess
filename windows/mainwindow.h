@@ -11,6 +11,12 @@
 #include <QBitmap>
 #include <QTimer>
 #include "..\src\game\clock.h"
+#include <QVBoxLayout>
+#include <QScrollBar>
+#include <QScrollArea>
+#include <QKeyEvent>
+#include <QFont>
+#include <QFontMetrics>
 
 namespace Ui {
     class MainWindow;
@@ -20,27 +26,52 @@ class MainWindow : public QMainWindow
 {
     Q_OBJECT
 
-    Ui::MainWindow* ui;
-    Board* board = nullptr;
-    ChessClock* clock = nullptr;
-    std::map<std::string, QSoundEffect*> sounds;
-    QSettings settings;
-    QGraphicsDropShadowEffect * avatar_effect = new QGraphicsDropShadowEffect;
-    QPixmap user_pic = QPixmap(":images/profile");
-    QPixmap opp_pic = QPixmap(":images/profile");
-    QBitmap pic_mask;
-    QWidget* last_tab;
-    bool match_side = true;
-    const int max_nickname_length = 12;
+    Ui::MainWindow*
+        ui;
+    Board*
+        board = nullptr;
+    ChessClock*
+        clock = nullptr;
+    std::map<std::string, QSoundEffect*>
+        sounds;
+    QSettings
+        settings;
+    QGraphicsDropShadowEffect *
+        avatar_effect = new QGraphicsDropShadowEffect;
+    QPixmap
+        user_pic = QPixmap(":images/profile");
+    QPixmap
+        opp_pic = QPixmap(":images/profile");
+    QBitmap
+        pic_mask;
+    QWidget*
+        last_tab;
+    bool
+        match_side = true;
+    const int
+        max_nick = 12;
+    QVBoxLayout*
+        message_layout = new QVBoxLayout;
+    QWidget*
+        message_box = new QWidget(this);
+    QFont
+        message_font{"Pristina", 15};
+    QFontMetrics
+        message_metrics{message_font};
+    int
+        max_message_width;
 
     void showStatus(const QString& status);  // FIX: will const& cause problems or not?
     void switchGlow();
-    void startGame(bool side, int time);  // parameters: bool side - shows which color will user have,
+    void startGame(bool side, int time);  // parameters: bool side - shows
+    // which color will user have, true - for white
     //int time (in milliseconds)
+    bool eventFilter(QObject *object, QEvent *event);
 
 public:
     MainWindow(QWidget *parent = 0);
     ~MainWindow();
+    void printMessage(QString name, bool own, QString text);
 
 signals:
     void timeToSwitchTime();

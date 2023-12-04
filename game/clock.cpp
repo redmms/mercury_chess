@@ -1,15 +1,17 @@
 #include "clock.h"
 
-ChessClock::ChessClock(QObject* parent, QLabel* _black_label, QLabel* _white_label, int _max_time)
-    : QObject{parent},
-      black_label(_black_label),
-      white_label(_white_label),
-      max_time(_max_time),
-      white_remains(_max_time),
-      black_remains(_max_time)
+ChessClock::ChessClock(QObject* parent, QLabel* opponent_label, QLabel* user_label,
+                       bool side_, int max_time_)
+    : QObject(parent),
+      side(side),
+      black_label(side_ ? opponent_label : user_label),
+      white_label(side_ ? user_label : opponent_label),
+      max_time(max_time_),
+      white_remains(max_time_),
+      black_remains(max_time_)
 {
     for (auto timer: {black_timer, white_timer}){
-        timer->setTimerType(Qt::PreciseTimer);
+        //timer->setTimerType(Qt::PreciseTimer); // this line will really slow down the game
         timer->setInterval(max_time);
         connect(timer, &QTimer::timeout, this, &ChessClock::gameTimeout);
     }
@@ -46,10 +48,10 @@ void ChessClock::gameTimeout()
 {
     stopTimer();
     QTimer* timer = (QTimer*) sender();
-    if (timer == black_timer)
-        emit blackOut();
-    else if (timer == white_timer)
-        emit whiteOut();
+    if (side && timer == black_timer || !side && timer == white_timer)
+        emit opponentOut();
+    else if (side && timer == white_timer || !side && timer == black_timer)
+        emit userOut();
 }
 
 void ChessClock::startTimer()

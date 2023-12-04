@@ -17,9 +17,11 @@
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow),
-    last_tab(ui->pre_tab)
+    last_tab(ui->pre_tab),
+    max_message_width((int) (ui->chat_area->maximumWidth() / 3) * 2)
 {
     ui->setupUi(this);
+    ui->message_edit->installEventFilter(this);
     ui->mainToolBar->hide();
     ui->tabWidget->tabBar()->hide();
     ui->tabWidget->setCurrentWidget(ui->pre_tab);
@@ -31,22 +33,22 @@ MainWindow::MainWindow(QWidget *parent) :
 
     sounds["move"] = new QSoundEffect;
     sounds["move"]->setSource(QUrl::fromLocalFile(":/sounds/move"));
-    sounds["eaten by opp"] = new QSoundEffect;
-    sounds["eaten by opp"]->setSource(QUrl::fromLocalFile(":/sounds/user_eaten"));
-    sounds["eaten by opp"]->setVolume(0.6);
-    sounds["eaten by user"] = new QSoundEffect;
-    sounds["eaten by user"]->setSource(QUrl::fromLocalFile(":/sounds/opp_eaten"));
-    sounds["eaten by user"]->setVolume(0.7);
+    sounds["user's piece eaten"] = new QSoundEffect;
+    sounds["user's piece eaten"]->setSource(QUrl::fromLocalFile(":/sounds/user_eaten"));
+    sounds["user's piece eaten"]->setVolume(0.6);
+    sounds["opponent's piece eaten"] = new QSoundEffect;
+    sounds["opponent's piece eaten"]->setSource(QUrl::fromLocalFile(":/sounds/opp_eaten"));
+    sounds["opponent's piece eaten"]->setVolume(0.7);
     sounds["castling"] = new QSoundEffect;
     sounds["castling"]->setSource(QUrl::fromLocalFile(":/sounds/castling"));
     sounds["promotion"] = new QSoundEffect;
     sounds["promotion"]->setSource(QUrl::fromLocalFile(":/sounds/promotion"));
-    sounds["check"] = new QSoundEffect;
-    sounds["check"]->setSource(QUrl::fromLocalFile(":/sounds/check"));
-    sounds["check"]->setVolume(0.7);
-    sounds["check_to_opp"] = new QSoundEffect;
-    sounds["check_to_opp"]->setSource(QUrl::fromLocalFile(":/sounds/check_to_opp"));
-    sounds["check_to_opp"]->setVolume(0.7);
+    sounds["check to user"] = new QSoundEffect;
+    sounds["check to user"]->setSource(QUrl::fromLocalFile(":/sounds/check"));
+    sounds["check to user"]->setVolume(0.7);
+    sounds["check to opponent"] = new QSoundEffect;
+    sounds["check to opponent"]->setSource(QUrl::fromLocalFile(":/sounds/check_to_opp"));
+    sounds["check to opponent"]->setVolume(0.6);
     sounds["invalid move"] = new QSoundEffect;
     sounds["invalid move"]->setSource(QUrl::fromLocalFile(":/sounds/invalid"));
     sounds["lose"] = new QSoundEffect;
@@ -61,7 +63,7 @@ MainWindow::MainWindow(QWidget *parent) :
     QSettings::setDefaultFormat(QSettings::IniFormat); // personal preference
    // settings.beginGroup("names");
     settings.setValue("user_name", "Lazy" +
-                      QString::number(std::rand() % (int) std::pow(10, max_nickname_length - 4)));
+                      QString::number(std::rand() % (int) std::pow(10, max_nick - 4)));
     settings.setValue("opp_name", "Player2");
     settings.setValue("time_setup", 0);
   //  settings.endGroup();
@@ -83,8 +85,8 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->opponent_avatar->setMask(pic_mask);
     ui->opponent_name->setText(settings.value("opp_name").toString());
     ui->profile_avatar->setMask(pic_mask); // picture in the settings
-    ui->profile_avatar->setPixmap(user_pic);
     ui->profile_name->setText(settings.value("user_name").toString());
+    ui->profile_avatar->setPixmap(user_pic);
 
     auto layout = ui->time_limits_layout;
     QPushButton* button;
@@ -96,6 +98,16 @@ MainWindow::MainWindow(QWidget *parent) :
             settings.setValue("time_setup", time_limit);
         });
     }
+
+    message_layout->setContentsMargins(5, 5, 5, 5);
+    message_box->setLayout(message_layout);
+    message_box->resize(ui->chat_area->width(), 0);
+    //message_box->setMaximumWidth(ui->chat_area->maximumWidth());
+   // message_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+   // ui->chat_area->viewport()->setStyleSheet("border-radius: 14");
+    ui->chat_area->setWidget(message_box);
+    ui->chat_area->setWidgetResizable(true);
+   // ui->chat_area->setViewportMargins(0, 14, 0, 14);
 }
 
 MainWindow::~MainWindow()
@@ -105,40 +117,24 @@ MainWindow::~MainWindow()
 
 void MainWindow::startGame(bool side, int time) // side true for user - white
 {
-    if (board != nullptr)
-        board = new Board(board/*, side*/);
-    else
-        board = new Board(ui->board_background/*, side*/);
-
-    if (clock != nullptr){
-        clock->~QObject();
-        //clock->~QObject();
-        clock = nullptr;
-    }
-
     ui->user_avatar->setPixmap(user_pic);
     ui->opponent_avatar->setPixmap(opp_pic);
     last_tab = ui->tabWidget->currentWidget();
     ui->tabWidget->setCurrentWidget(ui->game_tab);
+    (side ? ui->user_avatar : ui->opponent_avatar)->setGraphicsEffect(avatar_effect);
 
-    if (side){
-        ui->user_avatar->setGraphicsEffect(avatar_effect);
-        clock = new ChessClock(this, ui->opponent_timer, ui->user_timer, time);
-    }
-    else{
-        ui->opponent_avatar->setGraphicsEffect(avatar_effect);
-        clock = new ChessClock(this, ui->user_timer, ui->opponent_timer, time);
-    }
-
+    board = new Board(board != nullptr ? board : ui->board_background, side);
+    // old board will be destroyed inside Board constructor
     connect(board, &Board::newStatus, this, &MainWindow::statusSlot);
     connect(board, &Board::theEnd, this, &MainWindow::endSlot);
 
+    clock = new ChessClock(board, ui->opponent_timer, ui->user_timer, side, time);
     connect(this, &MainWindow::timeToSwitchTime, clock, &ChessClock::switchTimer);
-    connect(clock, &ChessClock::blackOut, [this](){
-        endSlot(endnum::black_out_of_time);
+    connect(clock, &ChessClock::userOut, [this](){
+        endSlot(endnum::user_out_of_time);
     });
-    connect(clock, &ChessClock::whiteOut, [this](){
-        endSlot(endnum::white_out_of_time);
+    connect(clock, &ChessClock::opponentOut, [this](){
+        endSlot(endnum::opponent_out_of_time);
     });
 
     connect(ui->resign_button, &QPushButton::clicked, this, &MainWindow::on_resign_button_clicked);
@@ -154,52 +150,45 @@ void MainWindow::endSlot(endnum end_type)  // FIX: white_wins and black_wins enu
     QString opp_name = settings.value("opp_name").toString();
     QString info_message;
     switch(end_type){
-        case endnum::draw:
+        case endnum::draw_by_agreement:
             sounds["draw"]->play();
             info_message = "Draw by agreement";
         break;
-        case endnum::stalemate:
+        case endnum::draw_by_stalemate:
             sounds["draw"]->play();
             info_message = "Draw by stalemate";
         break;
-        case endnum::white_wins:
+        case endnum::user_wins:
             sounds["win"]->play();
             info_message = "You win by checkmate";
         break;
-        case endnum::black_wins:
+        case endnum::opponent_wins:
             sounds["lose"]->play();
             info_message = opp_name + " wins by checkmate";
         break;
-        case endnum::white_resignation:
+        case endnum::user_resignation:
             sounds["lose"]->play();
             info_message = opp_name + " wins by your resignation";
         break;
-        case endnum::white_out_of_time:
-            if (match_side){
-                sounds["lose"]->play();
-                info_message = opp_name  + " wins by your timeout";
-            }
-            else{
-                sounds["win"]->play();
-                info_message = "You win by " + opp_name + "'s timeout";
-            }
+        case endnum::opponent_resignation:
+            sounds["win"]->play();
+            info_message = "You win by " + opp_name + "'s resignation";
         break;
-        case endnum::black_out_of_time:
-            if (!match_side){
-                sounds["lose"]->play();
-                info_message = opp_name  + " wins by your timeout";
-            }
-            else{
-                sounds["win"]->play();
-                info_message = "You win by " + opp_name + "'s timeout";
-            }
+        case endnum::user_out_of_time:
+            sounds["lose"]->play();
+            info_message = opp_name  + " wins by your timeout";
+        break;
+        case endnum::opponent_out_of_time:
+            sounds["win"]->play();
+            info_message = "You win by " + opp_name + "'s timeout";
     }
     showStatus(info_message);
+
+    clock->stopTimer();
     board->setEnabled(false);
     ui->draw_button->disconnect();
     ui->resign_button->disconnect();
-    clock->~QObject();
-    clock = nullptr;
+
     QMessageBox msg_box;
     msg_box.setWindowTitle("The end");
     msg_box.setText(info_message);
@@ -216,25 +205,23 @@ void MainWindow::endSlot(endnum end_type)  // FIX: white_wins and black_wins enu
 void MainWindow::statusSlot(tatus status)
 {
     switch(status){
-        case tatus::check:
-            if(board->turn){
-                sounds["check"]->play();
-                showStatus("Check! Protect His Majesty!");
-            }
-            else{
-                sounds["check_to_opp"]->play();
-                showStatus("You are a fearless person!");
-            }
+        case tatus::check_to_user:
+            sounds["check to user"]->play();
+            showStatus("Check! Protect His Majesty!");
         break;
-        case tatus::eaten_by_opp:
-            sounds["eaten by opp"]->play();
+        case tatus::check_to_opponent:
+            sounds["check to opponent"]->play();
+            showStatus("You are a fearless person!");
+        break;
+        case tatus::users_piece_eaten:
+            sounds["user's piece eaten"]->play();
             showStatus(board->turn ? "White's turn" : "Black's turn");
         break;
-        case tatus::eaten_by_user:
-            sounds["eaten by user"]->play();
+        case tatus::opponents_piece_eaten:
+            sounds["opponent's piece eaten"]->play();
             showStatus(board->turn ? "White's turn" : "Black's turn");
         break;
-        case tatus::new_turn:
+        case tatus::just_new_turn:
             sounds["move"]->play();
             showStatus(board->turn ? "White's turn" : "Black's turn");
         break;
@@ -270,6 +257,46 @@ void MainWindow::switchGlow() // FIX: should be changed for different sides
     }
 }
 
+void MainWindow::printMessage(QString name, bool own, QString text)
+{
+    QChar ch;
+    for (int cur_len = 0, pos = 0; pos < text.size(); pos++){
+        ch = text[pos];
+        if (ch == ' ')
+            cur_len = 0;
+        else{
+            cur_len += message_metrics.size(0, ch).width();
+            if (cur_len > max_message_width){
+                text.insert(pos, "\n");
+                cur_len = 0;
+            }
+        }
+    }
+
+    QLabel* message = new QLabel(this);
+    message->setStyleSheet("background: gray; border-radius: 14;");
+    message->setIndent(7);
+    message->setMargin(5);
+    message->setMaximumWidth(max_message_width);
+    message->setWordWrap(true);
+    message->setFont(message_font);
+    message->setText(name + "\n" + text);
+    message->adjustSize();
+    message->setMinimumSize(message->size());
+    message->setMaximumSize(message->size());
+    // 10 is layout margin here, for shortness
+    message_layout->addWidget(message, 0, Qt::AlignTop | (own ? Qt::AlignRight : Qt::AlignLeft));
+    message_box->resize(message_box->width(), message_box->height() + message->height() + 10);
+
+    //ui->chat_area->viewport()->update(); // should go BEFORE scrolling scroller
+    QTimer::singleShot(200, [&]() {
+        auto scroller = ui->chat_area->verticalScrollBar();
+        scroller->setValue(scroller->maximum());
+    });
+
+
+}
+
 void MainWindow::on_draw_button_clicked()
 {
     // send some signal to the opponent's computer, that will be received by some slot
@@ -280,7 +307,7 @@ void MainWindow::on_draw_button_clicked()
 
 void MainWindow::on_resign_button_clicked()
 {
-    endSlot(endnum::white_resignation);
+    endSlot(endnum::user_resignation);
 }
 
 void MainWindow::on_actionProfile_triggered()
@@ -305,7 +332,7 @@ void MainWindow::on_change_name_button_clicked()
 {
     QString new_name = ui->name_edit->text();
     ui->name_edit->clear();
-    if (new_name.size() <= max_nickname_length) {
+    if (new_name.size() <= max_nick) {
         settings.setValue("user_name", new_name);
         ui->user_name->setText(new_name);
         ui->profile_name->setText(new_name);
@@ -313,7 +340,7 @@ void MainWindow::on_change_name_button_clicked()
         QMessageBox msg_box;
         msg_box.setWindowTitle("So huge!");
         msg_box.setText("This nickname is too long. Maximum length is " +
-                        QString::number(max_nickname_length) );
+                        QString::number(max_nick) );
         msg_box.setIcon(QMessageBox::Warning);
         msg_box.addButton("Ok", QMessageBox::AcceptRole);
         msg_box.addButton("Hate you, but Ok", QMessageBox::RejectRole);
@@ -361,7 +388,7 @@ void MainWindow::on_send_invite_button_clicked()
     if (chosen_time){
         last_tab = ui->tabWidget->currentWidget();
         ui->tabWidget->setCurrentWidget(ui->game_tab);
-        startGame(match_side, settings.value("time_setup").toInt());
+        startGame(true /*bool(std::rand()%2)*/, settings.value("time_setup").toInt());
     }
     else{
         QMessageBox msg_box;
@@ -375,3 +402,20 @@ void MainWindow::on_send_invite_button_clicked()
 
 }
 
+bool MainWindow::eventFilter(QObject *object, QEvent *event)
+{
+    if (object == ui->message_edit && event->type() == QEvent::KeyPress)
+    {
+        QKeyEvent *key_event = static_cast<QKeyEvent*>(event);
+        if (key_event->key() == Qt::Key_Return || key_event->key() == Qt::Key_Enter)
+        {
+            QString message_text = ui->message_edit->toPlainText();
+            printMessage(settings.value("user_name").toString(), true, message_text);
+            ui->message_edit->clear();
+        }
+        else
+        {
+            return QMainWindow::eventFilter(object, event);
+        }
+    }
+}

@@ -12,26 +12,27 @@
 #endif // !coorder
 
 enum endnum : int {
-    draw,
-    white_wins,
-    black_wins,
-    white_resignation,
-    black_resignation,
-    stalemate,
-    repetition,
-    insufficient_material,
-    white_out_of_time,
-    black_out_of_time
+    draw_by_agreement,
+    draw_by_stalemate,
+    user_wins,
+    opponent_wins,
+    user_resignation,
+    opponent_resignation,
+    user_out_of_time,
+    opponent_out_of_time,
+    draw_by_repetition, // FIX: need to handle
+    draw_by_insufficient_material  // FIX: need to handle
 };
 
 enum tatus : int {
+    check_to_user,
+    check_to_opponent,
+    users_piece_eaten,
+    opponents_piece_eaten,
     draw_suggestion,
-    check,
-    new_turn,
-    eaten_by_opp,
-    eaten_by_user,
     castling,
     promotion,
+    just_new_turn,
     invalid_move
 };
 

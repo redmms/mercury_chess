@@ -8,9 +8,9 @@ enum endnum : int;
 class Board : public QLabel {
 	Q_OBJECT
 
-    void drawLetters();
-    void drawNumbers();
-    void drawTiles();
+    void drawLetters(bool side);
+    void drawNumbers(bool side);
+    void drawTiles(bool side);
     void openPromotion(Tile* from);
 
 friend class Tile;
@@ -18,11 +18,12 @@ protected:
     int tile_size;
 
 public:
-    Board(QLabel* background/*, bool side*/);
+    Board(QLabel* background, bool side);
     
     Validation valid = Validation(this);
     Tile* tiles[8][8] = { { NULL } };
     bool turn = true;  // true for white turn;
+    bool side; // true for user on white side;
     Tile* from_tile = nullptr;  // always actualized in Tile::setPiece()
     Tile* white_king = nullptr;  // ditto
     Tile* black_king = nullptr;  // ditto

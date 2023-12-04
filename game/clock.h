@@ -19,16 +19,17 @@ class ChessClock : public QObject
     QLabel* white_label;
     QTime zero_time = QTime(0, 0);
     int max_time;
+    bool side;
 
 public:
-    ChessClock(QObject* parent, QLabel* _black_label, QLabel* _white_label, int _max_time);
+    ChessClock(QObject* parent, QLabel* opponent_label, QLabel* user_label, bool side_, int max_time_);
     ~ChessClock();
 
     void stopTimer();
 
 signals:
-    void whiteOut();
-    void blackOut();
+    void userOut();
+    void opponentOut();
 
 private slots:
     void updateTimer();

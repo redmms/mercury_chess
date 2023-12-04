@@ -8,7 +8,6 @@
 #include <map>
 #include <string>
 class Board;
-//struct scoord;
 
 class Tile: public QLabel
 {

@@ -1,4 +1,3 @@
-#pragma once
 #include <QApplication>
 #include "windows\mainwindow.h"
 #include "game\tile.h"

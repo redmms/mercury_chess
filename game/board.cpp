@@ -6,8 +6,9 @@
 #include <QEventLoop>
 #include <QTimer>
 
-Board::Board(QLabel* background = 0) :
-    tile_size(background->width() / 9)
+Board::Board(QLabel* background = 0, bool side_par = true) :
+    tile_size(background->width() / 9),
+    side(side_par)
 {
     setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
     setMinimumSize(396, 396);
@@ -20,9 +21,9 @@ Board::Board(QLabel* background = 0) :
     // replace ui board, by this class
     background->~QLabel();
 
-    drawLetters();
-    drawNumbers();
-    drawTiles();
+    drawLetters(side);
+    drawNumbers(side);
+    drawTiles(side);
 }
 
 void Board::reactOnClick(Tile* tile) {
@@ -45,9 +46,9 @@ void Board::reactOnClick(Tile* tile) {
     }
     else if (valid.isValid(tile)) { // if it's the second click and move is valid
     //then move pieces
-        tatus emit_status = tatus::new_turn;
+        tatus emit_status = tatus::just_new_turn;
         if (valid.differentColor(tile->coord))
-            emit_status = turn ? tatus::eaten_by_user : tatus::eaten_by_opp;
+            emit_status = side == turn ? tatus::opponents_piece_eaten : tatus::users_piece_eaten;
 
         if (Tile* rook; valid.canCastle(from_tile, tile, &rook)){
             castleKing(from_tile, tile, rook);
@@ -55,7 +56,7 @@ void Board::reactOnClick(Tile* tile) {
         }
         else if (valid.canPass(from_tile, tile)){
             passPawn(from_tile, tile);
-            emit_status = turn ? tatus::eaten_by_user : tatus::eaten_by_opp;
+            emit_status = side == turn ? tatus::opponents_piece_eaten : tatus::users_piece_eaten;
         }
         else
             moveNormally(from_tile, tile);
@@ -68,11 +69,11 @@ void Board::reactOnClick(Tile* tile) {
         turn = !turn;
         if (valid.inCheck(turn))
             if (valid.inStalemate(turn))  // check + stalemate == checkmate
-                emit theEnd(turn ? endnum::black_wins : endnum::white_wins);
+                emit theEnd(side == turn ? endnum::opponent_wins : endnum::user_wins);
             else
-                emit newStatus(tatus::check);
+                emit newStatus(side == turn ? tatus::check_to_user : tatus::check_to_opponent);
         else if(valid.inStalemate(turn))
-            emit theEnd(endnum::stalemate);
+            emit theEnd(endnum::draw_by_stalemate);
         else
             emit newStatus(emit_status);
 
@@ -84,10 +85,11 @@ void Board::reactOnClick(Tile* tile) {
 }
 
 
-void Board::drawLetters() {
+void Board::drawLetters(bool side) {
+    std::string letters = side ? "abcdefgh" : "hgfedcba";
     int width = tile_size, height = tile_size/2,
         x = tile_size / 2, y = this->height() - height;
-    for (char ch : "abcdefgh") {
+    for (char ch : letters) {
         QLabel* letter = new QLabel(this);
         letter->setGeometry(x, y, width, height);
         letter->setText(QString(ch));
@@ -98,7 +100,7 @@ void Board::drawLetters() {
         x += width;
     }
     x = width / 2, y = 0;
-    for (char ch : "abcdefgh") {
+    for (char ch : letters) {
         QLabel* letter = new QLabel(this);
         letter->setGeometry(x, y, width, height);
         letter->setText(QString(ch));
@@ -110,10 +112,11 @@ void Board::drawLetters() {
     }
 }
 
-void Board::drawNumbers() {
+void Board::drawNumbers(bool side) {
+    std::string digits = side ? "87654321" : "12345678";
     int width = tile_size / 2, height = tile_size,
         x = 0, y = tile_size / 2;
-    for (char ch : "87654321") {
+    for (char ch : digits) {
         QLabel* letter = new QLabel(this);
         letter->setGeometry(x, y, width, height);
         letter->setText(QString(ch));
@@ -124,7 +127,7 @@ void Board::drawNumbers() {
         y += height;
     }
     x = this->width() - width, y = height / 2;
-    for (char ch : "87654321") {
+    for (char ch : digits) {
         QLabel* letter = new QLabel(this);
         letter->setGeometry(x, y, width, height);
         letter->setText(QString(ch));
@@ -136,14 +139,22 @@ void Board::drawNumbers() {
     }
 }
 
-void Board::drawTiles()
+void Board::drawTiles(bool side)
 {
-    for (int y = 7; y >= 0; y--){
-        for (int x = 0; x < 8; x++){
-            tiles[x][y] = new Tile(this, {x, y});
-            QObject::connect(tiles[x][y], &Tile::tileClicked, this, &Board::reactOnClick);
+    if (side)
+        for (int y = 7; y >= 0; y--){
+            for (int x = 0; x <= 7; x++){
+                tiles[x][y] = new Tile(this, {x, y});
+                QObject::connect(tiles[x][y], &Tile::tileClicked, this, &Board::reactOnClick);
+            }
         }
-    }
+    else
+        for (int y = 0; y <= 7; y++){
+            for (int x = 7; x >= 0; x--){
+                tiles[x][y] = new Tile(this, {x, y});
+                QObject::connect(tiles[x][y], &Tile::tileClicked, this, &Board::reactOnClick);
+            }
+        }
 
     //black pawns
     for (int x = 0; x < 8; x++)
