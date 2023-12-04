@@ -1733,8 +1733,8 @@ border-radius: 14px;
             </property>
             <property name="font">
              <font>
-              <family>Pristina</family>
-              <pointsize>15</pointsize>
+              <family>Segoe Print</family>
+              <pointsize>12</pointsize>
              </font>
             </property>
             <property name="toolTip">

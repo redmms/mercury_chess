@@ -55,7 +55,7 @@ class MainWindow : public QMainWindow
     QWidget*
         message_box = new QWidget(this);
     QFont
-        message_font{"Pristina", 15};
+        message_font{"Segoe Print", 12};
     QFontMetrics
         message_metrics{message_font};
     int

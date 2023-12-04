@@ -17,11 +17,10 @@
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow),
-    last_tab(ui->pre_tab),
-    max_message_width((int) (ui->chat_area->maximumWidth() / 3) * 2)
+    last_tab(ui->pre_tab)
 {
+    // .ui file finish strokes
     ui->setupUi(this);
-    ui->message_edit->installEventFilter(this);
     ui->mainToolBar->hide();
     ui->tabWidget->tabBar()->hide();
     ui->tabWidget->setCurrentWidget(ui->pre_tab);
@@ -31,6 +30,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     std::srand(std::time(nullptr));
 
+    // sounds init
     sounds["move"] = new QSoundEffect;
     sounds["move"]->setSource(QUrl::fromLocalFile(":/sounds/move"));
     sounds["user's piece eaten"] = new QSoundEffect;
@@ -60,6 +60,7 @@ MainWindow::MainWindow(QWidget *parent) :
     sounds["draw"] = new QSoundEffect;
     sounds["draw"]->setSource(QUrl::fromLocalFile(":/sounds/draw"));
 
+    // settings init
     QSettings::setDefaultFormat(QSettings::IniFormat); // personal preference
    // settings.beginGroup("names");
     settings.setValue("user_name", "Lazy" +
@@ -68,10 +69,12 @@ MainWindow::MainWindow(QWidget *parent) :
     settings.setValue("time_setup", 0);
   //  settings.endGroup();
 
+    // glow effect for avatars
     avatar_effect->setBlurRadius(20);
     avatar_effect->setOffset(0, 0);
     avatar_effect->setColor(Qt::green);
 
+    // mask for rounded borders on avatars
     auto mask_size = ui->user_avatar->width();
     QPixmap  pix(mask_size,mask_size); // initialize a mask for avatar's rounded corners
     pix.fill(Qt::transparent);
@@ -80,6 +83,7 @@ MainWindow::MainWindow(QWidget *parent) :
     painter.drawRoundedRect(0,0,mask_size,mask_size,14,14);
     pic_mask = pix.createMaskFromColor(Qt::transparent);
 
+    // user and opponent avatars in game and settings
     ui->user_avatar->setMask(pic_mask);
     ui->user_name->setText(settings.value("user_name").toString());
     ui->opponent_avatar->setMask(pic_mask);
@@ -88,6 +92,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->profile_name->setText(settings.value("user_name").toString());
     ui->profile_avatar->setPixmap(user_pic);
 
+    // friend_connect_tab > time limit buttons
     auto layout = ui->time_limits_layout;
     QPushButton* button;
     for (int i = 1; i < 10; i++){
@@ -99,15 +104,18 @@ MainWindow::MainWindow(QWidget *parent) :
         });
     }
 
+    // chat
+    ui->message_edit->installEventFilter(this);
+    max_message_width = ui->chat_area->minimumWidth() - 20;
     message_layout->setContentsMargins(5, 5, 5, 5);
     message_box->setLayout(message_layout);
     message_box->resize(ui->chat_area->width(), 0);
     //message_box->setMaximumWidth(ui->chat_area->maximumWidth());
-   // message_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+    message_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
    // ui->chat_area->viewport()->setStyleSheet("border-radius: 14");
     ui->chat_area->setWidget(message_box);
     ui->chat_area->setWidgetResizable(true);
-   // ui->chat_area->setViewportMargins(0, 14, 0, 14);
+
 }
 
 MainWindow::~MainWindow()
@@ -278,9 +286,10 @@ void MainWindow::printMessage(QString name, bool own, QString text)
     message->setIndent(7);
     message->setMargin(5);
     message->setMaximumWidth(max_message_width);
-    message->setWordWrap(true);
     message->setFont(message_font);
-    message->setText(name + "\n" + text);
+    message->setText("<b>" + name + "</b><br/>" + text);
+    //message->setTextFormat(Qt::RichText);
+    message->setWordWrap(true);
     message->adjustSize();
     message->setMinimumSize(message->size());
     message->setMaximumSize(message->size());
@@ -388,7 +397,7 @@ void MainWindow::on_send_invite_button_clicked()
     if (chosen_time){
         last_tab = ui->tabWidget->currentWidget();
         ui->tabWidget->setCurrentWidget(ui->game_tab);
-        startGame(true /*bool(std::rand()%2)*/, settings.value("time_setup").toInt());
+        startGame(match_side /*bool(std::rand()%2)*/, settings.value("time_setup").toInt());
     }
     else{
         QMessageBox msg_box;
