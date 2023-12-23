@@ -14,6 +14,7 @@
         <file alias="queen_white">images/queen_white.svg</file>
         <file alias="rook_black">images/rook_black.svg</file>
         <file alias="rook_white">images/rook_white.svg</file>
+        <file alias="background">images/temnozelenyi-zadnii-fon-100-foto-93.jpg</file>
     </qresource>
     <qresource prefix="/sounds">
         <file alias="move">sounds/nice/wav/move.wav</file>

@@ -1,43 +1,45 @@
 #ifndef CLOCK_H
 #define CLOCK_H
 
-#include <QObject>
-#include <QLabel>
-#include <QTimer>
-#include <QTime>
+#include "qdatetime.h"
+#include "qobject.h"
+
+class QLabel;
+class QTimer;
+
 
 class ChessClock : public QObject
 {
-    Q_OBJECT
+	Q_OBJECT
 
-    QTimer* black_timer = new QTimer(this);
-    QTimer* white_timer = new QTimer(this);
-    QTimer* sec_counter = new QTimer(this);
-    int white_remains;
-    int black_remains;
-    QLabel* black_label;
-    QLabel* white_label;
-    QTime zero_time = QTime(0, 0);
-    int max_time;
-    bool side;
+	bool side;
+	QLabel* black_label;
+	QLabel* white_label;
+	int max_time;
+	int black_remains;
+	int white_remains;
+	QTimer* black_timer;
+	QTimer* white_timer;
+	QTimer* sec_counter;
+	QTime zero_time;
 
 public:
-    ChessClock(QObject* parent, QLabel* opponent_label, QLabel* user_label, bool side_, int max_time_);
-    ~ChessClock();
+	ChessClock(QObject* parent, QLabel* opponent_label, QLabel* user_label, bool side_, int max_minutes);
+	~ChessClock();
 
-    void stopTimer();
+	void stopTimer();
 
 signals:
-    void userOut();
-    void opponentOut();
+	void userOut();
+	void opponentOut();
 
 private slots:
-    void updateTimer();
-    void gameTimeout();
+	void updateTimer();
+	void gameTimeout();
 
 public slots:
-    void startTimer();
-    void switchTimer();
+	void startTimer();
+	void switchTimer();
 };
 
 #endif // CLOCK_H

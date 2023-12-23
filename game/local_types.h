@@ -1,5 +1,6 @@
 #pragma once
 #include <utility>
+#include <QDataStream>
 #ifndef pove
 #define pove std::pair<virtu, virtu>
 #define povec const pove& 
@@ -11,7 +12,24 @@
 #define coorder const scoord& 
 #endif // !coorder
 
-enum endnum : int {
+enum package_ty : quint8 {
+    registration,
+    invite,
+    invite_respond,
+    move,
+    chat_message,
+    draw_suggestion,
+    draw_respond,
+    resignation,
+    end_game,
+    no_such_user,
+    opponent_disconnected,
+    login,
+    success,
+    already_registered
+};
+
+enum endnum : quint8 {
     draw_by_agreement,
     draw_by_stalemate,
     user_wins,
@@ -21,15 +39,16 @@ enum endnum : int {
     user_out_of_time,
     opponent_out_of_time,
     draw_by_repetition, // FIX: need to handle
-    draw_by_insufficient_material  // FIX: need to handle
+    draw_by_insufficient_material,  // FIX: need to handle
+    opponent_disconnected_end,
+    server_disconnected
 };
 
-enum tatus : int {
+enum tatus : quint8 {
     check_to_user,
     check_to_opponent,
-    users_piece_eaten,
-    opponents_piece_eaten,
-    draw_suggestion,
+    user_piece_eaten,
+    opponent_piece_eaten,
     castling,
     promotion,
     just_new_turn,
@@ -47,13 +66,6 @@ struct scoord{
         return x == right.x && y == right.y;
     }
 };
-
-//bool operator==(const scoord& left, const scoord& right) {
-//    return left.x == right.x && left.y == right.y;
-//}
-//bool operator != (const scoord& left, const scoord& right) {
-//    return left.x != right.x && left.y != right.y;
-//}
 
 class Tile;
 struct virtu{
