@@ -72,7 +72,7 @@ void WebClient::checkConnection()
 
 #include "webclient_pack_tools.h"
 
-void WebClient::sendToServer(package_ty type, bool respond, const QString& message, scoord from, scoord to, char promotion_type)
+void WebClient::sendToServer(package_ty type, bool respond, QString message, scoord from, scoord to, char promotion_type)
 {
     switch(type){
     case package_ty::registration:

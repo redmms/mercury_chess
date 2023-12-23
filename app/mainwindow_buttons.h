@@ -183,6 +183,7 @@ bool MainWindow::eventFilter(QObject* object, QEvent* event)
         QKeyEvent* key_event = static_cast<QKeyEvent*>(event);
         if (key_event && (key_event->key() == Qt::Key_Return || key_event->key() == Qt::Key_Enter)){
             emit editReturnPressed();
+            return true;
         }
         else{
             return QMainWindow::eventFilter(object, event);

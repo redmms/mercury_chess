@@ -56,7 +56,7 @@ signals:
 	void endedReadingInvite();
 
 public slots:
-    void sendToServer(package_ty type, bool respond = false, const QString& message = "", scoord from = {}, scoord to = {}, char promotion_type = 'e');
+    void sendToServer(package_ty type, bool respond = false, QString message = "", scoord from = {}, scoord to = {}, char promotion_type = 'e');
 	void readFromServer();
 
 };
