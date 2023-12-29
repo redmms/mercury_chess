@@ -15,9 +15,9 @@ void WebClient::writePack(const QByteArray& data) {
 }
 
 void WebClient::writePack(const QString& data) {
-    auto copy = data.toLatin1();
-    auto copy_size = data.size();
-    send_stream.writeBytes(data.toLatin1(), data.size()); // FIX: or data.ToLatin1().size()?
+    auto utf8_str = data.toUtf8();
+    auto str_size = utf8_str.size();
+    send_stream.writeBytes(utf8_str, str_size);
 }
 
 void WebClient::writePack(const QPixmap& data) {

@@ -33,19 +33,22 @@ void WebClient::initSocket()
         qDebug() << socketError;
     });
     connect(socket, &QTcpSocket::readyRead, this, &WebClient::readFromServer);
-    connect(socket, &QTcpSocket::disconnected, socket, &QTcpSocket::deleteLater);
     connect(socket, &QTcpSocket::disconnected, [&](){
         qDebug() << "Lost connection with server";
-
+        socket->deleteLater();
         if (mainwindow->game_active)
             mainwindow->endSlot(endnum::server_disconnected);
 
         QMessageBox msg_box;
         msg_box.setWindowTitle("Connection failed");
-        msg_box.setText("Lost connection with server. What else did you expect from a noncommercial project?");
+        msg_box.setText("Lost connection with server, register again. What else did you expect from a noncommercial project?");
+        msg_box.addButton("Love you, ready to donate.", QMessageBox::AcceptRole);
         msg_box.setIcon(QMessageBox::Critical);
         msg_box.exec();
+
         mainwindow->openTab(mainwindow->ui->pre_tab);
+
+        socket = nullptr;
     });
 }
 
@@ -53,19 +56,29 @@ void WebClient::checkConnection()
 {
     if (socket == nullptr || !socket){
         initSocket();
-        socket->connectToHost(/*"192.168.0.10"*/ "127.0.0.1", 49001);  // "145.249.226.3"
+        connectToServer();
+    }
+    else if (!socket->isValid() || !socket->isOpen()){
+        initSocket();
+        connectToServer();
+    }
+    else if (socket->state() != QAbstractSocket::ConnectedState){
+        connectToServer();
     }
     else{
-        if (!socket->isOpen() || !socket->isValid() ){
-            initSocket();
-            socket->connectToHost(/*"192.168.0.10"*/ "127.0.0.1", 49001);  // "145.249.226.3"
-        }
-        else if (socket->state() != QAbstractSocket::ConnectedState) {
-            socket->connectToHost(/*"192.168.0.10"*/ "127.0.0.1", 49001);  // "145.249.226.3"
-        }
-        else {
-           qDebug() << "Socket is connected. Chill out.";
-        }
+        qDebug() << "Socket is fine. Connection also seems to be fine.";
+    }
+}
+
+void WebClient::connectToServer()
+// socket parameter should be a valid QTcpSocket*
+{
+    socket->connectToHost("127.0.0.1", 49001);  // /*"192.168.0.10"*/ "127.0.0.1"
+    if (socket->state() == QAbstractSocket::ConnectedState){
+        qDebug() << "Connected to server.";
+    }
+    else{
+        qDebug() << "Tried to connect to server but socket state isn't ConnectedState.";
     }
 }
 
@@ -167,6 +180,8 @@ void WebClient::readFromServer()
             mainwindow->settings.setValue("opp_name", opp_name);
             if (!picture.isNull() && picture.size() == QSize{100, 100})
                 mainwindow->opp_pic = picture;
+            else
+                mainwindow->opp_pic = mainwindow->default_pic;
             mainwindow->settings.setValue("match_side", side);
             mainwindow->settings.setValue("time_setup", int(time));
             mainwindow->startGame();
@@ -178,7 +193,8 @@ void WebClient::readFromServer()
         msg_box.exec();
         break;
     }
-    case package_ty::invite_respond: // if true, load picture and start game else nothing (though in
+    case package_ty::invite_respond:
+        // if true, load picture and start game else nothing (though in
         // future there should be a message box showing was it rejected or just waiting too long for an
         // answer)
     {
@@ -188,7 +204,10 @@ void WebClient::readFromServer()
         if (respond){
             QPixmap picture;
             readPack(picture);
-            mainwindow->opp_pic = picture;
+            if (!picture.isNull() && picture.size() == QSize{100, 100})
+                mainwindow->opp_pic = picture;
+            else
+                mainwindow->opp_pic = mainwindow->default_pic;
             mainwindow->startGame();
         }
         emit endedReadingInvite();
@@ -268,6 +287,7 @@ void WebClient::readFromServer()
         msg_box.addButton("Ok", QMessageBox::AcceptRole);
         msg_box.addButton("Hate you, but Ok", QMessageBox::RejectRole);
         msg_box.exec();
+        emit endedReadingInvite();
         break;
     }
     case package_ty::opponent_disconnected:

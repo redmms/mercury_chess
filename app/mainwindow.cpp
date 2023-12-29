@@ -37,9 +37,10 @@ MainWindow::MainWindow(QWidget* parent) :
     avatar_effect(new QGraphicsDropShadowEffect(this)),
 	user_pic(":images/profile"),
 	opp_pic(":images/profile"),
+    default_pic(":images/profile"),
 	pic_mask{},
-//	last_tab(ui->pre_tab),
-	max_nick(12),
+    last_tab{},
+    max_nick(12),
     message_layout(new QVBoxLayout()),
 	message_box(new QWidget(this)),
 	message_font{ "Segoe Print", 12 },
@@ -276,6 +277,7 @@ void MainWindow::endSlot(endnum end_type)  // FIX: white_wins and black_wins enu
 	case endnum::opponent_resignation:
 		sounds["win"]->play();
 		info_message = "You win by " + opp_name + "'s resignation";
+        net->sendToServer(package_ty::end_game);
 		break;
 	case endnum::user_out_of_time:
 		sounds["lose"]->play();

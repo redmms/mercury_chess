@@ -156,9 +156,9 @@ void MainWindow::on_send_invite_button_clicked() // FIX: here - package_ty::invi
     }
     else {
         QEventLoop loop; // FIX: should whow "Waiting for friend's respond" message with a rolling widget
-        connect(net, &WebClient::endedReadingInvite, &loop, &QEventLoop::quit);
         connect(net, &WebClient::endedReadingInvite, [&](){
             QApplication::restoreOverrideCursor();
+            loop.quit();
         });
         bool match_side = std::rand() % 2;
         settings.setValue("match_side", match_side);

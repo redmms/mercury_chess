@@ -58,6 +58,7 @@ protected:
     Ui::MainWindow* ui;
 	QPixmap user_pic;
 	QPixmap opp_pic;
+    QPixmap default_pic;
 	QSettings settings;
 
 	void startGame();

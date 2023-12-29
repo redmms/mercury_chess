@@ -4,7 +4,7 @@
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
-    app.setOrganizationName("MMD18 soft");
+    app.setOrganizationName("MMD18 individual soft");
     app.setApplicationName("Mercury Chess 1");
     MainWindow *main_window = new MainWindow();
     main_window->showMaximized();

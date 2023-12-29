@@ -42,6 +42,7 @@ public:
 
     void initSocket();
     void checkConnection();
+    void connectToServer();
 //	void sendRegistration();
 //	void sendInvite();
 //	void sendInviteRespond(bool respond);
