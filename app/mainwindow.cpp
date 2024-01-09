@@ -48,7 +48,8 @@ MainWindow::MainWindow(QWidget* parent) :
     max_message_width{},
     rounded_area(new RoundedScrollArea(this)),
     game_active(false),
-    registering(false)
+    regime(0),
+    waiting_for_invite_respond(false)
 {
 	// .ui file finish strokes
 	ui->setupUi(this);
@@ -60,6 +61,8 @@ MainWindow::MainWindow(QWidget* parent) :
         ui->tabWidget->widget(i)->setStyleSheet("QTabWidget::tab > QWidget > QWidget{background-image: url(:/images/background);}"); //background-color: #75752d;
 	// fixes the background color for tabs. There's some bug in Designer
     ui->statusBar->hide();
+    ui->draw_button->disconnect();
+    ui->resign_button->disconnect();
 
 	std::srand(std::time(nullptr));
 
@@ -81,7 +84,7 @@ MainWindow::MainWindow(QWidget* parent) :
 	sounds["check to user"]->setVolume(0.7f);
 	sounds["check to opponent"] = new QSoundEffect;
 	sounds["check to opponent"]->setSource(QUrl::fromLocalFile(":/sounds/check_to_opp"));
-    sounds["check to opponent"]->setVolume(0.5f);
+    sounds["check to opponent"]->setVolume(0.3f);
 	sounds["invalid move"] = new QSoundEffect;
 	sounds["invalid move"]->setSource(QUrl::fromLocalFile(":/sounds/invalid"));
 	sounds["lose"] = new QSoundEffect;
@@ -111,7 +114,7 @@ MainWindow::MainWindow(QWidget* parent) :
 	QPixmap  pix(mask_size, mask_size); // initialize a mask for avatar's rounded corners
 	pix.fill(Qt::transparent);
 	QPainter painter(&pix);
-	painter.setBrush(Qt::color1);
+    painter.setBrush(Qt::color1); //Qt::black
 	painter.drawRoundedRect(0, 0, mask_size, mask_size, 14, 14);
 	pic_mask = pix.createMaskFromColor(Qt::transparent);
 
@@ -244,62 +247,9 @@ void MainWindow::endSlot(endnum end_type)  // FIX: white_wins and black_wins enu
 // be changed to user_wins and opp_wins, and what color user plays should be checked in Board::reactOnClick();
 {
     if (!game_active){
-        qDebug() << "Application tried to close inactive game";
+        qDebug() << curTime() << "Application tried to close inactive game";
         return;
     }
-	QString opp_name = settings.value("opp_name").toString();
-	QString info_message;
-    auto icon_type = QMessageBox::Information;
-	switch (end_type) {
-	case endnum::draw_by_agreement:
-		sounds["draw"]->play();
-		info_message = "Draw by agreement";
-		break;
-	case endnum::draw_by_stalemate:
-		sounds["draw"]->play();
-		info_message = "Draw by stalemate";
-        net->sendToServer(package_ty::end_game);
-		break;
-	case endnum::user_wins:
-		sounds["win"]->play();
-		info_message = "You win by checkmate";
-        net->sendToServer(package_ty::end_game);
-		break;
-	case endnum::opponent_wins:
-		sounds["lose"]->play();
-		info_message = opp_name + " wins by checkmate";
-        net->sendToServer(package_ty::end_game);
-		break;
-	case endnum::user_resignation:
-		sounds["lose"]->play();
-		info_message = opp_name + " wins by your resignation";
-		break;
-	case endnum::opponent_resignation:
-		sounds["win"]->play();
-		info_message = "You win by " + opp_name + "'s resignation";
-        net->sendToServer(package_ty::end_game);
-		break;
-	case endnum::user_out_of_time:
-		sounds["lose"]->play();
-		info_message = opp_name + " wins by your timeout";
-        net->sendToServer(package_ty::end_game);
-		break;
-	case endnum::opponent_out_of_time:
-		sounds["win"]->play();
-		info_message = "You win by " + opp_name + "'s timeout";
-        net->sendToServer(package_ty::end_game);
-        break;
-    case endnum::opponent_disconnected_end:
-        icon_type = QMessageBox::Critical;
-        info_message = "Opponent disconnected. Maybe he doesn't like to play with you?";
-        break;
-    case endnum::server_disconnected:
-        icon_type = QMessageBox::Critical;
-        info_message = "Lost connection with server";
-        break;
-	}
-	showStatus(info_message);
-
 	clock->stopTimer();
 	board->setEnabled(false);
 	ui->draw_button->disconnect();
@@ -310,18 +260,65 @@ void MainWindow::endSlot(endnum end_type)  // FIX: white_wins and black_wins enu
     ui->statusBar->hide();
     ui->message_edit->removeEventFilter(this);
 
-    if (end_type != endnum::server_disconnected){
-        QMessageBox msg_box;
-        msg_box.setWindowTitle("The end");
-        msg_box.setText(info_message);
-        msg_box.setIcon(icon_type);
-        msg_box.addButton("Ok", QMessageBox::AcceptRole);
-        msg_box.addButton("Back to the menu", QMessageBox::RejectRole);
-        connect(&msg_box, &QMessageBox::rejected, [this]() {
-            openTab(ui->friend_connect_tab);
-            });
-        msg_box.exec();
+    QString opp_name = settings.value("opp_name").toString();
+    QString info_message;
+    auto icon_type = QMessageBox::Information;
+    switch (end_type) {
+    case endnum::draw_by_agreement:
+        sounds["draw"]->play(); // FIX: this may cause server to keep game active (player1 and player2 initialized)
+        // because neither opponent neither user will send end_game signal to server
+        info_message = "Draw by agreement";
+        break;
+    case endnum::draw_by_stalemate:
+        sounds["draw"]->play();
+        info_message = "Draw by stalemate";
+        break;
+    case endnum::user_wins:
+        sounds["win"]->play();
+        info_message = "You win by checkmate";
+        break;
+    case endnum::opponent_wins:
+        sounds["lose"]->play();
+        info_message = opp_name + " wins by checkmate";
+        break;
+    case endnum::user_resignation:
+        sounds["lose"]->play();
+        info_message = opp_name + " wins by your resignation";
+        break;
+    case endnum::opponent_resignation:
+        sounds["win"]->play();
+        info_message = "You win by " + opp_name + "'s resignation";
+        break;
+    case endnum::user_out_of_time:
+        sounds["lose"]->play();
+        info_message = opp_name + " wins by your timeout";
+        break;
+    case endnum::opponent_out_of_time:
+        sounds["win"]->play();
+        info_message = "You win by " + opp_name + "'s timeout";
+        break;
+    case endnum::opponent_disconnected_end:
+        icon_type = QMessageBox::Critical;
+        info_message = "Opponent disconnected. Maybe he doesn't like to play with you?";
+        break;
+    case endnum::server_disconnected:
+        icon_type = QMessageBox::Critical;
+        info_message = "-1";
+        return;
     }
+
+    net->sendToServer(package_ty::end_game);
+    showStatus(info_message);
+    QMessageBox msg_box;
+    msg_box.setWindowTitle("The end");
+    msg_box.setText(info_message);
+    msg_box.setIcon(icon_type);
+    msg_box.addButton("Ok", QMessageBox::AcceptRole);
+    msg_box.addButton("Back to the menu", QMessageBox::RejectRole);
+    connect(&msg_box, &QMessageBox::rejected, [this]() {
+        openTab(ui->friend_connect_tab);
+        });
+    msg_box.exec();
 }
 
 void MainWindow::statusSlot(tatus status)
@@ -409,3 +406,20 @@ void MainWindow::printMessage(QString name, bool own, QString text)
 		scroller->setValue(scroller->maximum());
 		});
 }
+
+void MainWindow::on_actionToggle_fullscreen_triggered()
+{
+    static bool fullscreen = false;
+    if (fullscreen){
+        showMaximized();
+        if (game_active)
+            statusBar()->show();
+    }
+    else{
+        showFullScreen();
+        if (game_active)
+            statusBar()->hide();
+    }
+    fullscreen = !fullscreen;
+}
+

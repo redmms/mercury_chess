@@ -14,6 +14,8 @@
 
 enum package_ty : quint8 {
     registration,
+    login,
+    new_name,
     invite,
     invite_respond,
     move,
@@ -22,10 +24,10 @@ enum package_ty : quint8 {
     draw_respond,
     resignation,
     end_game,
+    success,
     no_such_user,
     opponent_disconnected,
-    login,
-    success,
+    none,
     already_registered
 };
 
@@ -73,3 +75,9 @@ struct virtu{
     bool color;
     char name;
 };
+
+#include <QDateTime>
+inline QString curTime()
+{
+    return QDateTime::currentDateTime().toString("hh:mm:ss.zzz");
+}

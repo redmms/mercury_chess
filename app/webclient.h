@@ -43,6 +43,7 @@ public:
     void initSocket();
     void checkConnection();
     void connectToServer();
+    void packFromSock(QTcpSocket* socket, QByteArray& received_package);
 //	void sendRegistration();
 //	void sendInvite();
 //	void sendInviteRespond(bool respond);

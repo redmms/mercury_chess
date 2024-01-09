@@ -288,7 +288,7 @@ background-color: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 1, stop: 0 #634b30, s
      <verstretch>0</verstretch>
     </sizepolicy>
    </property>
-   <layout class="QHBoxLayout" name="horizontalLayout">
+   <layout class="QVBoxLayout" name="verticalLayout_3">
     <property name="leftMargin">
      <number>0</number>
     </property>
@@ -383,13 +383,13 @@ background-color: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 1, stop: 0 #634b30, s
           </property>
           <property name="minimumSize">
            <size>
-            <width>201</width>
+            <width>300</width>
             <height>41</height>
            </size>
           </property>
           <property name="maximumSize">
            <size>
-            <width>201</width>
+            <width>300</width>
             <height>41</height>
            </size>
           </property>
@@ -606,13 +606,13 @@ background-color: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 1, stop: 0 #634b30, s
           </property>
           <property name="minimumSize">
            <size>
-            <width>201</width>
+            <width>300</width>
             <height>41</height>
            </size>
           </property>
           <property name="maximumSize">
            <size>
-            <width>201</width>
+            <width>300</width>
             <height>41</height>
            </size>
           </property>
@@ -829,13 +829,13 @@ background-color: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 1, stop: 0 #634b30, s
           </property>
           <property name="minimumSize">
            <size>
-            <width>201</width>
+            <width>300</width>
             <height>41</height>
            </size>
           </property>
           <property name="maximumSize">
            <size>
-            <width>201</width>
+            <width>300</width>
             <height>41</height>
            </size>
           </property>
@@ -1097,13 +1097,13 @@ background-color: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 1, stop: 0 #634b30, s
            <widget class="QLabel" name="login_header">
             <property name="minimumSize">
              <size>
-              <width>340</width>
+              <width>300</width>
               <height>40</height>
              </size>
             </property>
             <property name="maximumSize">
              <size>
-              <width>340</width>
+              <width>300</width>
               <height>40</height>
              </size>
             </property>
@@ -1161,13 +1161,13 @@ background-color: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 1, stop: 0 #634b30, s
            <widget class="QLineEdit" name="login_edit">
             <property name="minimumSize">
              <size>
-              <width>340</width>
+              <width>300</width>
               <height>40</height>
              </size>
             </property>
             <property name="maximumSize">
              <size>
-              <width>340</width>
+              <width>300</width>
               <height>40</height>
              </size>
             </property>
@@ -1197,13 +1197,13 @@ background-color: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 1, stop: 0 #634b30, s
             </property>
             <property name="minimumSize">
              <size>
-              <width>340</width>
+              <width>300</width>
               <height>40</height>
              </size>
             </property>
             <property name="maximumSize">
              <size>
-              <width>340</width>
+              <width>300</width>
               <height>40</height>
              </size>
             </property>
@@ -1420,13 +1420,13 @@ background-color: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 1, stop: 0 #634b30, s
             </property>
             <property name="minimumSize">
              <size>
-              <width>340</width>
+              <width>300</width>
               <height>40</height>
              </size>
             </property>
             <property name="maximumSize">
              <size>
-              <width>340</width>
+              <width>300</width>
               <height>40</height>
              </size>
             </property>
@@ -1677,36 +1677,18 @@ background-color: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 1, stop: 0 #634b30, s
        <attribute name="title">
         <string>settings</string>
        </attribute>
-       <layout class="QVBoxLayout" name="verticalLayout_5" stretch="3,1">
+       <layout class="QGridLayout" name="gridLayout" rowstretch="2,1">
         <property name="leftMargin">
-         <number>0</number>
+         <number>20</number>
         </property>
-        <property name="topMargin">
-         <number>0</number>
+        <property name="spacing">
+         <number>14</number>
         </property>
-        <property name="rightMargin">
-         <number>0</number>
-        </property>
-        <property name="bottomMargin">
-         <number>0</number>
-        </property>
-        <item>
-         <layout class="QVBoxLayout" name="verticalLayout_3">
+        <item row="0" column="0">
+         <layout class="QVBoxLayout" name="verticalLayout_5">
           <item>
            <layout class="QVBoxLayout" name="verticalLayout">
-            <property name="leftMargin">
-             <number>5</number>
-            </property>
-            <property name="topMargin">
-             <number>5</number>
-            </property>
-            <property name="rightMargin">
-             <number>5</number>
-            </property>
-            <property name="bottomMargin">
-             <number>5</number>
-            </property>
-            <item>
+            <item alignment="Qt::AlignHCenter">
              <widget class="QLabel" name="profile_avatar">
               <property name="minimumSize">
                <size>
@@ -1749,7 +1731,7 @@ background-color: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 1, stop: 0 #634b30, s
               </property>
              </widget>
             </item>
-            <item alignment="Qt::AlignLeft">
+            <item alignment="Qt::AlignHCenter">
              <widget class="QPushButton" name="change_photo_button">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -1977,16 +1959,16 @@ background-color: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 1, stop: 0 #634b30, s
           <item>
            <layout class="QVBoxLayout" name="verticalLayout_2">
             <property name="leftMargin">
-             <number>5</number>
+             <number>0</number>
             </property>
             <property name="topMargin">
-             <number>5</number>
+             <number>0</number>
             </property>
             <property name="rightMargin">
-             <number>5</number>
+             <number>0</number>
             </property>
             <property name="bottomMargin">
-             <number>5</number>
+             <number>0</number>
             </property>
             <item alignment="Qt::AlignLeft">
              <widget class="QLabel" name="profile_name">
@@ -2311,7 +2293,20 @@ background-color: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 1, stop: 0 #634b30, s
           </item>
          </layout>
         </item>
-        <item>
+        <item row="0" column="1">
+         <spacer name="horizontalSpacer_9">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>672</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item row="1" column="0" colspan="2">
          <layout class="QHBoxLayout" name="horizontalLayout_3">
           <property name="sizeConstraint">
            <enum>QLayout::SetNoConstraint</enum>
@@ -2339,13 +2334,13 @@ background-color: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 1, stop: 0 #634b30, s
             </property>
             <property name="minimumSize">
              <size>
-              <width>201</width>
+              <width>300</width>
               <height>41</height>
              </size>
             </property>
             <property name="maximumSize">
              <size>
-              <width>201</width>
+              <width>300</width>
               <height>41</height>
              </size>
             </property>
@@ -2573,7 +2568,10 @@ background-color: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 1, stop: 0 #634b30, s
        <attribute name="title">
         <string>friend</string>
        </attribute>
-       <layout class="QHBoxLayout" name="horizontalLayout_5">
+       <layout class="QHBoxLayout" name="horizontalLayout_5" stretch="1,0,1">
+        <property name="spacing">
+         <number>14</number>
+        </property>
         <property name="leftMargin">
          <number>0</number>
         </property>
@@ -2607,19 +2605,19 @@ background-color: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 1, stop: 0 #634b30, s
           <item>
            <layout class="QGridLayout" name="time_limits_layout">
             <property name="leftMargin">
-             <number>20</number>
+             <number>10</number>
             </property>
             <property name="topMargin">
-             <number>20</number>
+             <number>10</number>
             </property>
             <property name="rightMargin">
-             <number>20</number>
+             <number>10</number>
             </property>
             <property name="bottomMargin">
-             <number>20</number>
+             <number>10</number>
             </property>
             <property name="spacing">
-             <number>20</number>
+             <number>10</number>
             </property>
             <item row="2" column="0">
              <widget class="QPushButton" name="min5">
@@ -2631,7 +2629,7 @@ background-color: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 1, stop: 0 #634b30, s
               </property>
               <property name="minimumSize">
                <size>
-                <width>100</width>
+                <width>0</width>
                 <height>40</height>
                </size>
               </property>
@@ -2854,7 +2852,7 @@ background-color: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 1, stop: 0 #634b30, s
               </property>
               <property name="minimumSize">
                <size>
-                <width>100</width>
+                <width>0</width>
                 <height>40</height>
                </size>
               </property>
@@ -3077,7 +3075,7 @@ background-color: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 1, stop: 0 #634b30, s
               </property>
               <property name="minimumSize">
                <size>
-                <width>100</width>
+                <width>0</width>
                 <height>40</height>
                </size>
               </property>
@@ -3300,7 +3298,7 @@ background-color: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 1, stop: 0 #634b30, s
               </property>
               <property name="minimumSize">
                <size>
-                <width>100</width>
+                <width>0</width>
                 <height>40</height>
                </size>
               </property>
@@ -3523,7 +3521,7 @@ background-color: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 1, stop: 0 #634b30, s
               </property>
               <property name="minimumSize">
                <size>
-                <width>100</width>
+                <width>0</width>
                 <height>40</height>
                </size>
               </property>
@@ -3746,7 +3744,7 @@ background-color: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 1, stop: 0 #634b30, s
               </property>
               <property name="minimumSize">
                <size>
-                <width>100</width>
+                <width>0</width>
                 <height>40</height>
                </size>
               </property>
@@ -3969,7 +3967,7 @@ background-color: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 1, stop: 0 #634b30, s
               </property>
               <property name="minimumSize">
                <size>
-                <width>100</width>
+                <width>0</width>
                 <height>40</height>
                </size>
               </property>
@@ -4192,7 +4190,7 @@ background-color: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 1, stop: 0 #634b30, s
               </property>
               <property name="minimumSize">
                <size>
-                <width>100</width>
+                <width>0</width>
                 <height>40</height>
                </size>
               </property>
@@ -4415,7 +4413,7 @@ background-color: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 1, stop: 0 #634b30, s
               </property>
               <property name="minimumSize">
                <size>
-                <width>100</width>
+                <width>0</width>
                 <height>40</height>
                </size>
               </property>
@@ -4632,7 +4630,7 @@ background-color: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 1, stop: 0 #634b30, s
              <widget class="QLabel" name="choose_time_header">
               <property name="minimumSize">
                <size>
-                <width>100</width>
+                <width>0</width>
                 <height>40</height>
                </size>
               </property>
@@ -4694,31 +4692,31 @@ background-color: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 1, stop: 0 #634b30, s
           <item>
            <layout class="QVBoxLayout" name="verticalLayout_6">
             <property name="spacing">
-             <number>20</number>
+             <number>14</number>
             </property>
             <property name="leftMargin">
-             <number>20</number>
+             <number>10</number>
             </property>
             <property name="topMargin">
-             <number>20</number>
+             <number>10</number>
             </property>
             <property name="rightMargin">
-             <number>20</number>
+             <number>10</number>
             </property>
             <property name="bottomMargin">
-             <number>20</number>
+             <number>10</number>
             </property>
             <item>
              <widget class="QLabel" name="choose_time_header_2">
               <property name="minimumSize">
                <size>
-                <width>100</width>
+                <width>300</width>
                 <height>40</height>
                </size>
               </property>
               <property name="maximumSize">
                <size>
-                <width>340</width>
+                <width>300</width>
                 <height>40</height>
                </size>
               </property>
@@ -4773,13 +4771,13 @@ background-color: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 1, stop: 0 #634b30, s
              <widget class="QLineEdit" name="friend_name_edit">
               <property name="minimumSize">
                <size>
-                <width>100</width>
+                <width>300</width>
                 <height>40</height>
                </size>
               </property>
               <property name="maximumSize">
                <size>
-                <width>340</width>
+                <width>300</width>
                 <height>40</height>
                </size>
               </property>
@@ -4806,13 +4804,13 @@ background-color: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 1, stop: 0 #634b30, s
               </property>
               <property name="minimumSize">
                <size>
-                <width>100</width>
+                <width>300</width>
                 <height>40</height>
                </size>
               </property>
               <property name="maximumSize">
                <size>
-                <width>340</width>
+                <width>300</width>
                 <height>40</height>
                </size>
               </property>
@@ -6262,7 +6260,7 @@ border-radius: 14;</string>
      <x>0</x>
      <y>0</y>
      <width>842</width>
-     <height>22</height>
+     <height>21</height>
     </rect>
    </property>
    <property name="defaultUp">
@@ -6276,6 +6274,7 @@ border-radius: 14;</string>
      <string>Settings</string>
     </property>
     <addaction name="actionProfile"/>
+    <addaction name="actionToggle_fullscreen"/>
    </widget>
    <widget class="QMenu" name="menuPlay">
     <property name="title">
@@ -6423,6 +6422,11 @@ border-radius: 14;</string>
   <action name="actionLoad_game">
    <property name="text">
     <string>Load game</string>
+   </property>
+  </action>
+  <action name="actionToggle_fullscreen">
+   <property name="text">
+    <string>Toggle fullscreen</string>
    </property>
   </action>
  </widget>

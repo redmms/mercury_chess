@@ -22,9 +22,12 @@ void MainWindow::on_change_photo_button_clicked()
         QString("Choose a photo for avatar. Avatar picture will be scaled to 100x100 pixel image."),
         tr("Images (*.png *.jpg *.jpeg *.pgm)"));
     QSize user_size = ui->user_avatar->size();
-    user_pic = QPixmap(avatar_address).scaled(user_size);
-    ui->user_avatar->setPixmap(user_pic);
-    ui->profile_avatar->setPixmap(user_pic);
+    if (!avatar_address.isEmpty()){
+        user_pic = QPixmap(avatar_address).scaled(user_size);
+        ui->profile_avatar->setPixmap(user_pic);
+        if (game_active)
+            ui->user_avatar->setPixmap(user_pic);
+    }
 }
 
 void MainWindow::on_change_name_button_clicked()
@@ -57,12 +60,7 @@ void MainWindow::on_change_name_button_clicked()
 
 void MainWindow::on_back_from_settings_clicked()
 {
-    if (last_tab == ui->pre_tab) {
-        net->sendToServer(package_ty::registration);
-        openTab(ui->friend_connect_tab);
-    }
-    else
-        openTab(last_tab);
+    openTab(last_tab);
 }
 
 void MainWindow::on_actionWith_friend_triggered()
@@ -76,13 +74,13 @@ void MainWindow::on_actionWith_friend_triggered()
 void MainWindow::on_login_button_clicked()
 {
     openTab(ui->login_tab);
-    registering = false;
+    regime = 1;
 }
 
 void MainWindow::on_registrate_button_clicked()
 {
     openTab(ui->login_tab);
-    registering = true;
+    regime = 2;
 }
 
 void MainWindow::on_end_login_button_clicked()
@@ -91,9 +89,9 @@ void MainWindow::on_end_login_button_clicked()
     if (entered_username.size() <= max_nick) {
         settings.setValue("user_name", entered_username);
         ui->profile_name->setText(entered_username);
-        if (registering)
+        if (regime == 2)
             net->sendToServer(package_ty::registration);
-        else
+        else if (regime == 1)
             net->sendToServer(package_ty::login);
     }
     else{
@@ -115,15 +113,19 @@ void MainWindow::on_back_from_login_button_clicked()
 
 void MainWindow::on_guest_button_clicked()
 {
+    regime = 3;
     QString random_username = "Lazy" + QString::number(std::rand() % (int)std::pow(10, max_nick - 4));
     settings.setValue("user_name", random_username);
     net->sendToServer(package_ty::registration);
     net->sendToServer(package_ty::login);
-    openTab(ui->friend_connect_tab);
 }
 
 void MainWindow::on_send_invite_button_clicked() // FIX: here - package_ty::invite, user's name, user's image,
 {
+    if (waiting_for_invite_respond){
+        qDebug() << curTime() << "Tried to send match invite several times";
+        return;
+    }
     int chosen_time = settings.value("time_setup").toInt();
     QString friend_name = ui->friend_name_edit->text();
     QString user_name = settings.value("user_name").toString();
@@ -158,6 +160,7 @@ void MainWindow::on_send_invite_button_clicked() // FIX: here - package_ty::invi
         QEventLoop loop; // FIX: should whow "Waiting for friend's respond" message with a rolling widget
         connect(net, &WebClient::endedReadingInvite, [&](){
             QApplication::restoreOverrideCursor();
+            waiting_for_invite_respond = false;
             loop.quit();
         });
         bool match_side = std::rand() % 2;
@@ -165,6 +168,7 @@ void MainWindow::on_send_invite_button_clicked() // FIX: here - package_ty::invi
         settings.setValue("opp_name", friend_name);
         net->sendToServer(package_ty::invite);
         QApplication::setOverrideCursor(Qt::WaitCursor);
+        waiting_for_invite_respond = true;
         loop.exec();
     }
 }

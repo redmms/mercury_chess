@@ -8,6 +8,7 @@
 #include <QMessageBox>
 #include <QTcpSocket>
 #include "ui_mainwindow.h"
+#include <QEventLoop>
 
 WebClient::WebClient(MainWindow* parent) :
     QObject(parent),
@@ -21,20 +22,52 @@ WebClient::WebClient(MainWindow* parent) :
     read_stream.setVersion(QDataStream::Qt_5_15);
     send_stream.setVersion(QDataStream::Qt_5_15);
     if (read_stream.status() != QDataStream::Ok)
-        qDebug() << "read_stream error!";
+        qDebug() << curTime() << "read_stream error!";
     if (send_stream.status() != QDataStream::Ok)
-        qDebug() << "send_stream error!";
+        qDebug() << curTime() << "send_stream error!";
 }
 
 void WebClient::initSocket()
 {
     socket = new QTcpSocket(this); //FIX: how to destruct previous socket?
-    connect(socket, &QTcpSocket::errorOccurred, [](QAbstractSocket::SocketError socketError){
-        qDebug() << socketError;
+    connect(socket, &QTcpSocket::errorOccurred, [&](QAbstractSocket::SocketError socketError){
+        if (socket->state() == QAbstractSocket::UnconnectedState){
+            qDebug() << curTime() << "Couldn't connect to server:";
+            qDebug() << curTime() << socketError;
+            QMessageBox msg_box;
+            msg_box.setWindowTitle("No connection");
+            msg_box.setText("You are offline. Contact me by mmd18cury@yandex.ru to start the server.");
+            msg_box.setIcon(QMessageBox::Warning);
+            msg_box.addButton("Ok", QMessageBox::AcceptRole);
+            msg_box.addButton("Hate you, but Ok", QMessageBox::RejectRole);
+            msg_box.exec();
+        }
+        else if (socket->state() != QAbstractSocket::ConnectedState){
+            qDebug() << curTime() << "Error occured while trying to connect to server:";
+            qDebug() << curTime() << socketError;
+            QMessageBox msg_box;
+            msg_box.setWindowTitle("No connection");
+            msg_box.setText("No connection, some error occured. Contact me by mmd18cury@yandex.ru.");
+            msg_box.setIcon(QMessageBox::Warning);
+            msg_box.addButton("Ok", QMessageBox::AcceptRole);
+            msg_box.addButton("Hate you, but Ok", QMessageBox::RejectRole);
+            msg_box.exec();
+        }
+        else{
+            qDebug() << curTime() << "Socket error signal received, but socket state is connected:";
+            qDebug() << curTime() << socketError;
+        }
     });
-    connect(socket, &QTcpSocket::readyRead, this, &WebClient::readFromServer);
+    connect(socket, &QTcpSocket::connected, [&](){
+        qDebug() << curTime() << "Connected to server.";
+    });
+    connect(socket, &QTcpSocket::readyRead, [&](){
+            while(socket->bytesAvailable() > 0){
+                this->readFromServer();
+            }
+    });
     connect(socket, &QTcpSocket::disconnected, [&](){
-        qDebug() << "Lost connection with server";
+        qDebug() << curTime() << "Lost connection with server";
         socket->deleteLater();
         if (mainwindow->game_active)
             mainwindow->endSlot(endnum::server_disconnected);
@@ -62,31 +95,78 @@ void WebClient::checkConnection()
         initSocket();
         connectToServer();
     }
-    else if (socket->state() != QAbstractSocket::ConnectedState){
+    else if (socket->state() == QAbstractSocket::UnconnectedState){
         connectToServer();
     }
     else{
-        qDebug() << "Socket is fine. Connection also seems to be fine.";
+        auto state_copy = socket->state();
+        qDebug() << curTime()
+                 << "Socket is fine. Connection also seems to be fine. Socket state is "
+                 << socket->state();
     }
 }
 
 void WebClient::connectToServer()
 // socket parameter should be a valid QTcpSocket*
 {
-    socket->connectToHost("127.0.0.1", 49001);  // /*"192.168.0.10"*/ "127.0.0.1"
-    if (socket->state() == QAbstractSocket::ConnectedState){
-        qDebug() << "Connected to server.";
-    }
-    else{
-        qDebug() << "Tried to connect to server but socket state isn't ConnectedState.";
-    }
+//    if (socket->state() == QAbstractSocket::UnconnectedState)
+
+    socket->connectToHost("40.113.33.140", 49001);  // /*"192.168.0.10"*/ "127.0.0.1"
+    //socket->connectToHost("127.0.0.1", 443);  // /*"192.168.0.10"*/ "127.0.0.1"
+
+    //auto copy_state = socket->state();
 }
 
+void WebClient::packFromSock(QTcpSocket *socket, QByteArray &read_package)
+{
+    auto avail_copy = socket->bytesAvailable();
+    while(socket->bytesAvailable() < 2){
+        if (!socket->waitForReadyRead()) {
+            qDebug() << curTime() << "waitForReadyRead() timed out";
+            return;
+        }
+    }
+    read_package = socket->read(2);
+    //QDataStream package_stream(read_package);
+    quint16 pack_size;
+    read_stream >> pack_size;
+    qDebug() << curTime() << "Received package size supposed to be" << pack_size;
+    // else can be done: (((pack_size = 0) &= buffer[0]) <<= 8) &= buffer[1]
+    // but it will depend on endiannes;
+
+    int need_to_add = pack_size - read_package.size();
+    if (socket->bytesAvailable() >= need_to_add){
+        qDebug() << curTime() << "Full package arrived";
+        read_package.append(socket->read(need_to_add));
+    }
+    else{
+        qDebug() << curTime() << "Only a part of package arrived. Waiting for other parts";
+        while (socket->bytesAvailable() < need_to_add) {
+            if (!socket->waitForReadyRead()) {
+                qDebug() << curTime() << "Error waiting for more data";
+                return;
+            }
+        }
+        read_package.append(socket->read(need_to_add));
+        qDebug() << curTime() << "Package is fulfilled";
+    }
+
+    if (read_package.isEmpty()){
+        qDebug() << curTime() << "Received package was empty or most likely there was an error";
+        return;
+    }
+    else{
+        qDebug() << curTime() << "Received package size is" << read_package.size();
+    }
+    read_stream.device()->reset();
+}
 
 #include "webclient_pack_tools.h"
 
 void WebClient::sendToServer(package_ty type, bool respond, QString message, scoord from, scoord to, char promotion_type)
 {
+    quint16 pack_size = 0;
+    send_stream << pack_size;
     switch(type){
     case package_ty::registration:
         checkConnection();
@@ -137,28 +217,46 @@ void WebClient::sendToServer(package_ty type, bool respond, QString message, sco
         writePack(package_ty::end_game);
         break;
     }
+    send_stream.device()->seek(0);
+    pack_size = (quint16) send_package.size();
+    send_stream << pack_size;
+
+//    QByteArray little_copy{};
+//    for (int l = 0; l < send_package.size(); l += 10){
+//        for (int r = l; r < l + 10 && r < send_package.size(); r++){
+
+//            little_copy.push_back(send_package[r]);
+//        }
+//        auto bytes_written = socket->write(little_copy);
+//        if (!socket->waitForBytesWritten()) // FIX: it may cause the problem with pictures
+//            qDebug() << curTime() << "Couldn't wait for bytes to be written";
+//        little_copy.clear();
+//    }
 
     auto bytes_written = socket->write(send_package);
+    if (!socket->waitForBytesWritten(10000)) // FIX: it may cause the problem with pictures
+        qDebug() << curTime() << "Couldn't wait for bytes to be written";
     if (bytes_written == -1)
-        qDebug() << "Couldn't write send_package to server";
+        qDebug() << curTime() << "Couldn't write send_package to server";
     else if (bytes_written != send_package.size())
-        qDebug() << "Bytes writen to server are not as wanted";
+        qDebug() << curTime() << "Bytes writen to server are not as wanted";
+
     send_package.clear();
     send_stream.device()->reset();
 }
 
 void WebClient::readFromServer()
 {
-    read_package = socket->readAll();
-    if (read_package.isEmpty())
-        qDebug() << "Package received from server is either empty or most likely there was an error";
+    packFromSock(socket, read_package);
+    quint16 skip;
+    read_stream >> skip;
 
     package_ty type;
     readPack(type);   
     switch(type){
     case package_ty::invite:  //show message box and send invite respond
     {
-        qDebug() << "Invite received";
+        qDebug() << curTime() << "Invite received";
         QString user_name;
         readPack(user_name);
         QString opp_name;
@@ -198,7 +296,7 @@ void WebClient::readFromServer()
         // future there should be a message box showing was it rejected or just waiting too long for an
         // answer)
     {
-        qDebug() << "Invite respond received";
+        qDebug() << curTime() << "Invite respond received";
         bool respond;
         readPack(respond);
         if (respond){
@@ -215,7 +313,7 @@ void WebClient::readFromServer()
     }
     case package_ty::move:
     {
-        qDebug() << "Move received";
+        qDebug() << curTime() << "Move received";
         quint8 from_k;
         readPack(from_k);
         scoord from{from_k % 8, from_k / 8};
@@ -235,7 +333,7 @@ void WebClient::readFromServer()
     }
     case package_ty::chat_message:
     {
-        qDebug() << "Message received";
+        qDebug() << curTime() << "Message received";
         QString message;
         readPack(message);
         QString name = mainwindow->settings.value("opp_name").toString();
@@ -244,7 +342,7 @@ void WebClient::readFromServer()
     }
     case package_ty::draw_suggestion: //show message box with opponent's name and draw suggestion
     {
-        qDebug() << "Draw suggestion received";
+        qDebug() << curTime() << "Draw suggestion received";
         QMessageBox msg_box;
         msg_box.setWindowTitle("Draw suggestion");
         QString name = mainwindow->settings.value("opp_name").toString();
@@ -264,7 +362,7 @@ void WebClient::readFromServer()
     }
     case package_ty::draw_respond: //if true stop the game as draw, else nothing
     {
-        qDebug() << "Draw respond received";
+        qDebug() << curTime() << "Draw respond received";
         bool respond;
         readPack(respond);
         if (respond)
@@ -273,13 +371,13 @@ void WebClient::readFromServer()
     }
     case package_ty::resignation: // mainwindow->endSlot(endnum::opponents_resignation
     {
-        qDebug() << "Resignation from opponent received";
+        qDebug() << curTime() << "Resignation from opponent received";
         mainwindow->endSlot(endnum::opponent_resignation);
         break;
     }
     case package_ty::no_such_user:
     {
-        qDebug() << "No such user signal received";
+        qDebug() << curTime() << "No such user signal received";
         QMessageBox msg_box;
         msg_box.setWindowTitle("No such user");
         msg_box.setText("Player with this nickname wasn't found");
@@ -292,13 +390,13 @@ void WebClient::readFromServer()
     }
     case package_ty::opponent_disconnected:
     {
-        qDebug() << "Opponent disconnected signal received";
+        qDebug() << curTime() << "Opponent disconnected signal received";
         mainwindow->endSlot(endnum::opponent_disconnected_end);
         break;
     }
     case package_ty::already_registered:
     {
-        qDebug() << "Already registered signal received";
+        qDebug() << curTime() << "Already registered signal received";
         QMessageBox msg_box;
         msg_box.setWindowTitle("Already registered");
         msg_box.setText("A user with this nickname is already registered. You need to work out a new one.");
@@ -311,7 +409,7 @@ void WebClient::readFromServer()
     }
     case package_ty::success:
     {
-        qDebug() << "Success signal received";
+        qDebug() << curTime() << "Success signal received";
         QMessageBox msg_box;
         msg_box.setWindowTitle("Good news");
         msg_box.setText("Operation done successfuly.");
@@ -319,10 +417,12 @@ void WebClient::readFromServer()
         msg_box.addButton("Ok", QMessageBox::AcceptRole);
         msg_box.addButton("Hate you, but Ok", QMessageBox::RejectRole);
         msg_box.exec();
-        if (mainwindow->registering)
+        if (mainwindow->regime == 2)
             mainwindow->openTab(mainwindow->ui->pre_tab);
-        else
+        else if (mainwindow->regime == 1)
             mainwindow->openTab(mainwindow->ui->friend_connect_tab);
+        else if (mainwindow->regime == 3)
+            mainwindow->regime = 1;
         break;
     }
     }

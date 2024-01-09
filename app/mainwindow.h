@@ -46,7 +46,7 @@ class MainWindow : public QMainWindow
 	int max_message_width;
     RoundedScrollArea* rounded_area;
     bool game_active;
-    bool registering;
+    bool waiting_for_invite_respond;
 
 	void showStatus(const QString& status);  // FIX: will const& cause problems or not?
 	void switchGlow();
@@ -60,6 +60,7 @@ protected:
 	QPixmap opp_pic;
     QPixmap default_pic;
 	QSettings settings;
+    int regime;
 
 	void startGame();
 	void printMessage(QString name, bool own, QString text);
@@ -75,6 +76,7 @@ signals:
 
 private slots:
 	void statusSlot(tatus status);
+    void editReturnSlot();
 
 	void on_draw_button_clicked();
 	void on_resign_button_clicked();
@@ -86,13 +88,10 @@ private slots:
 	void on_registrate_button_clicked();
 	void on_guest_button_clicked();
 	void on_send_invite_button_clicked();
-    void editReturnSlot();
-
     void on_login_button_clicked();
-
     void on_end_login_button_clicked();
-
     void on_back_from_login_button_clicked();
+    void on_actionToggle_fullscreen_triggered();
 
 protected slots:
 	void endSlot(endnum end_type);

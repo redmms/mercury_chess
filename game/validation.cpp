@@ -95,7 +95,7 @@ void Validation::hideValid()
     if (board.from_tile != nullptr)
         board.from_tile->dyeNormal();
     else
-        qDebug() << "You try to dyeNormal() from_tile that is nullptr";
+        qDebug() << curTime() << "You try to dyeNormal() from_tile that is nullptr";
 	for (auto tile : valid_moves)
 		tile->dyeNormal();
 	valid_moves.clear();
