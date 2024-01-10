@@ -178,7 +178,8 @@ void MainWindow::editReturnSlot()
     QString message_text = ui->message_edit->toPlainText();
     printMessage(settings.value("user_name").toString(), true, message_text);
     ui->message_edit->clear();
-    net->sendToServer(package_ty::chat_message, false, message_text); // FIX: works even after the end of the game
+    if (settings.value("game_regime").toString() == "friend_online")
+        net->sendToServer(package_ty::chat_message, false, message_text); // FIX: works even after the end of the game
 }
 
 bool MainWindow::eventFilter(QObject* object, QEvent* event)
@@ -198,3 +199,18 @@ bool MainWindow::eventFilter(QObject* object, QEvent* event)
     }
 }
 
+void MainWindow::on_actionToggle_fullscreen_triggered()
+{
+    static bool fullscreen = false;
+    if (fullscreen){
+        showMaximized();
+        if (game_active)
+            statusBar()->show();
+    }
+    else{
+        showFullScreen();
+        if (game_active)
+            statusBar()->hide();
+    }
+    fullscreen = !fullscreen;
+}

@@ -7,9 +7,10 @@
 #include <QTimer>
 #include <string>
 
-Board::Board(QLabel* background = 0, bool side_par = true) :
+Board::Board(QLabel* background = 0, const QSettings& settings_par = {}) :
 	tile_size(background->width() / 9),
-	side(side_par),  // true for user on white side
+    settings(settings_par),
+    side(settings.value("match_side").toBool()),  // true for user on white side
 	valid(new Validation(this)),
 	tiles{ { NULL } },
 	turn(true),  // true for white turn;
@@ -55,7 +56,10 @@ void Board::reactOnClick(Tile* tile) {
 	if (from_tile == nullptr) {
 		// if it's first click then pick the piece and
 		// show valid moves
-		if (turn == tile->piece_color && side == tile->piece_color && tile->piece_name != 'e') {
+        if (turn == tile->piece_color &&
+                (side == tile->piece_color ||
+                 settings.value("game_regime").toString() != "friend_online") &&
+                tile->piece_name != 'e') {
 			from_tile = tile;
 			valid->showValid(tile);
 		}
@@ -70,6 +74,7 @@ void Board::reactOnClick(Tile* tile) {
 	else if (valid->isValid(tile)) {
 		// if it's the second click and move is valid
 		// then move pieces
+        valid->hideValid();
 		halfMove(from_tile, tile);
         valid->reactOnMove(from_tile->coord, tile->coord);
 		from_tile = nullptr;

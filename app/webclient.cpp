@@ -85,9 +85,11 @@ void WebClient::initSocket()
     });
 }
 
-void WebClient::checkConnection()
+void WebClient::checkConnection(package_ty type)
 {
     if (socket == nullptr || !socket){
+        if (type != package_ty::registration && type != package_ty::login)
+            qDebug() << curTime() << "Warning: you need to register o log in before sending any data to the server";
         initSocket();
         connectToServer();
     }
@@ -167,15 +169,14 @@ void WebClient::sendToServer(package_ty type, bool respond, QString message, sco
 {
     quint16 pack_size = 0;
     send_stream << pack_size;
+    checkConnection(type);
     switch(type){
     case package_ty::registration:
-        checkConnection();
         writePack(package_ty::registration);
         writePack(mainwindow->settings.value("user_name").toString());
         // FIX: add check of "user_name" setting exist. P.S. no need
         break;
     case package_ty::login:
-        checkConnection();
         writePack(package_ty::login);
         writePack(mainwindow->settings.value("user_name").toString());
         break;
@@ -306,6 +307,7 @@ void WebClient::readFromServer()
                 mainwindow->opp_pic = picture;
             else
                 mainwindow->opp_pic = mainwindow->default_pic;
+            mainwindow->settings.setValue("game_regime", "friend_online");
             mainwindow->startGame();
         }
         emit endedReadingInvite();

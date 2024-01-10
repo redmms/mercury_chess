@@ -1,6 +1,7 @@
 #pragma once
 #include "local_types.h"
 #include <QLabel>
+#include <QSettings>
 class Tile;
 class Validation;
 class WebClient;
@@ -8,7 +9,9 @@ class WebClient;
 class Board : public QLabel {
 	Q_OBJECT
 
-	void drawLetters(bool side);
+    const QSettings& settings;
+
+    void drawLetters(bool side);
 	void drawNumbers(bool side);
 	void drawTiles(bool side);
 	void openPromotion(Tile* from);
@@ -22,7 +25,7 @@ protected:
 	void halfMove(Tile* from, Tile* to);
 
 public:
-	Board(QLabel* background, bool side);
+    Board(QLabel* background, const QSettings& settings);
 
 	Validation* valid;
 	Tile* tiles[8][8];

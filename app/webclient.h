@@ -41,7 +41,7 @@ public:
 	WebClient(MainWindow* parent = nullptr);
 
     void initSocket();
-    void checkConnection();
+    void checkConnection(package_ty type);
     void connectToServer();
     void packFromSock(QTcpSocket* socket, QByteArray& received_package);
 //	void sendRegistration();

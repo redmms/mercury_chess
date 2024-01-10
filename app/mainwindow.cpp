@@ -103,6 +103,7 @@ MainWindow::MainWindow(QWidget* parent) :
 	settings.setValue("opp_name", "Player2");
 	settings.setValue("time_setup", 0);
 	settings.setValue("match_side", false);
+    settings.setValue("game_regime", "friend_offline");
 
 	// glow effect for avatars
     avatar_effect->setBlurRadius(40);
@@ -178,9 +179,8 @@ void MainWindow::openStopGameDialog()
     msg_box.setWindowTitle("Stop active game");
     msg_box.setText("Stop your current game at first.");
     msg_box.setIcon(QMessageBox::Warning);
-    msg_box.addButton("Resign", QMessageBox::AcceptRole);
-    msg_box.addButton("Back to the board", QMessageBox::RejectRole);
-    connect(&msg_box, &QMessageBox::accepted, this, &MainWindow::on_resign_button_clicked);
+    msg_box.addButton("Ok", QMessageBox::AcceptRole);
+    msg_box.addButton("Hate you, but Ok", QMessageBox::RejectRole);
     msg_box.exec();
 }
 
@@ -213,33 +213,38 @@ void MainWindow::startGame() // side true for user - white
 	ui->message_edit->setPlainText("Great move! Have you studied in a clown school?");
 	ui->actionProfile->setEnabled(false);
     ui->statusBar->show();
-    ui->message_edit->installEventFilter(this);
+    if (settings.value("game_regime").toString() == "friend_online")
+        ui->message_edit->installEventFilter(this);
 
-	board = new Board(board != nullptr ? board : ui->board_background, match_side);
+    board = new Board(board != nullptr ? board : ui->board_background, settings);
 	// old board will be destroyed inside Board constructor
 	connect(board, &Board::newStatus, this, &MainWindow::statusSlot);
 	connect(board, &Board::theEnd, this, &MainWindow::endSlot);
-    connect(board, &Board::moveMade, [this](scoord from, scoord to, char promotion_type) {
-        net->sendToServer(package_ty::move, {}, {}, from, to, promotion_type);
-		});
 
-	int time = settings.value("time_setup").toInt();
-	clock = new ChessClock(board, ui->opponent_timer, ui->user_timer, match_side, time);
-	// old clock will be destroyed inside Board constructor as a child // FIX: at least it should be
-	connect(this, &MainWindow::timeToSwitchTime, clock, &ChessClock::switchTimer);
-	connect(clock, &ChessClock::userOut, [this]() {
-		endSlot(endnum::user_out_of_time);
-		});
-	connect(clock, &ChessClock::opponentOut, [this]() {
-		endSlot(endnum::opponent_out_of_time);
-		});
+    if (settings.value("game_regime").toString() == "friend_online"){
+        connect(board, &Board::moveMade, [this](scoord from, scoord to, char promotion_type) {
+            net->sendToServer(package_ty::move, {}, {}, from, to, promotion_type);
+            });
 
-	connect(ui->resign_button, &QPushButton::clicked, this, &MainWindow::on_resign_button_clicked);
-	connect(ui->draw_button, &QPushButton::clicked, this, &MainWindow::on_draw_button_clicked);
-    connect(this, &MainWindow::editReturnPressed, this, &MainWindow::editReturnSlot);
+        int time = settings.value("time_setup").toInt();
+        clock = new ChessClock(board, ui->opponent_timer, ui->user_timer, match_side, time);
+        // old clock will be destroyed inside Board constructor as a child // FIX: at least it should be
+        connect(this, &MainWindow::timeToSwitchTime, clock, &ChessClock::switchTimer);
+        connect(clock, &ChessClock::userOut, [this]() {
+            endSlot(endnum::user_out_of_time);
+            });
+        connect(clock, &ChessClock::opponentOut, [this]() {
+            endSlot(endnum::opponent_out_of_time);
+            });
+
+        connect(ui->resign_button, &QPushButton::clicked, this, &MainWindow::on_resign_button_clicked);
+        connect(ui->draw_button, &QPushButton::clicked, this, &MainWindow::on_draw_button_clicked);
+        connect(this, &MainWindow::editReturnPressed, this, &MainWindow::editReturnSlot);
+
+        clock->startTimer();
+    }
 
 	showStatus("Ready? Go!");
-	clock->startTimer();
     game_active = true;
 }
 
@@ -307,7 +312,8 @@ void MainWindow::endSlot(endnum end_type)  // FIX: white_wins and black_wins enu
         return;
     }
 
-    net->sendToServer(package_ty::end_game);
+    if (settings.value("game_regime").toString() == "friend_online")
+        net->sendToServer(package_ty::end_game);
     showStatus(info_message);
     QMessageBox msg_box;
     msg_box.setWindowTitle("The end");
@@ -407,19 +413,13 @@ void MainWindow::printMessage(QString name, bool own, QString text)
 		});
 }
 
-void MainWindow::on_actionToggle_fullscreen_triggered()
+
+void MainWindow::on_actionWith_friend_offline_triggered()
 {
-    static bool fullscreen = false;
-    if (fullscreen){
-        showMaximized();
-        if (game_active)
-            statusBar()->show();
-    }
-    else{
-        showFullScreen();
-        if (game_active)
-            statusBar()->hide();
-    }
-    fullscreen = !fullscreen;
+    settings.setValue("match_side", true);
+    opp_pic = default_pic;
+    settings.setValue("opp_name", "Friend");
+    settings.setValue("game_regime", "friend_offline");
+    startGame();
 }
 

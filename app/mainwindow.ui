@@ -6291,7 +6291,7 @@ border-radius: 14;</string>
      <property name="title">
       <string>Offline</string>
      </property>
-     <addaction name="actionWith_AI_2"/>
+     <addaction name="actionWith_friend_offline"/>
      <addaction name="actionWith_friend_2"/>
      <addaction name="actionTraining"/>
     </widget>
@@ -6394,7 +6394,7 @@ border-radius: 14;</string>
     <string>Randomly</string>
    </property>
   </action>
-  <action name="actionWith_AI_2">
+  <action name="actionWith_friend_offline">
    <property name="text">
     <string>With friend</string>
    </property>

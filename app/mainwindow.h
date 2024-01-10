@@ -59,7 +59,6 @@ protected:
 	QPixmap user_pic;
 	QPixmap opp_pic;
     QPixmap default_pic;
-	QSettings settings;
     int regime;
 
 	void startGame();
@@ -69,6 +68,8 @@ protected:
 public:
 	MainWindow(QWidget* parent = 0);
 	~MainWindow();
+
+    QSettings settings;
 
 signals:
 	void timeToSwitchTime();
@@ -92,6 +93,8 @@ private slots:
     void on_end_login_button_clicked();
     void on_back_from_login_button_clicked();
     void on_actionToggle_fullscreen_triggered();
+
+    void on_actionWith_friend_offline_triggered();
 
 protected slots:
 	void endSlot(endnum end_type);
