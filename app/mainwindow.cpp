@@ -243,6 +243,10 @@ void MainWindow::startGame() // side true for user - white
 
         clock->startTimer();
     }
+    else if (settings.value("game_regime").toString() == "friend_offline"){
+        ui->user_timer->setText("");
+        ui->opponent_timer->setText("");
+    }
 
 	showStatus("Ready? Go!");
     game_active = true;
