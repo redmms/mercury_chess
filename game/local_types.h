@@ -28,6 +28,8 @@ enum package_ty : quint8 {
     no_such_user,
     opponent_disconnected,
     none,
+    wrong_password,
+    user_offline,
     already_registered
 };
 
@@ -81,3 +83,42 @@ inline QString curTime()
 {
     return QDateTime::currentDateTime().toString("hh:mm:ss.zzz");
 }
+
+#include <QMessageBox>
+inline void showBox(QString header,
+                    QString text,
+                    QMessageBox::Icon icon_type = QMessageBox::Information)
+{
+    QMessageBox msg_box;
+    msg_box.setWindowTitle(header);
+    msg_box.setText(text);
+    msg_box.setIcon(icon_type);
+    msg_box.addButton("Ok", QMessageBox::AcceptRole);
+    msg_box.addButton("Hate you, but Ok", QMessageBox::RejectRole);
+    msg_box.exec();
+}
+
+
+//#include <QMessageBox>
+//#include <functional>
+//inline void showBox(QString header,
+//                    QString text,
+//                    QMessageBox::Icon icon_type = QMessageBox::Information,
+//                    std::function<void()> accept_func = nullptr,
+//                    std::function<void()> reject_func = nullptr)
+//{
+//    QMessageBox msg_box;
+//    msg_box.setWindowTitle(header);
+//    msg_box.setText(text);
+//    msg_box.setIcon(icon_type);
+//    msg_box.addButton("Ok", QMessageBox::AcceptRole);
+//    msg_box.addButton("Hate you, but Ok", QMessageBox::RejectRole);
+//    if (accept_func != nullptr){
+//        QObject::connect(&msg_box, QMessageBox::AcceptRole, accept_func);
+//    }
+//    if (reject_func != nullptr){
+//        QObject::connect(&msg_box, QMessageBox::RejectRole, reject_func);
+//    }
+//    msg_box.exec();
+//}
+

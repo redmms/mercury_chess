@@ -1,6 +1,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "C:\Qt_projects\multicolor_chess\src\game\board.h"
+#include "C:\Qt_projects\multicolor_chess\src\game\validation.h"
 #include "C:\Qt_projects\multicolor_chess\src\game\clock.h"
 #include "C:\Qt_projects\multicolor_chess\src\game\local_types.h"
 #include "webclient.h"
@@ -25,6 +26,7 @@
 #include <QApplication>
 #include <QDebug>
 #include <QKeyEvent>
+#include <QCryptographicHash>
 
 MainWindow::MainWindow(QWidget* parent) :
 	QMainWindow(parent),
@@ -48,7 +50,7 @@ MainWindow::MainWindow(QWidget* parent) :
     max_message_width{},
     rounded_area(new RoundedScrollArea(this)),
     game_active(false),
-    regime(0),
+    login_regime(0),
     waiting_for_invite_respond(false)
 {
 	// .ui file finish strokes
@@ -63,6 +65,8 @@ MainWindow::MainWindow(QWidget* parent) :
     ui->statusBar->hide();
     ui->draw_button->disconnect();
     ui->resign_button->disconnect();
+    ui->menuOnline->setEnabled(false);
+    ui->actionProfile->setEnabled(false);
 
 	std::srand(std::time(nullptr));
 
@@ -175,13 +179,9 @@ void MainWindow::openTab(QWidget* page)
 
 void MainWindow::openStopGameDialog()
 {
-    QMessageBox msg_box;
-    msg_box.setWindowTitle("Stop active game");
-    msg_box.setText("Stop your current game at first.");
-    msg_box.setIcon(QMessageBox::Warning);
-    msg_box.addButton("Ok", QMessageBox::AcceptRole);
-    msg_box.addButton("Hate you, but Ok", QMessageBox::RejectRole);
-    msg_box.exec();
+    showBox("Stop active game",
+            "Stop your current game at first.",
+            QMessageBox::Warning);
 }
 
 void MainWindow::showStatus(const QString& status) {
@@ -200,6 +200,18 @@ void MainWindow::switchGlow() // FIX: should be changed for different sides
 
 void MainWindow::startGame() // side true for user - white
 {
+    QString game_type = settings.value("game_regime").toString();
+    if (game_type == "friend_online"){
+        ui->actionProfile->setEnabled(false);
+        ui->message_edit->setPlainText("Great move! Have you studied in a clown school?");
+        ui->message_edit->installEventFilter(this);
+    }
+    else if (game_type == "friend_offline"){
+        settings.setValue("match_side", true);
+        opp_pic = default_pic;
+        settings.setValue("opp_name", "Friend");
+        ui->message_edit->setPlainText("Chat is off. But you can chat with yourself if you are a hikikomori.");
+    }
 	openTab(ui->game_tab);
     activateWindow();
 	ui->user_avatar->setPixmap(user_pic);
@@ -210,18 +222,14 @@ void MainWindow::startGame() // side true for user - white
 	(match_side ? ui->user_avatar : ui->opponent_avatar)->setGraphicsEffect(avatar_effect);
 	for (QLayoutItem* child; (child = message_layout->takeAt(0)) != nullptr; child->widget()->~QWidget()) {}
     message_box->resize(rounded_area->width(), 0);
-	ui->message_edit->setPlainText("Great move! Have you studied in a clown school?");
-	ui->actionProfile->setEnabled(false);
     ui->statusBar->show();
-    if (settings.value("game_regime").toString() == "friend_online")
-        ui->message_edit->installEventFilter(this);
 
     board = new Board(board != nullptr ? board : ui->board_background, settings);
 	// old board will be destroyed inside Board constructor
 	connect(board, &Board::newStatus, this, &MainWindow::statusSlot);
 	connect(board, &Board::theEnd, this, &MainWindow::endSlot);
 
-    if (settings.value("game_regime").toString() == "friend_online"){
+    if (game_type == "friend_online"){
         connect(board, &Board::moveMade, [this](scoord from, scoord to, char promotion_type) {
             net->sendToServer(package_ty::move, {}, {}, from, to, promotion_type);
             });
@@ -243,13 +251,14 @@ void MainWindow::startGame() // side true for user - white
 
         clock->startTimer();
     }
-    else if (settings.value("game_regime").toString() == "friend_offline"){
+    else if (game_type == "friend_offline"){
         ui->user_timer->setText("");
         ui->opponent_timer->setText("");
     }
 
 	showStatus("Ready? Go!");
     game_active = true;
+
 }
 
 void MainWindow::endSlot(endnum end_type)  // FIX: white_wins and black_wins enum values should
@@ -259,7 +268,8 @@ void MainWindow::endSlot(endnum end_type)  // FIX: white_wins and black_wins enu
         qDebug() << curTime() << "Application tried to close inactive game";
         return;
     }
-	clock->stopTimer();
+    if (settings.value("game_regime").toString() == "friend_online")
+        clock->stopTimer();
 	board->setEnabled(false);
 	ui->draw_button->disconnect();
 	ui->resign_button->disconnect();
@@ -333,6 +343,10 @@ void MainWindow::endSlot(endnum end_type)  // FIX: white_wins and black_wins enu
 
 void MainWindow::statusSlot(tatus status)
 {
+//    int i = 3;
+////    for (int i = 1; i <= 5; i++)
+//        qDebug() << curTime() << "Counted moves:" << board->valid->countMovesTest(i);
+
 	switch (status) {
 	case tatus::check_to_user:
 		sounds["check to user"]->play();
@@ -417,13 +431,8 @@ void MainWindow::printMessage(QString name, bool own, QString text)
 		});
 }
 
-
-void MainWindow::on_actionWith_friend_offline_triggered()
+void MainWindow::on_actionEnter_triggered()
 {
-    settings.setValue("match_side", true);
-    opp_pic = default_pic;
-    settings.setValue("opp_name", "Friend");
-    settings.setValue("game_regime", "friend_offline");
-    startGame();
+    openTab(ui->pre_tab);
 }
 

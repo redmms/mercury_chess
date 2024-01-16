@@ -4,6 +4,8 @@
 #include "local_types.h"
 #include "tile.h"
 #include <QDebug>
+#include <iostream>
+
 using namespace std;
 using lambda = function<bool(scoord)>;
 using checker = function<bool(scoord, bool&)>;
@@ -108,7 +110,7 @@ bool Validation::isValid(Tile* tile)
 
 bool Validation::empty()
 {
-	return valid_moves.empty();
+    return valid_moves.empty();
 }
 
 bool Validation::inCheck(bool color)
@@ -129,7 +131,7 @@ bool Validation::inStalemate(bool color)
 		for (int y = 0; y < 8; y++) {
 			if (occupied({ x, y }) && !differentColor({ x, y })) {
 				findValid(theTile({ x, y }));
-				if (!empty()) {
+                if (!empty()) {
 					valid_moves.clear();
 					return false;
 				}
@@ -262,9 +264,38 @@ void Validation::findValid(Tile* from_tile)
 		};
 
 	// Lambdas about king:
-	auto exposureKing = [&](scoord coord) -> bool {
+    auto exposureKing = [&](scoord coord) -> bool {
+
+        X = from.x - king.x,
+        Y = from.y - king.y;
+        bool from_aligns_king = abs(X) == abs(Y) || !X || !Y;
+        if (from_aligns_king){
+            pove virtual_move;
+            board.moveVirtually(from_tile, theTile(coord), virtual_move);
+            auto threatensToKing = [&](scoord coord) -> bool {
+                char name = pieceName(coord);
+                return (abs(X) == abs(Y)
+                    ? differentColor(coord) && (name == 'B' || name == 'Q')
+                    : differentColor(coord) && (name == 'R' || name == 'Q'));
+                };
+            auto bordersAfter = [&](scoord coord) {
+                return inBoard(coord) && (!occupied(coord) || differentColor(coord));
+                };
+            auto checkerAfter = [&](scoord coord, bool& result) -> bool {
+                return enemyFinder(coord, threatensToKing, bordersAfter, result);
+                };
+            // FIX: it checks differentColor() 3 times or more
+            bool occurs_threat;
+            add = findDirection(king, from);
+            fastThrough(king, add, checkerAfter, occurs_threat);
+            board.revertVirtualMove(virtual_move);
+            return occurs_threat;
+        }
+        else
+            return false;
+
 		// FIX: how will it work if the king is already under check?
-		if (first_evaluation) {
+/*		if (first_evaluation) {
 			X = from.x - king.x,
 				Y = from.y - king.y;
 			bool from_aligns_king = abs(X) == abs(Y) || !X || !Y;
@@ -297,14 +328,16 @@ void Validation::findValid(Tile* from_tile)
 			}
 			first_evaluation = false;
 		}
-        return may_exposure && notAlignsKing(coord, king, from);
+        return may_exposure && notAlignsKing(coord, king, from);*/ // if not aligns king then exposure him
+        // otherwise it will protect king with its own body
 		};
 	auto letKingDie = [&](scoord coord) {
 		if (check) {
-			board.moveVirtually(from_tile, theTile(coord));
+            pove virtual_move;
+            board.moveVirtually(from_tile, theTile(coord), virtual_move);
 			bool check_remains =
 				pieceName(coord) == 'K' ? underAttack(coord) : underAttack(king);
-			board.revertMove(board.virtual_move);
+            board.revertVirtualMove(virtual_move);
 			return check_remains;
 		}
 		return false;
@@ -442,6 +475,17 @@ bool Validation::canPass(Tile* from, Tile* to)
             from->coord.y == opp_to.tile->coord.y);
 }
 
+bool Validation::canPassVirtually(Tile *from, Tile *to)
+{
+    virtu opp_from = board.virtual_move.first;
+    virtu opp_to = board.virtual_move.second;
+    return (opp_from.name == 'P' &&
+            opp_from.color != from->piece_color &&
+            abs(opp_to.tile->coord.y - opp_from.tile->coord.y) == 2 &&
+            opp_from.tile->coord.x == to->coord.x &&
+            from->coord.y == opp_to.tile->coord.y);
+}
+
 bool Validation::canPromote(Tile* pawn, Tile* destination)
 {
 	return pawn->piece_name == 'P' && destination->coord.y == (board.turn ? 7 : 0);
@@ -451,5 +495,97 @@ void Validation::reactOnMove(scoord from, scoord to)
 {
 	for (int i = 0; i < 6; i++)
 		if (from == rooks_kings[i] || to == rooks_kings[i])
-			has_moved[i] = true;
+            has_moved[i] = true;
 }
+
+qint64 Validation::countMovesTest(int depth, int i)
+{
+    static bool initial_turn_copy = board.turn;
+    static virtu tiles_copy [8][8];
+    qint64 particular_move_count = 0;
+    if (i == 0)
+    {
+        initial_turn_copy = board.turn;
+        particular_move_count = 0;
+        for (int x = 0; x < 8; x++)
+            for (int y = 0; y < 8; y++)
+                tiles_copy[x][y] = board[x][y]->toVirtu();
+    }
+    if (i < depth)
+    {
+        for (int x = 0; x < 8; x++)
+        {
+            for (int y = 0; y < 8; y++)
+            {
+                scoord coord = {x, y};
+                Tile* tile = theTile({x, y});
+                if (occupied(coord) && !differentColor(coord))
+                {
+                    findValid(tile);
+                    if (i == depth - 1)
+                        particular_move_count += valid_moves.size();
+                    auto valid_moves_copy = valid_moves;
+                    valid_moves.clear();
+                    if (i != depth - 1)
+                    {
+                        for (auto move : valid_moves_copy)
+                        {
+                            pove last_move;
+                            board.moveVirtually(tile, move, last_move);
+                            board.turn = !board.turn;
+                            inCheck(board.turn);
+                            reactOnMove(tile->coord, move->coord);
+                            auto mc = countMovesTest(depth, i + 1);
+                            if (i == 0)
+                            {
+//                                qDebug() << char('a' + x) +
+//                                            QString::number(y + 1) +
+//                                            char('a' + move->coord.x) +
+//                                            QString::number(move->coord.y + 1)
+//                                         << "-"
+//                                         << mc;
+//                                qDebug() << curTime()
+//                                         << "From"
+//                                         << char('a' + x) + QString::number(y + 1)
+//                                         << "to"
+//                                         << char('a' + move->coord.x) + QString::number(move->coord.y + 1)
+//                                         << "-"
+//                                         << mc;
+                            }
+                            particular_move_count += mc;
+                            board.revertVirtualMove(last_move);
+                            board.turn = !board.turn;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    if (i == 0){
+        for (int x = 0; x < 8; x++) {
+            for (int y = 0; y < 8; y++) {
+                board.restoreTile(tiles_copy[x][y]);
+            }
+        }
+        board.turn = initial_turn_copy;
+    }
+    return particular_move_count;
+}
+
+// lines down here is for debugging:
+//                    std::list<scoord> valid_coords_copy;
+//                    for (auto move : valid_moves){
+//                        valid_coords_copy.push_back(move->coord);
+//                    }
+//
+
+    // for every possible move you need to make a virtual move and than repeat the counting cycle
+    // with new board situation
+    // but board saves only 1 last move, so you need to save initial position at first,
+    // otherwise you will not be able to restore it
+    // and maybe I need to create some function that will restore copy all tile from a saved
+    // board to original one
+
+    // but a simple solution would be to just copy a board
+
+

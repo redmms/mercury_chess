@@ -35,6 +35,7 @@ public:
 	void dyeNormal();
 	void dyeSelected();
 	void dyeValid();
+    virtu toVirtu();
 
 signals:
 	void tileClicked(Tile* tile);

@@ -50,8 +50,10 @@ public:
     bool inStalemate(bool color);
     bool canCastle(Tile* from, Tile* to, Tile** rook);
     bool canPass(Tile* from, Tile* to);
+    bool canPassVirtually(Tile* from, Tile* to);
     bool canPromote(Tile* pawn, Tile* destination);
     void reactOnMove(scoord from, scoord to);
+    qint64 countMovesTest(int depth = 5, int i = 0);
 };
 
 #endif // VALIDATION_H

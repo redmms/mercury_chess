@@ -34,24 +34,18 @@ void WebClient::initSocket()
         if (socket->state() == QAbstractSocket::UnconnectedState){
             qDebug() << curTime() << "Couldn't connect to server:";
             qDebug() << curTime() << socketError;
-            QMessageBox msg_box;
-            msg_box.setWindowTitle("No connection");
-            msg_box.setText("You are offline. Contact me by mmd18cury@yandex.ru to start the server.");
-            msg_box.setIcon(QMessageBox::Warning);
-            msg_box.addButton("Ok", QMessageBox::AcceptRole);
-            msg_box.addButton("Hate you, but Ok", QMessageBox::RejectRole);
-            msg_box.exec();
+            showBox("No connection",
+                    "You are offline. Contact me by mmd18cury@yandex.ru to start the server.",
+                    QMessageBox::Warning);
+//            mainwindow->settings.setValue("game_regime", "friend_offline");
+//            mainwindow->startGame();
         }
         else if (socket->state() != QAbstractSocket::ConnectedState){
             qDebug() << curTime() << "Error occured while trying to connect to server:";
             qDebug() << curTime() << socketError;
-            QMessageBox msg_box;
-            msg_box.setWindowTitle("No connection");
-            msg_box.setText("No connection, some error occured. Contact me by mmd18cury@yandex.ru.");
-            msg_box.setIcon(QMessageBox::Warning);
-            msg_box.addButton("Ok", QMessageBox::AcceptRole);
-            msg_box.addButton("Hate you, but Ok", QMessageBox::RejectRole);
-            msg_box.exec();
+            showBox("No connection",
+                    "No connection, some error occured. Contact me by mmd18cury@yandex.ru.",
+                    QMessageBox::Warning);
         }
         else{
             qDebug() << curTime() << "Socket error signal received, but socket state is connected:";
@@ -72,12 +66,9 @@ void WebClient::initSocket()
         if (mainwindow->game_active)
             mainwindow->endSlot(endnum::server_disconnected);
 
-        QMessageBox msg_box;
-        msg_box.setWindowTitle("Connection failed");
-        msg_box.setText("Lost connection with server, register again. What else did you expect from a noncommercial project?");
-        msg_box.addButton("Love you, ready to donate.", QMessageBox::AcceptRole);
-        msg_box.setIcon(QMessageBox::Critical);
-        msg_box.exec();
+        showBox("Connection failed",
+                "Lost connection with server, log in again. What else did you expect from a noncommercial project?",
+                QMessageBox::Critical);
 
         mainwindow->openTab(mainwindow->ui->pre_tab);
 
@@ -114,7 +105,7 @@ void WebClient::connectToServer()
 //    if (socket->state() == QAbstractSocket::UnconnectedState)
 
     socket->connectToHost("40.113.33.140", 49001);  // /*"192.168.0.10"*/ "127.0.0.1"
-    //socket->connectToHost("127.0.0.1", 443);  // /*"192.168.0.10"*/ "127.0.0.1"
+    //socket->connectToHost("127.0.0.1", 49001);  // /*"192.168.0.10"*/ "127.0.0.1"
 
     //auto copy_state = socket->state();
 }
@@ -174,11 +165,13 @@ void WebClient::sendToServer(package_ty type, bool respond, QString message, sco
     case package_ty::registration:
         writePack(package_ty::registration);
         writePack(mainwindow->settings.value("user_name").toString());
+        writePack(mainwindow->settings.value("user_pass").toByteArray());
         // FIX: add check of "user_name" setting exist. P.S. no need
         break;
     case package_ty::login:
         writePack(package_ty::login);
         writePack(mainwindow->settings.value("user_name").toString());
+        writePack(mainwindow->settings.value("user_pass").toByteArray());
         break;
     case package_ty::invite:
         writePack(package_ty::invite);
@@ -283,6 +276,7 @@ void WebClient::readFromServer()
                 mainwindow->opp_pic = mainwindow->default_pic;
             mainwindow->settings.setValue("match_side", side);
             mainwindow->settings.setValue("time_setup", int(time));
+            mainwindow->settings.setValue("game_regime", "friend_online");
             mainwindow->startGame();
             sendToServer(package_ty::invite_respond, true);
         });
@@ -380,13 +374,9 @@ void WebClient::readFromServer()
     case package_ty::no_such_user:
     {
         qDebug() << curTime() << "No such user signal received";
-        QMessageBox msg_box;
-        msg_box.setWindowTitle("No such user");
-        msg_box.setText("Player with this nickname wasn't found");
-        msg_box.setIcon(QMessageBox::Warning);
-        msg_box.addButton("Ok", QMessageBox::AcceptRole);
-        msg_box.addButton("Hate you, but Ok", QMessageBox::RejectRole);
-        msg_box.exec();
+        showBox("No such user",
+                "Player with this nickname wasn't found",
+                QMessageBox::Warning);
         emit endedReadingInvite();
         break;
     }
@@ -399,33 +389,45 @@ void WebClient::readFromServer()
     case package_ty::already_registered:
     {
         qDebug() << curTime() << "Already registered signal received";
-        QMessageBox msg_box;
-        msg_box.setWindowTitle("Already registered");
-        msg_box.setText("A user with this nickname is already registered. You need to work out a new one.");
-        msg_box.setIcon(QMessageBox::Warning);
-        msg_box.addButton("Ok", QMessageBox::AcceptRole);
-        msg_box.addButton("Hate you, but Ok", QMessageBox::RejectRole);
-        msg_box.exec();
+        showBox("Already registered",
+                "A user with this nickname is already registered. You need to work out a new one.",
+                QMessageBox::Warning);
         mainwindow->openTab(mainwindow->ui->login_tab);
         break;
     }
     case package_ty::success:
     {
         qDebug() << curTime() << "Success signal received";
-        QMessageBox msg_box;
-        msg_box.setWindowTitle("Good news");
-        msg_box.setText("Operation done successfuly.");
-        msg_box.setIcon(QMessageBox::Information);
-        msg_box.addButton("Ok", QMessageBox::AcceptRole);
-        msg_box.addButton("Hate you, but Ok", QMessageBox::RejectRole);
-        msg_box.exec();
-        if (mainwindow->regime == 2)
+        showBox("Good news",
+                "Operation done successfuly.");
+
+        if (mainwindow->login_regime == 2){
             mainwindow->openTab(mainwindow->ui->pre_tab);
-        else if (mainwindow->regime == 1)
+            mainwindow->ui->login_password->clear();
+        }
+        else if (mainwindow->login_regime == 1){
             mainwindow->openTab(mainwindow->ui->friend_connect_tab);
-        else if (mainwindow->regime == 3)
-            mainwindow->regime = 1;
+            mainwindow->ui->menuOnline->setEnabled(true);
+            mainwindow->ui->actionProfile->setEnabled(true);
+            mainwindow->ui->login_password->clear();
+        }
+        else if (mainwindow->login_regime == 3){
+            mainwindow->login_regime = 1;
+            mainwindow->ui->login_password->clear();
+        }
         break;
+    }
+    case package_ty::wrong_password:
+    {
+        showBox("Wrong password",
+                "I understand you perfectly, I also have a bad memory. Should I advise you some memory pills?",
+                QMessageBox::Warning);
+    }
+    case package_ty::user_offline:
+    {
+        showBox("User offline",
+                "Suggested user is offline.");
+        emit endedReadingInvite();
     }
     }
     read_package.clear();

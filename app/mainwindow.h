@@ -59,7 +59,7 @@ protected:
 	QPixmap user_pic;
 	QPixmap opp_pic;
     QPixmap default_pic;
-    int regime;
+    int login_regime;
 
 	void startGame();
 	void printMessage(QString name, bool own, QString text);
@@ -95,6 +95,8 @@ private slots:
     void on_actionToggle_fullscreen_triggered();
 
     void on_actionWith_friend_offline_triggered();
+
+    void on_actionEnter_triggered();
 
 protected slots:
 	void endSlot(endnum end_type);

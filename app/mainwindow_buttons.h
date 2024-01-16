@@ -40,14 +40,9 @@ void MainWindow::on_change_name_button_clicked()
         ui->profile_name->setText(new_name);
     }
     else {
-        QMessageBox msg_box;
-        msg_box.setWindowTitle("So huge!");
-        msg_box.setText("This nickname is too long. Maximum length is " +
-            QString::number(max_nick));
-        msg_box.setIcon(QMessageBox::Warning);
-        msg_box.addButton("Ok", QMessageBox::AcceptRole);
-        msg_box.addButton("Hate you, but Ok", QMessageBox::RejectRole);
-        msg_box.exec();
+        showBox("So huge!",
+                "This nickname is too long. Maximum length is " + QString::number(max_nick),
+                QMessageBox::Warning);
     }
     //    QMessageBox msgBox;
     //    msgBox.setWindowTitle("Notification");
@@ -65,7 +60,8 @@ void MainWindow::on_back_from_settings_clicked()
 
 void MainWindow::on_actionWith_friend_triggered()
 {
-    if (game_active)
+    QString game_regime = settings.value("game_regime").toString();
+    if (game_active && game_regime == "friend_online")
         openStopGameDialog(); //FIX: need to be added to all play action slots in the future, when actions'll be added
     else
         openTab(ui->friend_connect_tab);
@@ -74,35 +70,49 @@ void MainWindow::on_actionWith_friend_triggered()
 void MainWindow::on_login_button_clicked()
 {
     openTab(ui->login_tab);
-    regime = 1;
+    login_regime = 1;
 }
 
 void MainWindow::on_registrate_button_clicked()
 {
     openTab(ui->login_tab);
-    regime = 2;
+    login_regime = 2;
 }
 
 void MainWindow::on_end_login_button_clicked()
 {
     QString entered_username = ui->login_edit->text();
-    if (entered_username.size() <= max_nick) {
-        settings.setValue("user_name", entered_username);
-        ui->profile_name->setText(entered_username);
-        if (regime == 2)
-            net->sendToServer(package_ty::registration);
-        else if (regime == 1)
-            net->sendToServer(package_ty::login);
+    if (ui->login_password->text().isEmpty()){
+        showBox("Too small for the party!",
+                "You need to enter a login",
+                QMessageBox::Warning);
     }
-    else{
-        QMessageBox msg_box;
-        msg_box.setWindowTitle("So huge!");
-        msg_box.setText("This nickname is too long. Maximum length is " +
-            QString::number(max_nick));
-        msg_box.setIcon(QMessageBox::Warning);
-        msg_box.addButton("Ok", QMessageBox::AcceptRole);
-        msg_box.addButton("Hate you, but Ok", QMessageBox::RejectRole);
-        msg_box.exec();
+    else if (entered_username.isEmpty()){
+        showBox("Too small for the party!",
+                "You need to enter a password",
+                QMessageBox::Warning);
+    }
+    else if (entered_username.size() > max_nick){
+        showBox("So huge!",
+                "This nickname is too long. Maximum length is " + QString::number(max_nick),
+                QMessageBox::Warning);
+    }
+    else if (ui->login_password->text().size() < 6){
+        showBox("Too small for the party!",
+                "The password should be at least 7 symbols long",
+                QMessageBox::Warning);
+    }
+    else {
+         settings.setValue("user_name", entered_username);
+         QCryptographicHash hasher(QCryptographicHash::Sha512);
+         hasher.addData(ui->login_password->text().toLocal8Bit());
+         QByteArray hashed_password = hasher.result();
+         settings.setValue("user_pass", hashed_password);
+         ui->profile_name->setText(entered_username);
+         if (login_regime == 2)
+            net->sendToServer(package_ty::registration);
+         else if (login_regime == 1)
+            net->sendToServer(package_ty::login);
     }
 }
 
@@ -113,7 +123,7 @@ void MainWindow::on_back_from_login_button_clicked()
 
 void MainWindow::on_guest_button_clicked()
 {
-    regime = 3;
+    login_regime = 3;
     QString random_username = "Lazy" + QString::number(std::rand() % (int)std::pow(10, max_nick - 4));
     settings.setValue("user_name", random_username);
     net->sendToServer(package_ty::registration);
@@ -130,31 +140,19 @@ void MainWindow::on_send_invite_button_clicked() // FIX: here - package_ty::invi
     QString friend_name = ui->friend_name_edit->text();
     QString user_name = settings.value("user_name").toString();
     if (!chosen_time) {
-        QMessageBox msg_box;
-        msg_box.setWindowTitle("Set up match timer");
-        msg_box.setText("You need to choose initial time for chess clock.");
-        msg_box.setIcon(QMessageBox::Warning);
-        msg_box.addButton("Ok", QMessageBox::AcceptRole);
-        msg_box.addButton("Hate you, but Ok", QMessageBox::RejectRole);
-        msg_box.exec();
+        showBox("Set up match timer",
+                "You need to choose initial time for chess clock.",
+                QMessageBox::Warning);
     }
     else if (friend_name.isEmpty()) {
-        QMessageBox msg_box;
-        msg_box.setWindowTitle("Enter friend's name");
-        msg_box.setText("You need to choose friend's name.");
-        msg_box.setIcon(QMessageBox::Warning);
-        msg_box.addButton("Ok", QMessageBox::AcceptRole);
-        msg_box.addButton("Hate you, but Ok", QMessageBox::RejectRole);
-        msg_box.exec();
+        showBox("Enter friend's name",
+                "You need to choose friend's name.",
+                QMessageBox::Warning);
     }
     else if (friend_name == user_name) {
-        QMessageBox msg_box;
-        msg_box.setWindowTitle("Too cunning");
-        msg_box.setText("You can't send invite to yourself");
-        msg_box.setIcon(QMessageBox::Warning);
-        msg_box.addButton("Ok", QMessageBox::AcceptRole);
-        msg_box.addButton("Hate you, but Ok", QMessageBox::RejectRole);
-        msg_box.exec();
+        showBox("Too cunning",
+                "You can't send invite to yourself",
+                QMessageBox::Warning);
     }
     else {
         QEventLoop loop; // FIX: should whow "Waiting for friend's respond" message with a rolling widget
@@ -213,4 +211,10 @@ void MainWindow::on_actionToggle_fullscreen_triggered()
             statusBar()->hide();
     }
     fullscreen = !fullscreen;
+}
+
+void MainWindow::on_actionWith_friend_offline_triggered()
+{
+    settings.setValue("game_regime", "friend_offline");
+    startGame();
 }

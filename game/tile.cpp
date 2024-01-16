@@ -134,5 +134,10 @@ void Tile::dyeValid()
 			.arg(css_colors["valid"][1]).arg(css_colors["hover"][1]));
 	else
 		setStyleSheet(QString("QLabel{background-color: %0;}:hover{background-color: %1;}")
-			.arg(css_colors["valid"][0]).arg(css_colors["hover"][0]));
+                      .arg(css_colors["valid"][0]).arg(css_colors["hover"][0]));
+}
+
+virtu Tile::toVirtu()
+{
+    return {this, this->piece_color, this->piece_name};
 }

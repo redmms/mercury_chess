@@ -34,7 +34,8 @@ Board::Board(QLabel* background = 0, const QSettings& settings_par = {}) :
 		"hover{"
 		"background-color: rgb(170,85,127);}"
     ),
-    last_promotion('e')
+    last_promotion('e'),
+    last_virtually_passed{}
 {
 	setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
 	setMinimumSize(396, 396);
@@ -197,27 +198,35 @@ void Board::openPromotion(Tile* from)
 
 void Board::saveMove(Tile* from, Tile* to, pove& move)
 {
-	move.first = { from, from->piece_color, from->piece_name };
-	move.second = { to, to->piece_color, to->piece_name };
+    move.first = from->toVirtu();
+    move.second = to->toVirtu();
 }
 
-void Board::revertMove(pove& move)
+void Board::revertVirtualMove(pove& move)
 {
 	virtu from = move.first;
 	virtu to = move.second;
-	from.tile->piece_name = from.name;
-	from.tile->piece_color = from.color;
-	to.tile->piece_name = to.name;
-	to.tile->piece_color = to.color;
-	move = {};
+    restoreTile(from);
+    restoreTile(to);
+    if (last_virtually_passed.tile != nullptr){
+        restoreTile(last_virtually_passed);
+    }
+    move = {};
 }
 
-void Board::moveVirtually(Tile* from, Tile* to)
+void Board::moveVirtually(Tile* from, Tile* to, pove& move)
 {
-	saveMove(from, to, virtual_move);
-	to->piece_color = from->piece_color;
-	to->piece_name = from->piece_name;
-	from->piece_name = 'e';
+    if (valid->canPassVirtually(from, to)){
+        last_virtually_passed = tiles[to->coord.x][from->coord.y]->toVirtu();
+        tiles[to->coord.x][from->coord.y]->piece_name = 'e';
+    }
+    else{
+        last_virtually_passed.tile = nullptr;
+    }
+    saveMove(from, to, move);
+    to->piece_color = from->piece_color;
+    to->piece_name = from->piece_name;
+    from->piece_name = 'e';
 }
 
 void Board::moveNormally(Tile* from, Tile* to)
@@ -242,7 +251,13 @@ void Board::castleKing(Tile* king, Tile* destination, Tile* rook)
 void Board::passPawn(Tile* from, Tile* to)
 {
 	moveNormally(from, to);
-	tiles[to->coord.x][from->coord.y]->setPiece('e', 0);
+    tiles[to->coord.x][from->coord.y]->setPiece('e', 0);
+}
+
+void Board::restoreTile(virtu saved)
+{
+    saved.tile->piece_color = saved.color;
+    saved.tile->piece_name = saved.name;
 }
 
 void Board::promotePawn(Tile* tile)
@@ -303,9 +318,28 @@ void Board::halfMove(Tile* from, Tile* to)
 		emit theEnd(endnum::draw_by_stalemate);
 	else
 		emit newStatus(emit_status);
-
-
 }
+
+//void Board::virtualHalfMove(Tile* from, Tile* to, char promo_ty_par)
+//{ // just a prototype
+//	if (Tile* rook; valid->canCastle(from, to, &rook)) {
+//		//castleKingVirtually(from, to, rook);
+//	}
+//	else
+//		moveVirtually(from, to);
+
+//	if (valid->canPromote(to, to)) {
+//        if (turn == side){
+//            //openPromotion(to);  // waits until the signal from a tile received
+//            last_promotion = promo_ty_par;
+//            promotePawn(to);
+//        }
+//	}
+
+//	turn = !turn;
+//	valid->inCheck(turn);
+//    valid->reactOnMove(from->coord, to->coord);
+//}
 
 
 

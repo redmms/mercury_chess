@@ -40,13 +40,15 @@ public:
 	QString board_css;
 	QString promo_css;
     char last_promotion;
+    virtu last_virtually_passed;
 
 	void saveMove(Tile* from, Tile* to, pove& move);
-	void revertMove(pove& move);
-	void moveVirtually(Tile* from, Tile* to);
+    void revertVirtualMove(pove& move);
+    void moveVirtually(Tile* from, Tile* to, pove& move);
 	void moveNormally(Tile* from, Tile* to);
 	void castleKing(Tile* king, Tile* destination, Tile* rook);
 	void passPawn(Tile* from, Tile* to);
+    void restoreTile(virtu saved);
 
 	auto operator [](int i) {
 		return tiles[i];
