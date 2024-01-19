@@ -12,15 +12,15 @@ Board::Board(QLabel* background = 0, const QSettings& settings_par = {}) :
     settings(settings_par),
     side(settings.value("match_side").toBool()),  // true for user on white side
 	valid(new Validation(this)),
-	tiles{ { NULL } },
-	turn(true),  // true for white turn;
-	from_tile(nullptr),  // always actualized in Tile::setPiece()
-	white_king(nullptr),  // ditto
-	black_king(nullptr),  // ditto
-	last_move{},
+    //tiles{ { } },
+    turn(true),  // true for white turn;
+    from_tile{},  // always actualized in Tile::setPiece()
+    white_king{},  // ditto
+    black_king{},  // ditto
+    last_move{},
 	virtual_move{},
-	menu{},
-	board_css(
+    //menu{},
+    board_css(
 		"Board{"
 		"background-color: rgb(170, 170, 125);"
 		"border: 1 solid black;"
@@ -50,35 +50,35 @@ Board::Board(QLabel* background = 0, const QSettings& settings_par = {}) :
 
 	drawLetters(side);
 	drawNumbers(side);
-	drawTiles(side);
+    drawTiles(side);
 }
 
 void Board::reactOnClick(Tile* tile) {
-	if (from_tile == nullptr) {
+    if (!from_tile) {
 		// if it's first click then pick the piece and
 		// show valid moves
         if (turn == tile->piece_color &&
                 (side == tile->piece_color ||
                  settings.value("game_regime").toString() != "friend_online") &&
                 tile->piece_name != 'e') {
-			from_tile = tile;
+            from_tile = tile; // FIX: are you sure?
 			valid->showValid(tile);
 		}
 	}
-	else if (tile != from_tile && turn == tile->piece_color && tile->piece_name != 'e') {
+    else if (tile != from_tile.data() && turn == tile->piece_color && tile->piece_name != 'e') {
 		// if the second click
 		// is on the piece of same color then pick it instead
 		valid->hideValid();
-		from_tile = tile;
+        from_tile = tile;
 		valid->showValid(tile);
 	}
 	else if (valid->isValid(tile)) {
 		// if it's the second click and move is valid
 		// then move pieces
         valid->hideValid();
-		halfMove(from_tile, tile);
+        halfMove(from_tile.data(), tile);
         valid->reactOnMove(from_tile->coord, tile->coord);
-		from_tile = nullptr;
+        from_tile = nullptr;
 	}
 	else
 		emit newStatus(tatus::invalid_move);
@@ -143,37 +143,37 @@ void Board::drawTiles(bool side)
 {
 	for (int y = 0; y < 8; y++) {
 		for (int x = 0; x < 8; x++) {
-			tiles[x][y] = new Tile(this, { x, y }, side);
+            tiles[x][y].reset( new Tile(this, {x, y}, side) );
 			// uses Board::tile_side bool side to coordinate itself on board, i.e. setGeometry()
-			QObject::connect(tiles[x][y], &Tile::tileClicked, this, &Board::reactOnClick);
+            QObject::connect(tiles[x][y].data(), &Tile::tileClicked, this, &Board::reactOnClick);
 		}
 	}
 
 	//black pawns
 	for (int x = 0; x < 8; x++)
-		tiles[x][6]->setPiece('P', 0);
+        tiles[x][6]->setPiece('P', 0);
 
 	//white pawns
 	for (int x = 0; x < 8; x++)
-		tiles[x][1]->setPiece('P', 1);
+        tiles[x][1]->setPiece('P', 1);
 
-	tiles[0][7]->setPiece('R', 0);
-	tiles[1][7]->setPiece('N', 0);
-	tiles[2][7]->setPiece('B', 0);
-	tiles[3][7]->setPiece('Q', 0);
-	tiles[4][7]->setPiece('K', 0);
-	tiles[5][7]->setPiece('B', 0);
-	tiles[6][7]->setPiece('N', 0);
-	tiles[7][7]->setPiece('R', 0);
+    tiles[0][7]->setPiece('R', 0);
+    tiles[1][7]->setPiece('N', 0);
+    tiles[2][7]->setPiece('B', 0);
+    tiles[3][7]->setPiece('Q', 0);
+    tiles[4][7]->setPiece('K', 0);
+    tiles[5][7]->setPiece('B', 0);
+    tiles[6][7]->setPiece('N', 0);
+    tiles[7][7]->setPiece('R', 0);
 
-	tiles[0][0]->setPiece('R', 1);
-	tiles[1][0]->setPiece('N', 1);
-	tiles[2][0]->setPiece('B', 1);
-	tiles[3][0]->setPiece('Q', 1);
-	tiles[4][0]->setPiece('K', 1);
-	tiles[5][0]->setPiece('B', 1);
-	tiles[6][0]->setPiece('N', 1);
-	tiles[7][0]->setPiece('R', 1);
+    tiles[0][0]->setPiece('R', 1);
+    tiles[1][0]->setPiece('N', 1);
+    tiles[2][0]->setPiece('B', 1);
+    tiles[3][0]->setPiece('Q', 1);
+    tiles[4][0]->setPiece('K', 1);
+    tiles[5][0]->setPiece('B', 1);
+    tiles[6][0]->setPiece('N', 1);
+    tiles[7][0]->setPiece('R', 1);
 }
 
 void Board::openPromotion(Tile* from)
@@ -182,17 +182,17 @@ void Board::openPromotion(Tile* from)
 	std::string pieces = "QNRB";
 	scoord coord = from->coord;
 	for (int i = 0; i < 4; i++, coord.y += turn ? -1 : 1) {
-        menu[i] = new Tile(this, coord, side);
-		menu[i]->setStyleSheet(promo_css);
-		menu[i]->setPiece(pieces[i], turn);
-		menu[i]->raise();
-		menu[i]->show();
-		connect(menu[i], &Tile::tileClicked, this, &Board::promotePawn);
-		connect(this, &Board::promotionEnd, &loop, &QEventLoop::quit);
+        menu[i].reset (new Tile(this, coord, side));
+        menu[i]->setStyleSheet(promo_css);
+        menu[i]->setPiece(pieces[i], turn);
+        menu[i]->raise();
+        menu[i]->show();
+        connect(menu[i].data(), &Tile::tileClicked, this, &Board::promotePawn);
+        connect(this, &Board::promotionEnd, &loop, &QEventLoop::quit);
 	}
 	for (int x = 0; x < 8; x++)
 		for (int y = 0; y < 8; y++)
-			tiles[x][y]->setEnabled(false);
+            tiles[x][y]->setEnabled(false);
 	loop.exec();
 }
 
@@ -234,8 +234,8 @@ void Board::moveNormally(Tile* from, Tile* to)
     if (turn == side)
         valid->hideValid(); // FIX: should be called only if it was our turn
 	saveMove(from, to, last_move); // should be used before moving
-	to->setPiece(from->piece_name, from->piece_color);
-	from->setPiece('e', 0);
+    to->setPiece(from->piece_name, from->piece_color);
+    from->setPiece('e', 0);
 }
 
 void Board::castleKing(Tile* king, Tile* destination, Tile* rook)
@@ -245,7 +245,7 @@ void Board::castleKing(Tile* king, Tile* destination, Tile* rook)
 	// the rook is always on the left or right side of king after castling
 	int x = destination->coord.x + k;
 	int y = destination->coord.y;
-	moveNormally(rook, tiles[x][y]);
+    moveNormally(rook, tiles[x][y].data());
 }
 
 void Board::passPawn(Tile* from, Tile* to)
@@ -262,11 +262,10 @@ void Board::restoreTile(virtu saved)
 
 void Board::promotePawn(Tile* tile)
 {
-	last_move.second.tile->setPiece(tile->piece_name, tile->piece_color);
+    last_move.second.tile->setPiece(tile->piece_name, tile->piece_color);
     last_promotion = tile->piece_name;
 	for (int i = 0; i < 4; i++) {
 		menu[i]->~Tile();
-		menu[i] = 0;
 	}
 	for (int x = 0; x < 8; x++)
 		for (int y = 0; y < 8; y++)

@@ -73,9 +73,10 @@ struct scoord{
 
 class Tile;
 struct virtu{
-    Tile* tile;
-    bool color;
-    char name;
+//    virtu(){tile = nullptr; color = false; name = 'e';}
+    Tile* tile /*= nullptr*/;
+    bool color/* = false*/;
+    char name/* = 'e'*/;
 };
 
 #include <QDateTime>

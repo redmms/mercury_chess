@@ -1,6 +1,5 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
-#include "qmainwindow.h"
 #include "qbitmap.h"
 #include "qfont.h"
 #include "qfontmetrics.h"
@@ -12,14 +11,21 @@
 #include "qobject.h"
 #include <bitset>
 #include <map>
-class Board;
-class ChessClock;
+#include <QScopedPointer>
+#include "../game/board.h"
+#include <QGraphicsDropShadowEffect>
+#include <QSoundEffect>
+#include "../game/clock.h"
+#include <QVBoxLayout>
+#include <QMainWindow>
+#include <QWidget>
+#include "ui_mainwindow.h"
+#include <QSharedPointer>
+#include <QPointer>
+
 class QEvent;
-class QGraphicsDropShadowEffect;
 class QObject;
-class QSoundEffect;
 class QVBoxLayout;
-class QWidget;
 class WebClient;
 
 namespace Ui
@@ -31,20 +37,20 @@ class MainWindow : public QMainWindow
 {
 	Q_OBJECT
 
-	Board* board;
-	ChessClock* clock;
-	WebClient* net;
-	std::map<std::string, QSoundEffect*> sounds;
-	QGraphicsDropShadowEffect* avatar_effect;
+    QScopedPointer<Board> board;
+    QScopedPointer<ChessClock> clock;
+    QScopedPointer<WebClient> net;
+    std::map<std::string, QScopedPointer<QSoundEffect>> sounds;
+    QScopedPointer<QGraphicsDropShadowEffect> avatar_effect;
 	QBitmap pic_mask;
-	QWidget* last_tab;
+    QPointer<QWidget> last_tab;
 	const int max_nick;
-	QVBoxLayout* message_layout;
-	QWidget* message_box;
+    QScopedPointer<QVBoxLayout> message_layout;
+    QScopedPointer<QWidget> message_box;
 	QFont message_font;
 	QFontMetrics message_metrics;
 	int max_message_width;
-    RoundedScrollArea* rounded_area;
+    QScopedPointer<RoundedScrollArea> rounded_area;
     bool game_active;
     bool waiting_for_invite_respond;
 
@@ -54,8 +60,9 @@ class MainWindow : public QMainWindow
     void openStopGameDialog();
 
 	friend class WebClient;
+
 protected:
-    Ui::MainWindow* ui;
+    QScopedPointer<Ui::MainWindow> ui;
 	QPixmap user_pic;
 	QPixmap opp_pic;
     QPixmap default_pic;
@@ -67,7 +74,6 @@ protected:
 
 public:
 	MainWindow(QWidget* parent = 0);
-	~MainWindow();
 
     QSettings settings;
 

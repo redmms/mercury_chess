@@ -25,6 +25,9 @@ class Tile : public QLabel
 
 public:
 	Tile(Board* mother_board = 0, scoord coord = { 0, 0 }, bool side = true);
+    ~Tile(){
+        this->~QLabel();
+    }
 
 	scoord coord;
 	bool tile_color;

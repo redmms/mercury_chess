@@ -37,7 +37,7 @@ Validation::Validation(Board* mother_board) :
 	perp_dir{ { 0,  1 }, { 0,  -1 }, { 1,  0 },  { -1, 0 } },
 	diag_dir{ { 1,  1 }, { 1, -1 },  { -1,  1 }, { -1, -1 } },
 	theTile([this](scoord coord) -> Tile* {
-        return board[coord.x][coord.y];
+        return board[coord.x][coord.y].data();
 		}),
 	inBoard([](scoord coord) -> bool {
         return coord.x >= 0 && coord.x < 8 && coord.y >= 0 && coord.y < 8;
@@ -115,13 +115,13 @@ bool Validation::empty()
 
 bool Validation::inCheck(bool color)
 {
-	Tile* king = color ? board.white_king : board.black_king;
+    Tile* king = color ? board.white_king.data() : board.black_king.data();
 	return (check = underAttack(king->coord));
 }
 
 bool Validation::inCheckmate(bool color)
 {
-	Tile* king = color ? board.white_king : board.black_king;
+    Tile* king = color ? board.white_king.data() : board.black_king.data();
 	return (check = underAttack(king->coord)) && inStalemate(king->piece_color);
 }
 

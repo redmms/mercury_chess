@@ -55,7 +55,7 @@ void MainWindow::on_change_name_button_clicked()
 
 void MainWindow::on_back_from_settings_clicked()
 {
-    openTab(last_tab);
+    openTab(last_tab.data());
 }
 
 void MainWindow::on_actionWith_friend_triggered()
@@ -156,7 +156,7 @@ void MainWindow::on_send_invite_button_clicked() // FIX: here - package_ty::invi
     }
     else {
         QEventLoop loop; // FIX: should whow "Waiting for friend's respond" message with a rolling widget
-        connect(net, &WebClient::endedReadingInvite, [&](){
+        connect(net.data(), &WebClient::endedReadingInvite, [&](){
             QApplication::restoreOverrideCursor();
             waiting_for_invite_respond = false;
             loop.quit();

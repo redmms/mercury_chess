@@ -7,16 +7,18 @@
 #include "qdatastream.h"
 #include "qobject.h"
 #include "qstring.h"
+#include <QTcpSocket>
+#include <QPointer>
+
 class MainWindow;
 class QPixmap;
-class QTcpSocket;
 
 class WebClient : public QObject
 {
 	Q_OBJECT
 
-    MainWindow* mainwindow;
-	QTcpSocket* socket;
+    QPointer<MainWindow> mainwindow;
+    QScopedPointer<QTcpSocket> socket;
 	QByteArray read_package;
 	QByteArray send_package;
 	QDataStream read_stream;

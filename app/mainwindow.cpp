@@ -1,8 +1,6 @@
 #include "mainwindow.h"
-#include "ui_mainwindow.h"
 #include "C:\Qt_projects\multicolor_chess\src\game\board.h"
 #include "C:\Qt_projects\multicolor_chess\src\game\validation.h"
-#include "C:\Qt_projects\multicolor_chess\src\game\clock.h"
 #include "C:\Qt_projects\multicolor_chess\src\game\local_types.h"
 #include "webclient.h"
 #include <QPainter>
@@ -30,9 +28,8 @@
 
 MainWindow::MainWindow(QWidget* parent) :
 	QMainWindow(parent),
-	ui(new Ui::MainWindow),
-	board(nullptr),
-	clock(nullptr),
+    board{},
+    clock{},
 	net(new WebClient(this)),
 	sounds{},
 	settings{},
@@ -51,7 +48,8 @@ MainWindow::MainWindow(QWidget* parent) :
     rounded_area(new RoundedScrollArea(this)),
     game_active(false),
     login_regime(0),
-    waiting_for_invite_respond(false)
+    waiting_for_invite_respond(false),
+    ui(new Ui::MainWindow)
 {
 	// .ui file finish strokes
 	ui->setupUi(this);
@@ -68,36 +66,36 @@ MainWindow::MainWindow(QWidget* parent) :
     ui->menuOnline->setEnabled(false);
     ui->actionProfile->setEnabled(false);
 
-	std::srand(std::time(nullptr));
+    std::srand(std::time(0));
 
 	// sounds init
-	sounds["move"] = new QSoundEffect;
+    sounds["move"].reset(new QSoundEffect);
 	sounds["move"]->setSource(QUrl::fromLocalFile(":/sounds/move"));
-	sounds["user's piece eaten"] = new QSoundEffect;
+    sounds["user's piece eaten"].reset(new QSoundEffect);
 	sounds["user's piece eaten"]->setSource(QUrl::fromLocalFile(":/sounds/user_eaten"));
 	sounds["user's piece eaten"]->setVolume(0.6f);
-	sounds["opponent's piece eaten"] = new QSoundEffect;
+    sounds["opponent's piece eaten"].reset(new QSoundEffect);
 	sounds["opponent's piece eaten"]->setSource(QUrl::fromLocalFile(":/sounds/opp_eaten"));
 	sounds["opponent's piece eaten"]->setVolume(0.7f);
-	sounds["castling"] = new QSoundEffect;
+    sounds["castling"].reset(new QSoundEffect);
 	sounds["castling"]->setSource(QUrl::fromLocalFile(":/sounds/castling"));
-	sounds["promotion"] = new QSoundEffect;
+    sounds["promotion"].reset(new QSoundEffect);
 	sounds["promotion"]->setSource(QUrl::fromLocalFile(":/sounds/promotion"));
-	sounds["check to user"] = new QSoundEffect;
+    sounds["check to user"].reset(new QSoundEffect);
 	sounds["check to user"]->setSource(QUrl::fromLocalFile(":/sounds/check"));
 	sounds["check to user"]->setVolume(0.7f);
-	sounds["check to opponent"] = new QSoundEffect;
+    sounds["check to opponent"].reset(new QSoundEffect);
 	sounds["check to opponent"]->setSource(QUrl::fromLocalFile(":/sounds/check_to_opp"));
     sounds["check to opponent"]->setVolume(0.3f);
-	sounds["invalid move"] = new QSoundEffect;
+    sounds["invalid move"].reset(new QSoundEffect);
 	sounds["invalid move"]->setSource(QUrl::fromLocalFile(":/sounds/invalid"));
-	sounds["lose"] = new QSoundEffect;
+    sounds["lose"].reset(new QSoundEffect);
 	sounds["lose"]->setSource(QUrl::fromLocalFile(":/sounds/lose"));
     sounds["lose"]->setVolume(0.5f);
-	sounds["win"] = new QSoundEffect;
+    sounds["win"].reset(new QSoundEffect);
 	sounds["win"]->setSource(QUrl::fromLocalFile(":/sounds/win"));
 	sounds["win"]->setVolume(0.8f);
-	sounds["draw"] = new QSoundEffect;
+    sounds["draw"].reset(new QSoundEffect);
 	sounds["draw"]->setSource(QUrl::fromLocalFile(":/sounds/draw"));
 
 	// settings init
@@ -150,29 +148,25 @@ MainWindow::MainWindow(QWidget* parent) :
     rounded_area->setMaximumSize(ui->chat_area->maximumSize());
     rounded_area->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     rounded_area->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    ui->game_grid->replaceWidget(ui->chat_area, rounded_area);
+    ui->game_grid->replaceWidget(ui->chat_area, rounded_area.data());
     ui->chat_area->~QScrollArea();
 
 	// chat
     max_message_width = rounded_area->minimumWidth() - 20;
     message_layout->setContentsMargins(10, 5, 10, 5);
-	message_box->setLayout(message_layout);
+    message_box->setLayout(message_layout.data());
     message_box->resize(rounded_area->width() - 28, 0);
 	message_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     message_box->setStyleSheet("background-color: transparent;"); //#1B1C1F
-    rounded_area->setWidget(message_box);
+    rounded_area->setWidget(message_box.data());
     rounded_area->setWidgetResizable(true);
-}
-
-MainWindow::~MainWindow()
-{
-	delete ui;
 }
 
 #include "mainwindow_buttons.h"
 
 void MainWindow::openTab(QWidget* page)
 {
+    //QScopedPointer<QWidget> tab_ptr(ui->tabWidget->currentWidget());
     last_tab = ui->tabWidget->currentWidget();
     ui->tabWidget->setCurrentWidget(page);
 }
@@ -192,9 +186,9 @@ void MainWindow::switchGlow() // FIX: should be changed for different sides
 {
     bool match_side = settings.value("match_side").toBool();
     if (board->turn == match_side)
-        ui->user_avatar->setGraphicsEffect(avatar_effect);
+        ui->user_avatar->setGraphicsEffect(avatar_effect.data());
     else
-        ui->opponent_avatar->setGraphicsEffect(avatar_effect);
+        ui->opponent_avatar->setGraphicsEffect(avatar_effect.data());
     this->update();
 }
 
@@ -219,29 +213,29 @@ void MainWindow::startGame() // side true for user - white
 	ui->opponent_avatar->setPixmap(opp_pic);
 	ui->opponent_name->setText(settings.value("opp_name").toString());
 	bool match_side = settings.value("match_side").toBool();
-	(match_side ? ui->user_avatar : ui->opponent_avatar)->setGraphicsEffect(avatar_effect);
+    (match_side ? ui->user_avatar : ui->opponent_avatar)->setGraphicsEffect(avatar_effect.data());
 	for (QLayoutItem* child; (child = message_layout->takeAt(0)) != nullptr; child->widget()->~QWidget()) {}
     message_box->resize(rounded_area->width(), 0);
     ui->statusBar->show();
 
-    board = new Board(board != nullptr ? board : ui->board_background, settings);
+    board.reset(new Board(board ? board.data() : ui->board_background, settings));
 	// old board will be destroyed inside Board constructor
-	connect(board, &Board::newStatus, this, &MainWindow::statusSlot);
-	connect(board, &Board::theEnd, this, &MainWindow::endSlot);
+    connect(board.data(), &Board::newStatus, this, &MainWindow::statusSlot);
+    connect(board.data(), &Board::theEnd, this, &MainWindow::endSlot);
 
     if (game_type == "friend_online"){
-        connect(board, &Board::moveMade, [this](scoord from, scoord to, char promotion_type) {
+        connect(board.data(), &Board::moveMade, [this](scoord from, scoord to, char promotion_type) {
             net->sendToServer(package_ty::move, {}, {}, from, to, promotion_type);
             });
 
         int time = settings.value("time_setup").toInt();
-        clock = new ChessClock(board, ui->opponent_timer, ui->user_timer, match_side, time);
+        clock.reset(new ChessClock(board.data(), ui->opponent_timer, ui->user_timer, match_side, time));
         // old clock will be destroyed inside Board constructor as a child // FIX: at least it should be
-        connect(this, &MainWindow::timeToSwitchTime, clock, &ChessClock::switchTimer);
-        connect(clock, &ChessClock::userOut, [this]() {
+        connect(this, &MainWindow::timeToSwitchTime, clock.data(), &ChessClock::switchTimer);
+        connect(clock.data(), &ChessClock::userOut, [this]() {
             endSlot(endnum::user_out_of_time);
             });
-        connect(clock, &ChessClock::opponentOut, [this]() {
+        connect(clock.data(), &ChessClock::opponentOut, [this]() {
             endSlot(endnum::opponent_out_of_time);
             });
 
@@ -404,7 +398,7 @@ void MainWindow::printMessage(QString name, bool own, QString text)
 		}
 	}
 
-	QLabel* message = new QLabel(this);
+    QSharedPointer<QLabel> message(new QLabel(this));
     if (own)
         message->setStyleSheet("background-color: rgb(0,179,60); border-radius: 14;");
     else
@@ -419,9 +413,9 @@ void MainWindow::printMessage(QString name, bool own, QString text)
 	message->setMinimumSize(message->size());
 	message->setMaximumSize(message->size());
     if (own)
-        message_layout->addWidget(message, 0, Qt::AlignTop | Qt::AlignRight);
+        message_layout->addWidget(message.data(), 0, Qt::AlignTop | Qt::AlignRight);
     else
-        message_layout->addWidget(message, 0, Qt::AlignTop | Qt::AlignLeft);
+        message_layout->addWidget(message.data(), 0, Qt::AlignTop | Qt::AlignLeft);
     message_box->resize(message_box->width(), message_box->height() + message->height() + 10);
 	// 10 is layout margin here, for shortness
 

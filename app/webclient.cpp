@@ -29,8 +29,9 @@ WebClient::WebClient(MainWindow* parent) :
 
 void WebClient::initSocket()
 {
-    socket = new QTcpSocket(this); //FIX: how to destruct previous socket?
-    connect(socket, &QTcpSocket::errorOccurred, [&](QAbstractSocket::SocketError socketError){
+    socket.reset(new QTcpSocket(this)); //FIX: how to destruct previous socket?
+    // FIX: will note QScopedPointer deleter mess with socket->deleteLater()?
+    connect(socket.data(), &QTcpSocket::errorOccurred, [&](QAbstractSocket::SocketError socketError){
         if (socket->state() == QAbstractSocket::UnconnectedState){
             qDebug() << curTime() << "Couldn't connect to server:";
             qDebug() << curTime() << socketError;
@@ -52,35 +53,31 @@ void WebClient::initSocket()
             qDebug() << curTime() << socketError;
         }
     });
-    connect(socket, &QTcpSocket::connected, [&](){
+    connect(socket.data(), &QTcpSocket::connected, [&](){
         qDebug() << curTime() << "Connected to server.";
     });
-    connect(socket, &QTcpSocket::readyRead, [&](){
+    connect(socket.data(), &QTcpSocket::readyRead, [&](){
             while(socket->bytesAvailable() > 0){
                 this->readFromServer();
             }
     });
-    connect(socket, &QTcpSocket::disconnected, [&](){
+    connect(socket.data(), &QTcpSocket::disconnected, [&](){
         qDebug() << curTime() << "Lost connection with server";
         socket->deleteLater();
         if (mainwindow->game_active)
             mainwindow->endSlot(endnum::server_disconnected);
-
         showBox("Connection failed",
                 "Lost connection with server, log in again. What else did you expect from a noncommercial project?",
                 QMessageBox::Critical);
-
         mainwindow->openTab(mainwindow->ui->pre_tab);
-
-        socket = nullptr;
     });
 }
 
 void WebClient::checkConnection(package_ty type)
 {
-    if (socket == nullptr || !socket){
+    if (!socket){
         if (type != package_ty::registration && type != package_ty::login)
-            qDebug() << curTime() << "Warning: you need to register o log in before sending any data to the server";
+            qDebug() << curTime() << "Warning: you need to register or log in before sending any data to the server";
         initSocket();
         connectToServer();
     }
@@ -92,7 +89,7 @@ void WebClient::checkConnection(package_ty type)
         connectToServer();
     }
     else{
-        auto state_copy = socket->state();
+        //auto state_copy = socket->state();
         qDebug() << curTime()
                  << "Socket is fine. Connection also seems to be fine. Socket state is "
                  << socket->state();
@@ -112,7 +109,7 @@ void WebClient::connectToServer()
 
 void WebClient::packFromSock(QTcpSocket *socket, QByteArray &read_package)
 {
-    auto avail_copy = socket->bytesAvailable();
+    //auto avail_copy = socket->bytesAvailable();
     while(socket->bytesAvailable() < 2){
         if (!socket->waitForReadyRead()) {
             qDebug() << curTime() << "waitForReadyRead() timed out";
@@ -241,7 +238,7 @@ void WebClient::sendToServer(package_ty type, bool respond, QString message, sco
 
 void WebClient::readFromServer()
 {
-    packFromSock(socket, read_package);
+    packFromSock(socket.data(), read_package);
     quint16 skip;
     read_stream >> skip;
 
@@ -316,6 +313,10 @@ void WebClient::readFromServer()
         quint8 to_k;
         readPack(to_k);
         scoord to{to_k % 8, to_k / 8};
+        if (!mainwindow->board){
+            qDebug() << curTime() << "ERROR: trying to write a move to nonexisting board";
+            return;
+        }
         mainwindow->board->halfMove(from, to);
         quint8 promo_int;
         readPack(promo_int);
@@ -422,12 +423,14 @@ void WebClient::readFromServer()
         showBox("Wrong password",
                 "I understand you perfectly, I also have a bad memory. Should I advise you some memory pills?",
                 QMessageBox::Warning);
+        break;
     }
     case package_ty::user_offline:
     {
         showBox("User offline",
                 "Suggested user is offline.");
         emit endedReadingInvite();
+        break;
     }
     }
     read_package.clear();

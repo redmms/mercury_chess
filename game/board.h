@@ -2,8 +2,10 @@
 #include "local_types.h"
 #include <QLabel>
 #include <QSettings>
-class Tile;
-class Validation;
+#include "validation.h"
+#include "tile.h"
+#include <QPointer>
+
 class WebClient;
 
 class Board : public QLabel {
@@ -27,16 +29,16 @@ protected:
 public:
     Board(QLabel* background, const QSettings& settings);
 
-	Validation* valid;
-	Tile* tiles[8][8];
+    QScopedPointer<Validation> valid;
+    QScopedPointer<Tile> tiles[8][8];
 	bool turn;
 	bool side;
-	Tile* from_tile;
-	Tile* white_king;
-	Tile* black_king;
+    QPointer<Tile> from_tile;
+    QPointer<Tile> white_king;
+    QPointer<Tile> black_king;
 	pove last_move;
 	pove virtual_move;
-	Tile* menu[4];
+    QScopedPointer<Tile> menu[4];
 	QString board_css;
 	QString promo_css;
     char last_promotion;
@@ -51,8 +53,8 @@ public:
     void restoreTile(virtu saved);
 
 	auto operator [](int i) {
-		return tiles[i];
-	}
+        return tiles[i];
+    }
 
 signals:
 	void newStatus(tatus status);

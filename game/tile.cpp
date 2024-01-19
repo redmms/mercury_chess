@@ -81,8 +81,8 @@ void Tile::setPiece(char elem, bool color)
 		break;
 	case 'K':
 		piece = QString(":images/king_" + add);
-		if (color) ((Board*)parent())->white_king = this;
-		else ((Board*)parent())->black_king = this;
+        if (color) ((Board*)parent())->white_king = this;
+        else ((Board*)parent())->black_king = this;
 		break;
 	case 'Q':
 		piece = QString(":images/queen_" + add);
