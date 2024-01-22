@@ -1,20 +1,18 @@
 #ifndef CLOCK_H
 #define CLOCK_H
-
-#include "qdatetime.h"
-#include "qobject.h"
+#include <QObject>
 #include <QPointer>
 #include <QScopedPointer>
+#include <QDateTime>
+#include <QTimer>
 
 class QLabel;
-class QTimer;
-
 
 class ChessClock : public QObject
 {
-	Q_OBJECT
+    Q_OBJECT
 
-	bool side;
+    bool side;
     QPointer<QLabel> black_label;
     QPointer<QLabel> white_label;
 	int max_time;
@@ -23,11 +21,10 @@ class ChessClock : public QObject
     QScopedPointer<QTimer> black_timer;
     QScopedPointer<QTimer> white_timer;
     QScopedPointer<QTimer> sec_counter;
-	QTime zero_time;
+    QTime zero_time;
 
 public:
-	ChessClock(QObject* parent, QLabel* opponent_label, QLabel* user_label, bool side_, int max_minutes);
-	~ChessClock();
+    ChessClock(QObject* parent, QLabel* opponent_label, QLabel* user_label, bool side_, int max_minutes);
 
 	void stopTimer();
 

@@ -45,6 +45,7 @@ enum endnum : quint8 {
     draw_by_repetition, // FIX: need to handle
     draw_by_insufficient_material,  // FIX: need to handle
     opponent_disconnected_end,
+    interrupt,
     server_disconnected
 };
 
@@ -72,11 +73,20 @@ struct scoord{
 };
 
 class Tile;
+#include <QPointer>
 struct virtu{
 //    virtu(){tile = nullptr; color = false; name = 'e';}
-    Tile* tile /*= nullptr*/;
-    bool color/* = false*/;
-    char name/* = 'e'*/;
+    QPointer<Tile> tile;
+    bool color = true;
+    char name = 'K';
+};
+
+struct halfmove{
+    pove move;
+    char promo = 'e';
+    bool castling = false;
+    bool pass = false;
+    bool turn = false;
 };
 
 #include <QDateTime>

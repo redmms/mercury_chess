@@ -17,8 +17,7 @@ Board::Board(QLabel* background = 0, const QSettings& settings_par = {}) :
     from_tile{},  // always actualized in Tile::setPiece()
     white_king{},  // ditto
     black_king{},  // ditto
-    last_move{},
-	virtual_move{},
+    virtual_move{},
     //menu{},
     board_css(
 		"Board{"
@@ -45,8 +44,7 @@ Board::Board(QLabel* background = 0, const QSettings& settings_par = {}) :
 	setToolTip("Think thoroughly");
 
 	background->parentWidget()->layout()->replaceWidget(background, this);
-	// replace ui board, by this class
-	background->~QLabel();
+    // replaces ui board, by this class
 
 	drawLetters(side);
 	drawNumbers(side);
@@ -216,7 +214,7 @@ void Board::revertVirtualMove(pove& move)
 
 void Board::moveVirtually(Tile* from, Tile* to, pove& move)
 {
-    if (valid->canPassVirtually(from, to)){
+    if (valid->canPassVirtually(from, to, move)){
         last_virtually_passed = tiles[to->coord.x][from->coord.y]->toVirtu();
         tiles[to->coord.x][from->coord.y]->piece_name = 'e';
     }
@@ -233,7 +231,9 @@ void Board::moveNormally(Tile* from, Tile* to)
 {
     if (turn == side)
         valid->hideValid(); // FIX: should be called only if it was our turn
-	saveMove(from, to, last_move); // should be used before moving
+//    halfmove last_move;
+//    saveMove(from, to, last_move.move); // should be used before moving
+//    history.push_back(last_move);
     to->setPiece(from->piece_name, from->piece_color);
     from->setPiece('e', 0);
 }
@@ -262,6 +262,7 @@ void Board::restoreTile(virtu saved)
 
 void Board::promotePawn(Tile* tile)
 {
+    pove last_move = history.back().move;
     last_move.second.tile->setPiece(tile->piece_name, tile->piece_color);
     last_promotion = tile->piece_name;
 	for (int i = 0; i < 4; i++) {
@@ -280,6 +281,8 @@ void Board::halfMove(scoord from, scoord to)
 
 void Board::halfMove(Tile* from, Tile* to)
 {
+    halfmove last_move;
+    last_move.move = {from->toVirtu(), to->toVirtu()};
     char promotion_type = 'e';
 	tatus emit_status = tatus::just_new_turn;
 	if (valid->differentColor(to->coord))
@@ -287,18 +290,22 @@ void Board::halfMove(Tile* from, Tile* to)
 
 	if (Tile* rook; valid->canCastle(from, to, &rook)) {
 		castleKing(from, to, rook);
+        last_move.castling = true;
 		emit_status = tatus::castling;
 	}
 	else if (valid->canPass(from, to)) {
 		passPawn(from, to);
+        last_move.pass = true;
         emit_status = turn == side ? tatus::opponent_piece_eaten : tatus::user_piece_eaten;
 	}
 	else
 		moveNormally(from, to);
 
 	if (valid->canPromote(to, to)) {
-        if (turn == side){
+        QString game_regime = settings.value("game_regime").toString();
+        if ((game_regime == "friend_online" && turn == side) || game_regime == "friend_offline"){
             openPromotion(to);  // waits until the signal from a tile received
+            last_move.promo = last_promotion;
             promotion_type = last_promotion;
         }
 		emit_status = tatus::promotion;
@@ -307,6 +314,8 @@ void Board::halfMove(Tile* from, Tile* to)
     if (turn == side)
         emit moveMade(from->coord, to->coord, promotion_type);
 
+    last_move.turn = turn;
+    history.push_back(last_move);
 	turn = !turn;
 	if (valid->inCheck(turn))
 		if (valid->inStalemate(turn))  // check + stalemate == checkmate

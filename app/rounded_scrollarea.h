@@ -6,8 +6,13 @@
 #include <QColor>
 
 class RoundedScrollArea : public QScrollArea {
+    QColor background_color;
+
 public:
-    RoundedScrollArea(QWidget *parent = nullptr) : QScrollArea(parent) {}
+    RoundedScrollArea(QWidget *parent = nullptr, QColor background_color_ = Qt::white) :
+        QScrollArea(parent),
+        background_color(background_color_)
+    {}
 
 protected:
     void paintEvent(QPaintEvent *event) override {
@@ -15,7 +20,7 @@ protected:
 
         QPainter painter(viewport());
         int radius = 14;
-        painter.setBrush(QColor(0, 102, 51));
+        painter.setBrush(background_color); // QColor(0, 102, 51)
         painter.setPen(Qt::NoPen);
         painter.drawRoundedRect(viewport()->rect(), radius, radius);
     }

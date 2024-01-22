@@ -46,6 +46,7 @@ public:
     void checkConnection(package_ty type);
     void connectToServer();
     void packFromSock(QTcpSocket* socket, QByteArray& received_package);
+    void connectNewHost();
 //	void sendRegistration();
 //	void sendInvite();
 //	void sendInviteRespond(bool respond);

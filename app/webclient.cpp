@@ -100,8 +100,9 @@ void WebClient::connectToServer()
 // socket parameter should be a valid QTcpSocket*
 {
 //    if (socket->state() == QAbstractSocket::UnconnectedState)
-
-    socket->connectToHost("40.113.33.140", 49001);  // /*"192.168.0.10"*/ "127.0.0.1"
+    QString address = mainwindow->settings.value("ip_address").toString();
+    int port = mainwindow->settings.value("port_address").toInt();
+    socket->connectToHost(address, port);  // /*"192.168.0.10"*/ "127.0.0.1"
     //socket->connectToHost("127.0.0.1", 49001);  // /*"192.168.0.10"*/ "127.0.0.1"
 
     //auto copy_state = socket->state();
@@ -149,6 +150,12 @@ void WebClient::packFromSock(QTcpSocket *socket, QByteArray &read_package)
         qDebug() << curTime() << "Received package size is" << read_package.size();
     }
     read_stream.device()->reset();
+}
+
+void WebClient::connectNewHost()
+{
+    initSocket();
+    checkConnection(package_ty::login);
 }
 
 #include "webclient_pack_tools.h"
@@ -409,7 +416,7 @@ void WebClient::readFromServer()
         else if (mainwindow->login_regime == 1){
             mainwindow->openTab(mainwindow->ui->friend_connect_tab);
             mainwindow->ui->menuOnline->setEnabled(true);
-            mainwindow->ui->actionProfile->setEnabled(true);
+            //mainwindow->ui->actionProfile->setEnabled(true);
             mainwindow->ui->login_password->clear();
         }
         else if (mainwindow->login_regime == 3){

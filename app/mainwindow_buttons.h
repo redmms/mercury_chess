@@ -132,10 +132,10 @@ void MainWindow::on_guest_button_clicked()
 
 void MainWindow::on_send_invite_button_clicked() // FIX: here - package_ty::invite, user's name, user's image,
 {
-    if (waiting_for_invite_respond){
-        qDebug() << curTime() << "Tried to send match invite several times";
-        return;
-    }
+//    if (waiting_for_invite_respond){
+//        qDebug() << curTime() << "Tried to send match invite several times";
+//        return;
+//    }
     int chosen_time = settings.value("time_setup").toInt();
     QString friend_name = ui->friend_name_edit->text();
     QString user_name = settings.value("user_name").toString();
@@ -155,19 +155,19 @@ void MainWindow::on_send_invite_button_clicked() // FIX: here - package_ty::invi
                 QMessageBox::Warning);
     }
     else {
-        QEventLoop loop; // FIX: should whow "Waiting for friend's respond" message with a rolling widget
-        connect(net.data(), &WebClient::endedReadingInvite, [&](){
-            QApplication::restoreOverrideCursor();
-            waiting_for_invite_respond = false;
-            loop.quit();
-        });
+        //QEventLoop loop; // FIX: should whow "Waiting for friend's respond" message with a rolling widget
+//        connect(net.data(), &WebClient::endedReadingInvite, [&](){
+//            QApplication::restoreOverrideCursor();
+//            waiting_for_invite_respond = false;
+//            loop.quit();
+//        });
         bool match_side = std::rand() % 2;
         settings.setValue("match_side", match_side);
         settings.setValue("opp_name", friend_name);
         net->sendToServer(package_ty::invite);
-        QApplication::setOverrideCursor(Qt::WaitCursor);
+       // QApplication::setOverrideCursor(Qt::WaitCursor);
         waiting_for_invite_respond = true;
-        loop.exec();
+        //loop.exec();
     }
 }
 
@@ -215,6 +215,34 @@ void MainWindow::on_actionToggle_fullscreen_triggered()
 
 void MainWindow::on_actionWith_friend_offline_triggered()
 {
-    settings.setValue("game_regime", "friend_offline");
-    startGame();
+    QString game_regime = settings.value("game_regime").toString();
+    if (game_active && game_regime == "friend_online")
+        openStopGameDialog();
+    else{
+        settings.setValue("game_regime", "friend_offline");
+        startGame();
+    }
+}
+
+void MainWindow::on_actionEnter_triggered()
+{
+    openTab(ui->pre_tab);
+}
+
+void MainWindow::on_change_ip_button_clicked()
+{
+    QString new_address = ui->ip_edit->text();
+    int new_port = ui->port_edit->text().toInt();
+    settings.setValue("ip_address", new_address);
+    settings.setValue("port_address", new_port);
+    net->connectNewHost();
+}
+
+void MainWindow::on_restore_default_button_clicked()
+{
+    settings.setValue("ip_address", default_address);
+    settings.setValue("port_address", default_port);
+    net->connectNewHost();
+    ui->ip_edit->clear();
+    ui->port_edit->clear();
 }

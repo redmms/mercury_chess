@@ -269,6 +269,7 @@ void Validation::findValid(Tile* from_tile)
         X = from.x - king.x,
         Y = from.y - king.y;
         bool from_aligns_king = abs(X) == abs(Y) || !X || !Y;
+       // bool to_aligns_king = !notAlignsKing(coord, king, from);
         if (from_aligns_king){
             pove virtual_move;
             board.moveVirtually(from_tile, theTile(coord), virtual_move);
@@ -466,8 +467,11 @@ bool Validation::canCastle(Tile* from, Tile* to, Tile** rook)
 
 bool Validation::canPass(Tile* from, Tile* to)
 {
-	virtu opp_from = board.last_move.first;
-	virtu opp_to = board.last_move.second;
+    if (board.history.empty())
+        return false;
+    pove last_move = board.history.back().move;
+    virtu opp_from = last_move.first;
+    virtu opp_to = last_move.second;
 	return (opp_from.name == 'P' &&
             opp_from.color != from->piece_color &&
             abs(opp_to.tile->coord.y - opp_from.tile->coord.y) == 2 &&
@@ -475,10 +479,13 @@ bool Validation::canPass(Tile* from, Tile* to)
             from->coord.y == opp_to.tile->coord.y);
 }
 
-bool Validation::canPassVirtually(Tile *from, Tile *to)
+bool Validation::canPassVirtually(Tile *from, Tile *to, pove virtual_move)
 {
-    virtu opp_from = board.virtual_move.first;
-    virtu opp_to = board.virtual_move.second;
+    if (board.history.empty())
+        return false;
+    pove last_move = board.history.back().move;
+    virtu opp_from = last_move.first;
+    virtu opp_to = last_move.second;
     return (opp_from.name == 'P' &&
             opp_from.color != from->piece_color &&
             abs(opp_to.tile->coord.y - opp_from.tile->coord.y) == 2 &&

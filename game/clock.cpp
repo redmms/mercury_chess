@@ -1,22 +1,23 @@
 #include "clock.h"
 #include <QtCore/qobjectdefs.h>
-#include "qlabel.h"
+#include <QLabel>
 #include "qnamespace.h"
-#include "qtimer.h"
+#include <QDebug>
+#include "local_types.h"
 
-ChessClock::ChessClock(QObject* parent, QLabel* opponent_label, QLabel* user_label,
-	bool side_, int max_minutes)
-	: QObject(parent),
-	side(side),
+ChessClock::ChessClock(QObject* parent = 0, QLabel* opponent_label = 0, QLabel* user_label = 0,
+    bool side_ = false, int max_minutes = 0)
+    : QObject(parent),
+    side(side_),
 	black_label(side_ ? opponent_label : user_label),
 	white_label(side_ ? user_label : opponent_label),
 	max_time(max_minutes * 60000),
 	black_remains(max_time),
-	white_remains(max_time),
-	black_timer(new QTimer(this)),
-	white_timer(new QTimer(this)),
-	sec_counter(new QTimer(this)),
-	zero_time(QTime(0, 0))
+    white_remains(max_time),
+    black_timer(new QTimer(this)),
+    white_timer(new QTimer(this)),
+    sec_counter(new QTimer(this)),
+    zero_time(QTime(0, 0))
 {
     for (auto timer : { black_timer.data(), white_timer.data() }) {
 		//timer->setTimerType(Qt::PreciseTimer); // this line will really slow down the game
@@ -31,18 +32,22 @@ ChessClock::ChessClock(QObject* parent, QLabel* opponent_label, QLabel* user_lab
 	white_label->setText(zero_time.addMSecs(max_time).toString("mm:ss"));
 }
 
-ChessClock::~ChessClock()
-{
-	black_timer->~QTimer();
-	white_timer->~QTimer();
-	sec_counter->~QTimer();
-}
-
 void ChessClock::stopTimer()
 {
-	black_timer->stop();
-	white_timer->stop();
-	sec_counter->stop();
+    if (black_timer)
+        black_timer->stop();
+    else
+        qDebug() << curTime() << "ERROR: tried to stop deleted timer";
+
+    if (white_timer)
+        white_timer->stop();
+    else
+        qDebug() << curTime() << "ERROR: tried to stop deleted timer";
+
+    if (sec_counter)
+        sec_counter->stop();
+    else
+        qDebug() << curTime() << "ERROR: tried to stop deleted timer";
 }
 
 void ChessClock::updateTimer()

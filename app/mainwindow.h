@@ -53,16 +53,21 @@ class MainWindow : public QMainWindow
     QScopedPointer<RoundedScrollArea> rounded_area;
     bool game_active;
     bool waiting_for_invite_respond;
+    QString default_address;
+    int default_port;
+    QScopedPointer<RoundedScrollArea> history_area;
+    QScopedPointer<QLabel> history_label;
 
 	void showStatus(const QString& status);  // FIX: will const& cause problems or not?
 	void switchGlow();
 	bool eventFilter(QObject* object, QEvent* event);
     void openStopGameDialog();
+    void writeStory(int order, halfmove move);
+    QString coordToString(scoord coord);
 
 	friend class WebClient;
-
 protected:
-    QScopedPointer<Ui::MainWindow> ui;
+    Ui::MainWindow* ui;
 	QPixmap user_pic;
 	QPixmap opp_pic;
     QPixmap default_pic;
@@ -74,6 +79,9 @@ protected:
 
 public:
 	MainWindow(QWidget* parent = 0);
+    ~MainWindow(){
+        delete ui;
+    }
 
     QSettings settings;
 
@@ -99,10 +107,10 @@ private slots:
     void on_end_login_button_clicked();
     void on_back_from_login_button_clicked();
     void on_actionToggle_fullscreen_triggered();
-
     void on_actionWith_friend_offline_triggered();
-
     void on_actionEnter_triggered();
+    void on_change_ip_button_clicked();
+    void on_restore_default_button_clicked();
 
 protected slots:
 	void endSlot(endnum end_type);

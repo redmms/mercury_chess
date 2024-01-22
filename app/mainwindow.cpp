@@ -45,11 +45,15 @@ MainWindow::MainWindow(QWidget* parent) :
 	message_font{ "Segoe Print", 12 },
 	message_metrics{ message_font },
     max_message_width{},
-    rounded_area(new RoundedScrollArea(this)),
+    rounded_area(new RoundedScrollArea(this, QColor(0, 102, 51))),
     game_active(false),
     login_regime(0),
     waiting_for_invite_respond(false),
-    ui(new Ui::MainWindow)
+    ui(new Ui::MainWindow),
+    default_address("40.113.33.140"),
+    default_port(49001),
+    history_area(new RoundedScrollArea(this, QColor(111, 196, 81))),
+    history_label(new QLabel(this))
 {
 	// .ui file finish strokes
 	ui->setupUi(this);
@@ -64,7 +68,7 @@ MainWindow::MainWindow(QWidget* parent) :
     ui->draw_button->disconnect();
     ui->resign_button->disconnect();
     ui->menuOnline->setEnabled(false);
-    ui->actionProfile->setEnabled(false);
+    //ui->actionProfile->setEnabled(false);
 
     std::srand(std::time(0));
 
@@ -106,6 +110,8 @@ MainWindow::MainWindow(QWidget* parent) :
 	settings.setValue("time_setup", 0);
 	settings.setValue("match_side", false);
     settings.setValue("game_regime", "friend_offline");
+    settings.setValue("ip_address", default_address);
+    settings.setValue("port_address", default_port);
 
 	// glow effect for avatars
     avatar_effect->setBlurRadius(40);
@@ -151,6 +157,8 @@ MainWindow::MainWindow(QWidget* parent) :
     ui->game_grid->replaceWidget(ui->chat_area, rounded_area.data());
     ui->chat_area->~QScrollArea();
 
+
+
 	// chat
     max_message_width = rounded_area->minimumWidth() - 20;
     message_layout->setContentsMargins(10, 5, 10, 5);
@@ -160,6 +168,25 @@ MainWindow::MainWindow(QWidget* parent) :
     message_box->setStyleSheet("background-color: transparent;"); //#1B1C1F
     rounded_area->setWidget(message_box.data());
     rounded_area->setWidgetResizable(true);
+
+    // match history
+    history_area->setStyleSheet("QAbstractScrollArea{background: transparent; border: none;}");
+    history_area->setGeometry(ui->match_history->geometry());
+    history_area->setSizePolicy(ui->match_history->sizePolicy());
+    history_area->setMinimumSize(ui->match_history->minimumSize());
+    history_area->setMaximumSize(ui->match_history->maximumSize());
+    history_area->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    history_area->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    ui->game_grid->replaceWidget(ui->match_history, history_area.data());
+    ui->match_history->~QLabel();
+
+    history_label->setStyleSheet("background-color: transparent;");
+    history_label->setFont({ "Segoe UI", 12 });
+    history_label->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
+    history_area->setWidget(history_label.data());
+    history_area->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
+
+    history_area->setWidgetResizable(true);
 }
 
 #include "mainwindow_buttons.h"
@@ -167,8 +194,20 @@ MainWindow::MainWindow(QWidget* parent) :
 void MainWindow::openTab(QWidget* page)
 {
     //QScopedPointer<QWidget> tab_ptr(ui->tabWidget->currentWidget());
+    if (!ui || !ui->tabWidget || !page)
+     {
+        qDebug() << curTime() << "ERROR: in open tab with pointers";
+        return;
+     }
     last_tab = ui->tabWidget->currentWidget();
+    if (!last_tab)
+     {
+        qDebug() << curTime() << "ERROR: in open tab with last_tab pointer";
+        return;
+     }
     ui->tabWidget->setCurrentWidget(page);
+    auto scroller = rounded_area->horizontalScrollBar();
+    scroller->setValue(scroller->maximum());
 }
 
 void MainWindow::openStopGameDialog()
@@ -176,6 +215,44 @@ void MainWindow::openStopGameDialog()
     showBox("Stop active game",
             "Stop your current game at first.",
             QMessageBox::Warning);
+}
+
+void MainWindow::writeStory(int order, halfmove move)
+{
+    virtu vf = move.move.first;
+    virtu vt = move.move.second;
+    char piece = vf.name;
+    Tile *from = vf.tile;
+    Tile *to = vt.tile;
+    char promo = move.promo;
+    scoord f = from->coord;
+    scoord t = to->coord;
+
+    QString out;
+    if (move.castling){
+        out = "O-O";
+    }
+    else{
+        out = piece + coordToString(f) + coordToString(t);
+        if (promo != 'e')
+            out += "=" + QString(promo);
+    }
+
+    if (order % 2)
+        history_label->setText(history_label->text() + QString::number((order-1) / 2 + 1) + ". " + out + " ");
+    else
+        history_label->setText(history_label->text() + out + " ");
+
+    history_label->adjustSize();
+//    QTimer::singleShot(100, [&]() {
+        auto scroller = history_area->horizontalScrollBar();
+        scroller->setValue(scroller->maximum());
+//        });
+}
+
+QString MainWindow::coordToString(scoord coord)
+{
+    return QString(char('a' + coord.x)) + QString::number(coord.y + 1);
 }
 
 void MainWindow::showStatus(const QString& status) {
@@ -195,6 +272,9 @@ void MainWindow::switchGlow() // FIX: should be changed for different sides
 void MainWindow::startGame() // side true for user - white
 {
     QString game_type = settings.value("game_regime").toString();
+    if (game_active && game_type == "friend_online"){
+        endSlot(endnum::interrupt);
+    }
     if (game_type == "friend_online"){
         ui->actionProfile->setEnabled(false);
         ui->message_edit->setPlainText("Great move! Have you studied in a clown school?");
@@ -218,8 +298,16 @@ void MainWindow::startGame() // side true for user - white
     message_box->resize(rounded_area->width(), 0);
     ui->statusBar->show();
 
-    board.reset(new Board(board ? board.data() : ui->board_background, settings));
-	// old board will be destroyed inside Board constructor
+    if (board)
+        board.reset(new Board(board.data(), settings));
+    else if (ui->board_background){
+        board.reset(new Board(ui->board_background, settings));
+        ui->board_background->~QLabel();
+    }
+    else
+        qDebug() << curTime() << "ERROR: in MainWindow::startGame() with board/ui->background pointer";
+
+    // old board will be destroyed inside Board constructor
     connect(board.data(), &Board::newStatus, this, &MainWindow::statusSlot);
     connect(board.data(), &Board::theEnd, this, &MainWindow::endSlot);
 
@@ -229,7 +317,7 @@ void MainWindow::startGame() // side true for user - white
             });
 
         int time = settings.value("time_setup").toInt();
-        clock.reset(new ChessClock(board.data(), ui->opponent_timer, ui->user_timer, match_side, time));
+        clock.reset(new ChessClock(0/*board.data()*/, ui->opponent_timer, ui->user_timer, match_side, time));
         // old clock will be destroyed inside Board constructor as a child // FIX: at least it should be
         connect(this, &MainWindow::timeToSwitchTime, clock.data(), &ChessClock::switchTimer);
         connect(clock.data(), &ChessClock::userOut, [this]() {
@@ -262,7 +350,7 @@ void MainWindow::endSlot(endnum end_type)  // FIX: white_wins and black_wins enu
         qDebug() << curTime() << "Application tried to close inactive game";
         return;
     }
-    if (settings.value("game_regime").toString() == "friend_online")
+    if (clock)
         clock->stopTimer();
 	board->setEnabled(false);
 	ui->draw_button->disconnect();
@@ -315,7 +403,9 @@ void MainWindow::endSlot(endnum end_type)  // FIX: white_wins and black_wins enu
         info_message = "Opponent disconnected. Maybe he doesn't like to play with you?";
         break;
     case endnum::server_disconnected:
-        icon_type = QMessageBox::Critical;
+        info_message = "-1";
+        return;
+    case endnum::interrupt:
         info_message = "-1";
         return;
     }
@@ -340,7 +430,6 @@ void MainWindow::statusSlot(tatus status)
 //    int i = 3;
 ////    for (int i = 1; i <= 5; i++)
 //        qDebug() << curTime() << "Counted moves:" << board->valid->countMovesTest(i);
-
 	switch (status) {
 	case tatus::check_to_user:
 		sounds["check to user"]->play();
@@ -377,6 +466,9 @@ void MainWindow::statusSlot(tatus status)
 	}
 	switchGlow();
 	emit timeToSwitchTime();
+    int order = board->history.size();
+    halfmove last_move = board->history.back();
+    writeStory(order, last_move);
 }
 
 void MainWindow::printMessage(QString name, bool own, QString text)
@@ -424,9 +516,3 @@ void MainWindow::printMessage(QString name, bool own, QString text)
 		scroller->setValue(scroller->maximum());
 		});
 }
-
-void MainWindow::on_actionEnter_triggered()
-{
-    openTab(ui->pre_tab);
-}
-

@@ -4,6 +4,8 @@
 #include <functional>
 #include <set>
 #include <list>
+#include <QPointer>
+
 class Board;
 class Tile;
 using lambda = std::function<bool(scoord)>;
@@ -12,7 +14,7 @@ using checker = std::function<bool(scoord, bool&)>;
 class Validation
 {
     Board& board; 
-    std::set<Tile*> valid_moves;
+    std::set<QPointer<Tile>> valid_moves;
     bool check;
     bool has_moved[6];
     scoord rooks_kings[6];
@@ -41,16 +43,16 @@ public:
     std::function<bool(scoord)> differentColor;
     std::function<char(scoord)> pieceName;
 
-    void showValid(Tile * from);
+    void showValid(Tile* from);
     void hideValid();
-    bool isValid(Tile * move);
+    bool isValid(Tile* move);
     bool empty();
     bool inCheck(bool color);
     bool inCheckmate(bool color);
     bool inStalemate(bool color);
     bool canCastle(Tile* from, Tile* to, Tile** rook);
     bool canPass(Tile* from, Tile* to);
-    bool canPassVirtually(Tile* from, Tile* to);
+    bool canPassVirtually(Tile* from, Tile* to, pove virtual_move);
     bool canPromote(Tile* pawn, Tile* destination);
     void reactOnMove(scoord from, scoord to);
     qint64 countMovesTest(int depth = 5, int i = 0);

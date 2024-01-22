@@ -5,6 +5,7 @@
 #include "validation.h"
 #include "tile.h"
 #include <QPointer>
+#include <vector>
 
 class WebClient;
 
@@ -29,6 +30,7 @@ protected:
 public:
     Board(QLabel* background, const QSettings& settings);
 
+    std::vector<halfmove> history;
     QScopedPointer<Validation> valid;
     QScopedPointer<Tile> tiles[8][8];
 	bool turn;
@@ -36,7 +38,6 @@ public:
     QPointer<Tile> from_tile;
     QPointer<Tile> white_king;
     QPointer<Tile> black_king;
-	pove last_move;
 	pove virtual_move;
     QScopedPointer<Tile> menu[4];
 	QString board_css;
