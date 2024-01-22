@@ -266,39 +266,39 @@ void Validation::findValid(Tile* from_tile)
 	// Lambdas about king:
     auto exposureKing = [&](scoord coord) -> bool {
 
-        X = from.x - king.x,
-        Y = from.y - king.y;
-        bool from_aligns_king = abs(X) == abs(Y) || !X || !Y;
-       // bool to_aligns_king = !notAlignsKing(coord, king, from);
-        if (from_aligns_king){
-            pove virtual_move;
-            board.moveVirtually(from_tile, theTile(coord), virtual_move);
-            auto threatensToKing = [&](scoord coord) -> bool {
-                char name = pieceName(coord);
-                return (abs(X) == abs(Y)
-                    ? differentColor(coord) && (name == 'B' || name == 'Q')
-                    : differentColor(coord) && (name == 'R' || name == 'Q'));
-                };
-            auto bordersAfter = [&](scoord coord) {
-                return inBoard(coord) && (!occupied(coord) || differentColor(coord));
-                };
-            auto checkerAfter = [&](scoord coord, bool& result) -> bool {
-                return enemyFinder(coord, threatensToKing, bordersAfter, result);
-                };
-            // FIX: it checks differentColor() 3 times or more
-            bool occurs_threat;
-            add = findDirection(king, from);
-            fastThrough(king, add, checkerAfter, occurs_threat);
-            board.revertVirtualMove(virtual_move);
-            return occurs_threat;
-        }
-        else
-            return false;
+//        X = from.x - king.x,
+//        Y = from.y - king.y;
+//        bool from_aligns_king = abs(X) == abs(Y) || !X || !Y;
+//       // bool to_aligns_king = !notAlignsKing(coord, king, from);
+//        if (from_aligns_king){
+//            pove virtual_move;
+//            board.moveVirtually(from_tile, theTile(coord), virtual_move);
+//            auto threatensToKing = [&](scoord coord) -> bool {
+//                char name = pieceName(coord);
+//                return (abs(X) == abs(Y)
+//                    ? differentColor(coord) && (name == 'B' || name == 'Q')
+//                    : differentColor(coord) && (name == 'R' || name == 'Q'));
+//                };
+//            auto bordersAfter = [&](scoord coord) {
+//                return inBoard(coord) && (!occupied(coord) || differentColor(coord));
+//                };
+//            auto checkerAfter = [&](scoord coord, bool& result) -> bool {
+//                return enemyFinder(coord, threatensToKing, bordersAfter, result);
+//                };
+//            // FIX: it checks differentColor() 3 times or more
+//            bool occurs_threat;
+//            add = findDirection(king, from);
+//            fastThrough(king, add, checkerAfter, occurs_threat);
+//            board.revertVirtualMove(virtual_move);
+//            return occurs_threat;
+//        }
+//        else
+//            return false;
 
 		// FIX: how will it work if the king is already under check?
-/*		if (first_evaluation) {
-			X = from.x - king.x,
-				Y = from.y - king.y;
+        if (first_evaluation) {
+            X = from.x - king.x,
+            Y = from.y - king.y;
 			bool from_aligns_king = abs(X) == abs(Y) || !X || !Y;
 			if (from_aligns_king) {
 				add = findDirection(king, from);
@@ -329,11 +329,13 @@ void Validation::findValid(Tile* from_tile)
 			}
 			first_evaluation = false;
 		}
-        return may_exposure && notAlignsKing(coord, king, from);*/ // if not aligns king then exposure him
+        return may_exposure && notAlignsKing(coord, king, from); // if not aligns king then exposure him
         // otherwise it will protect king with its own body
 		};
 	auto letKingDie = [&](scoord coord) {
-		if (check) {
+        // FIX: actually canPass() check should be in exposureKing() logically,
+        // but it will cause an exact copy of this function in eposureKing()
+        if (check || canPass(from_tile, theTile(coord))) {
             pove virtual_move;
             board.moveVirtually(from_tile, theTile(coord), virtual_move);
 			bool check_remains =
