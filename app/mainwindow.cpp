@@ -233,7 +233,9 @@ void MainWindow::writeStory(int order, halfmove move)
         out = "O-O";
     }
     else{
-        out = piece + coordToString(f) + coordToString(t);
+        if (piece != 'P')
+            out += piece;
+        out += coordToString(f) + coordToString(t);
         if (promo != 'e')
             out += "=" + QString(promo);
     }
@@ -297,6 +299,8 @@ void MainWindow::startGame() // side true for user - white
 	for (QLayoutItem* child; (child = message_layout->takeAt(0)) != nullptr; child->widget()->~QWidget()) {}
     message_box->resize(rounded_area->width(), 0);
     ui->statusBar->show();
+    history_label->clear();
+    history_label->adjustSize();
 
     if (board)
         board.reset(new Board(board.data(), settings));

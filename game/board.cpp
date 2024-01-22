@@ -283,6 +283,7 @@ void Board::halfMove(Tile* from, Tile* to)
 {
     halfmove last_move;
     last_move.move = {from->toVirtu(), to->toVirtu()};
+    history.push_back(last_move);
     char promotion_type = 'e';
 	tatus emit_status = tatus::just_new_turn;
 	if (valid->differentColor(to->coord))
@@ -315,7 +316,7 @@ void Board::halfMove(Tile* from, Tile* to)
         emit moveMade(from->coord, to->coord, promotion_type);
 
     last_move.turn = turn;
-    history.push_back(last_move);
+    history.back() = last_move;
 	turn = !turn;
 	if (valid->inCheck(turn))
 		if (valid->inStalemate(turn))  // check + stalemate == checkmate
