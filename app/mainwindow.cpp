@@ -32,7 +32,7 @@ MainWindow::MainWindow(QWidget* parent) :
     clock{},
 	net(new WebClient(this)),
 	sounds{},
-	settings{},
+    settings("settings_" + curTime() + ".ini", QSettings::IniFormat),
     avatar_effect(new QGraphicsDropShadowEffect(this)),
 	user_pic(":images/profile"),
 	opp_pic(":images/profile"),
