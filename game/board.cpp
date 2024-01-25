@@ -147,31 +147,68 @@ void Board::drawTiles(bool side)
 		}
 	}
 
+//    pair<int, int> white_pieces_coords[16]{
+//        {0, 0},
+//        {1, 0},
+//        {2, 0},
+//        {3, 0},
+//        {4, 0},
+//        {5, 0},
+//        {6, 0},
+//        {7, 0},
+
+//        {0, 1},
+//        {1, 1},
+//        {2, 1},
+//        {3, 1},
+//        {4, 1},
+//        {5, 1},
+//        {6, 1},
+//        {7, 1}
+//    };
+//    pair<int, int> black_pieces_coords[16]{
+//        {0, 7},
+//        {1, 7},
+//        {2, 7},
+//        {3, 7},
+//        {4, 7},
+//        {5, 7},
+//        {6, 7},
+//        {7, 7},
+
+//        {0, 6},
+//        {1, 6},
+//        {2, 6},
+//        {3, 6},
+//        {4, 6},
+//        {5, 6},
+//        {6, 6},
+//        {7, 6}
+//    };
+
 	//black pawns
-	for (int x = 0; x < 8; x++)
+    for (int x = 0; x < 8; x++){
         tiles[x][6]->setPiece('P', 0);
+        //black_piece_coords[x + 8] = {x, 6};
+    }
 
 	//white pawns
-	for (int x = 0; x < 8; x++)
+    for (int x = 0; x < 8; x++){
         tiles[x][1]->setPiece('P', 1);
+    }
 
-    tiles[0][7]->setPiece('R', 0);
-    tiles[1][7]->setPiece('N', 0);
-    tiles[2][7]->setPiece('B', 0);
-    tiles[3][7]->setPiece('Q', 0);
-    tiles[4][7]->setPiece('K', 0);
-    tiles[5][7]->setPiece('B', 0);
-    tiles[6][7]->setPiece('N', 0);
-    tiles[7][7]->setPiece('R', 0);
+    // black pieces
+    std::string pieces = "RNBQKBNR";
+    for (int x = 0; x < 8; x++){
+        tiles[x][7]->setPiece(pieces[x], 0);
+       //black_piece_coords[x] = {x, 7};
+    }
 
-    tiles[0][0]->setPiece('R', 1);
-    tiles[1][0]->setPiece('N', 1);
-    tiles[2][0]->setPiece('B', 1);
-    tiles[3][0]->setPiece('Q', 1);
-    tiles[4][0]->setPiece('K', 1);
-    tiles[5][0]->setPiece('B', 1);
-    tiles[6][0]->setPiece('N', 1);
-    tiles[7][0]->setPiece('R', 1);
+    // white pieces
+    for (int x = 0; x < 8; x++){
+        tiles[x][0]->setPiece(pieces[x], 1);
+        //piece_coords[x + 8] = {x, 0};
+    }
 }
 
 void Board::openPromotion(Tile* from)
@@ -185,7 +222,9 @@ void Board::openPromotion(Tile* from)
         menu[i]->setPiece(pieces[i], turn);
         menu[i]->raise();
         menu[i]->show();
-        connect(menu[i].data(), &Tile::tileClicked, this, &Board::promotePawn);
+        connect(menu[i].data(), &Tile::tileClicked, [&](Tile* into){
+            promotePawn(from, into);
+        });
         connect(this, &Board::promotionEnd, &loop, &QEventLoop::quit);
 	}
 	for (int x = 0; x < 8; x++)
@@ -260,11 +299,18 @@ void Board::restoreTile(virtu saved)
     saved.tile->piece_name = saved.name;
 }
 
-void Board::promotePawn(Tile* tile)
+int Board::idx(scoord coord)
 {
-    pove last_move = history.back().move;
-    last_move.second.tile->setPiece(tile->piece_name, tile->piece_color);
-    last_promotion = tile->piece_name;
+    for (int i = 0; i < piece_coords.size(); i++){
+        if (piece_coords[i] == coord)
+            return i;
+    }
+}
+
+void Board::promotePawn(Tile* from, Tile* into)
+{
+    from->setPiece(into->piece_name, into->piece_color);
+    last_promotion = into->piece_name;
 	for (int i = 0; i < 4; i++) {
 		menu[i]->~Tile();
 	}
@@ -283,7 +329,6 @@ void Board::halfMove(Tile* from, Tile* to)
 {
     halfmove last_move;
     last_move.move = {from->toVirtu(), to->toVirtu()};
-    history.push_back(last_move);
     char promotion_type = 'e';
 	tatus emit_status = tatus::just_new_turn;
 	if (valid->differentColor(to->coord))
@@ -316,7 +361,7 @@ void Board::halfMove(Tile* from, Tile* to)
         emit moveMade(from->coord, to->coord, promotion_type);
 
     last_move.turn = turn;
-    history.back() = last_move;
+    history.push_back(last_move);
 	turn = !turn;
 	if (valid->inCheck(turn))
 		if (valid->inStalemate(turn))  // check + stalemate == checkmate

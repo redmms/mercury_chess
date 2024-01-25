@@ -520,3 +520,24 @@ void MainWindow::printMessage(QString name, bool own, QString text)
 		scroller->setValue(scroller->maximum());
 		});
 }
+
+void MainWindow::on_actionAbout_triggered()
+{
+    QString title = "About Mercury Chess";
+    QString description = "I am Max Cury (MMD18) and this is my pet project written with Qt framework and C++ programming language.\n\n"
+            "It may seem that the main feature of the program is a chess game with a beautiful style, but it's absolutely not.\n\nThe main feature is its built-in archiver, "
+            "with its own chess game data format using a sophisticated algorithm to compress the data, so that it takes even less than 1 byte of space for every halfmove and uses its own "
+            "bitstream allowing it to operate individual bits in std::cout style (available on github by https://github.com/redmms/finestream.git).\n\nI also invented several algorithms for describing chess board positions "
+            "(like FEN but with a different structure and encoded in bits) and will code them if I find some "
+            "interest of programmers or chess community. "
+            "\n\n"
+            "To contact me, use this email: mmd18cury@yandex.ru";
+    QMessageBox::about(0, title, description);
+}
+
+
+void MainWindow::on_actionAbout_Qt_triggered()
+{
+    QMessageBox::aboutQt(0, "About Qt");
+}
+

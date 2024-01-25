@@ -46,7 +46,8 @@ enum endnum : quint8 {
     draw_by_insufficient_material,  // FIX: need to handle
     opponent_disconnected_end,
     interrupt,
-    server_disconnected
+    server_disconnected,
+    ENDNUM_MAX
 };
 
 enum tatus : quint8 {
@@ -69,6 +70,9 @@ struct scoord{
     }
     bool operator == (const scoord right) const {
         return x == right.x && y == right.y;
+    }
+    operator std::pair<int, int>() const {
+        return std::make_pair(x, y);
     }
 };
 

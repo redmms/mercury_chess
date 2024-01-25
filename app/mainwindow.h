@@ -112,6 +112,10 @@ private slots:
     void on_change_ip_button_clicked();
     void on_restore_default_button_clicked();
 
+    void on_actionAbout_triggered();
+
+    void on_actionAbout_Qt_triggered();
+
 protected slots:
 	void endSlot(endnum end_type);
 };

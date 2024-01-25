@@ -4,7 +4,7 @@
 
 int main(int argc, char *argv[])
 {
-    //qInstallMessageHandler(messageHandler);
+    qInstallMessageHandler(messageHandler);
     QApplication app(argc, argv);
     app.setOrganizationName("MMD18 soft");
     app.setApplicationName("Mercury Chess");
@@ -12,4 +12,3 @@ int main(int argc, char *argv[])
     mainwindow->showMaximized();
     return app.exec();
 }
-

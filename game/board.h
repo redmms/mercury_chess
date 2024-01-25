@@ -31,6 +31,7 @@ public:
     Board(QLabel* background, const QSettings& settings);
 
     std::vector<halfmove> history;
+    std::vector<scoord> piece_coords;
     QScopedPointer<Validation> valid;
     QScopedPointer<Tile> tiles[8][8];
 	bool turn;
@@ -52,6 +53,7 @@ public:
 	void castleKing(Tile* king, Tile* destination, Tile* rook);
 	void passPawn(Tile* from, Tile* to);
     void restoreTile(virtu saved);
+    int idx(scoord coord);
 
 	auto operator [](int i) {
         return tiles[i];
@@ -66,5 +68,5 @@ signals:
 
 private slots:
 	void reactOnClick(Tile* tile);
-	void promotePawn(Tile* tile);
+    void promotePawn(Tile* from, Tile* into);
 };

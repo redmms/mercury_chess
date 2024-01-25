@@ -373,7 +373,7 @@ void WebClient::readFromServer()
             mainwindow->endSlot(endnum::draw_by_agreement);
         break;
     }
-    case package_ty::resignation: // mainwindow->endSlot(endnum::opponents_resignation
+    case package_ty::resignation:
     {
         qDebug() << curTime() << "Resignation from opponent received";
         mainwindow->endSlot(endnum::opponent_resignation);

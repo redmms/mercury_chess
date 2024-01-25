@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>842</width>
-    <height>694</height>
+    <height>699</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -358,7 +358,7 @@ background-color: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 1, stop: 0 #634b30, s
 }</string>
       </property>
       <property name="currentIndex">
-       <number>4</number>
+       <number>2</number>
       </property>
       <property name="tabBarAutoHide">
        <bool>false</bool>
@@ -2211,6 +2211,9 @@ background-color: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 1, stop: 0 #634b30, s
               </property>
               <property name="styleSheet">
                <string notr="true">border-radius: 14;</string>
+              </property>
+              <property name="placeholderText">
+               <string>nickname</string>
               </property>
              </widget>
             </item>
@@ -7143,9 +7146,10 @@ border-radius: 14;
     </property>
     <addaction name="actionReport_a_bug"/>
     <addaction name="actionSend_suggestion"/>
-    <addaction name="actionRules_2"/>
+    <addaction name="actionRules"/>
     <addaction name="separator"/>
-    <addaction name="actionAbout_2"/>
+    <addaction name="actionAbout"/>
+    <addaction name="actionAbout_Qt"/>
    </widget>
    <widget class="QMenu" name="menuArchiver">
     <property name="title">
@@ -7203,22 +7207,12 @@ border-radius: 14;
     <string>Send suggestion</string>
    </property>
   </action>
-  <action name="actionAbout">
-   <property name="text">
-    <string>About</string>
-   </property>
-  </action>
   <action name="actionRules">
    <property name="text">
     <string>Rules</string>
    </property>
   </action>
-  <action name="actionRules_2">
-   <property name="text">
-    <string>Rules</string>
-   </property>
-  </action>
-  <action name="actionAbout_2">
+  <action name="actionAbout">
    <property name="text">
     <string>About</string>
    </property>
@@ -7271,6 +7265,11 @@ border-radius: 14;
   <action name="actionEnter">
    <property name="text">
     <string>Enter</string>
+   </property>
+  </action>
+  <action name="actionAbout_Qt">
+   <property name="text">
+    <string>About Qt</string>
    </property>
   </action>
  </widget>
