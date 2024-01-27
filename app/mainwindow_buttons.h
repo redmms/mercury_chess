@@ -246,3 +246,4 @@ void MainWindow::on_restore_default_button_clicked()
     ui->ip_edit->clear();
     ui->port_edit->clear();
 }
+

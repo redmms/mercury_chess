@@ -358,7 +358,7 @@ background-color: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 1, stop: 0 #634b30, s
 }</string>
       </property>
       <property name="currentIndex">
-       <number>2</number>
+       <number>0</number>
       </property>
       <property name="tabBarAutoHide">
        <bool>false</bool>

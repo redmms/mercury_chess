@@ -1,3 +1,4 @@
+//import bitchess;
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 #include "qbitmap.h"
@@ -111,10 +112,9 @@ private slots:
     void on_actionEnter_triggered();
     void on_change_ip_button_clicked();
     void on_restore_default_button_clicked();
-
     void on_actionAbout_triggered();
-
     void on_actionAbout_Qt_triggered();
+    void on_actionSave_game_triggered();
 
 protected slots:
 	void endSlot(endnum end_type);

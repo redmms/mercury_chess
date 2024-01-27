@@ -7,7 +7,7 @@
 #include <QTimer>
 #include <string>
 
-Board::Board(QLabel* background = 0, const QSettings& settings_par = {}) :
+Board::Board(QLabel* background = 0, const QSettings& settings_par = QSettings()) :
 	tile_size(background->width() / 9),
     settings(settings_par),
     side(settings.value("match_side").toBool()),  // true for user on white side
@@ -299,20 +299,20 @@ void Board::restoreTile(virtu saved)
     saved.tile->piece_name = saved.name;
 }
 
-int Board::idx(scoord coord)
-{
-    for (int i = 0; i < piece_coords.size(); i++){
-        if (piece_coords[i] == coord)
-            return i;
-    }
-}
+//int Board::idx(scoord coord)
+//{
+//    for (int i = 0; i < piece_coords.size(); i++){
+//        if (piece_coords[i] == coord)
+//            return i;
+//    }
+//}
 
 void Board::promotePawn(Tile* from, Tile* into)
 {
     from->setPiece(into->piece_name, into->piece_color);
     last_promotion = into->piece_name;
 	for (int i = 0; i < 4; i++) {
-		menu[i]->~Tile();
+		menu[i].reset();
 	}
 	for (int x = 0; x < 8; x++)
 		for (int y = 0; y < 8; y++)
@@ -334,7 +334,8 @@ void Board::halfMove(Tile* from, Tile* to)
 	if (valid->differentColor(to->coord))
         emit_status = turn == side ? tatus::opponent_piece_eaten : tatus::user_piece_eaten;
 
-	if (Tile* rook; valid->canCastle(from, to, &rook)) {
+    Tile* rook;
+    if (valid->canCastle(from, to, &rook)) {
 		castleKing(from, to, rook);
         last_move.castling = true;
 		emit_status = tatus::castling;

@@ -19,8 +19,8 @@ WebClient::WebClient(MainWindow* parent) :
     read_stream(&read_package, QIODevice::ReadOnly),
     send_stream(&send_package, QIODevice::WriteOnly)
 {
-    read_stream.setVersion(QDataStream::Qt_5_15);
-    send_stream.setVersion(QDataStream::Qt_5_15);
+    read_stream.setVersion(QDataStream::Qt_6_1/*QDataStream::Qt_5_15*/);
+    send_stream.setVersion(QDataStream::Qt_6_1/*QDataStream::Qt_5_15*/);
     if (read_stream.status() != QDataStream::Ok)
         qDebug() << curTime() << "read_stream error!";
     if (send_stream.status() != QDataStream::Ok)

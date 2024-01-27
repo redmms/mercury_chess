@@ -399,16 +399,20 @@ void Validation::findValid(Tile* from_tile)
 		int x = coord.x, y = coord.y;
 		scoord move;
 		int k = turn ? 1 : -1;
-		if (move = { x, y + 1 * k }; pawnCanMove(move)) {
+        move = { x, y + 1 * k };
+        if (pawnCanMove(move)) {
 			if (!letKingDie(move))
 				addValid(move);
-			if (move = { x, y + 2 * k }; (turn ? from.y == 1 : from.y == 6) &&
+            move = { x, y + 2 * k };
+            if ( (turn ? from.y == 1 : from.y == 6) &&
 				pawnCanMove(move) && !letKingDie(move))
 				addValid(move);
 		}
-		if (move = { x - 1, y + 1 * k }; pawnCanEat(move) && !letKingDie(move))
+        move = { x - 1, y + 1 * k };
+        if (pawnCanEat(move) && !letKingDie(move))
 			addValid(move);
-		if (move = { x + 1, y + 1 * k }; pawnCanEat(move) && !letKingDie(move))
+        move = { x + 1, y + 1 * k };
+        if (pawnCanEat(move) && !letKingDie(move))
 			addValid(move);
 		};
 
