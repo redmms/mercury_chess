@@ -7,6 +7,7 @@ import <type_traits>;
 import <vector>;
 import <queue>;
 import <bit>;
+import <ios>;
 using namespace std;
 
 
@@ -32,7 +33,7 @@ constexpr int CHB1 = CHAR_BIT - 1,
 		requires (sizeof(ARRAY_VALUES_TYPE) == 1)
 	void ToBytes(ORIGINAL_TYPE& NUMBER, ARRAY_VALUES_TYPE(&BYTES_ARRAY)[N]) {
 		if (N != sizeof(ORIGINAL_TYPE)) {
-			std::cerr << "Error: use array of same size as original data in ToBytes()" << std::endl;
+			//std::cerr << "Error: use array of same size as original data in ToBytes()" << std::endl;
 			throw std::out_of_range("Error: use array of same size as original data in ToBytes()");
 		}
 		ARRAY_VALUES_TYPE* BYTE_PTR = reinterpret_cast<ARRAY_VALUES_TYPE*>(&NUMBER);
@@ -44,8 +45,8 @@ constexpr int CHB1 = CHAR_BIT - 1,
 		requires fsm::container<CONTAINER_TYPE> && (sizeof(typename CONTAINER_TYPE::value_type) == 1)
 	void ToBytes(ORIGINAL_TYPE& NUMBER, CONTAINER_TYPE& BYTES_ARRAY) {
 		if (!BYTES_ARRAY.empty()) {
-			std::cerr << "Warning: in ToBytes(): you are adding NUMBER representation to "
-				"nonempty container" << std::endl;
+			//std::cerr << "Warning: in ToBytes(): you are adding NUMBER representation to "
+				//"nonempty container" << std::endl;
 		}
 		typename CONTAINER_TYPE::value_type* BYTE_PTR = reinterpret_cast<typename
 			CONTAINER_TYPE::value_type*>(&NUMBER);
@@ -114,11 +115,11 @@ constexpr int CHB1 = CHAR_BIT - 1,
 	template <typename T>
 	void ToSizedVector(T NUMBER, std::vector <bool>& CONTAINER) {
 		if (CONTAINER.empty()){
-			cerr << "ERROR: in ToSizedVector: initial vector<bool> is empty";
+			//cerr << "ERROR: in ToSizedVector: initial vector<bool> is empty";
 			return;
 		}
 		if (sizeof(NUMBER) < CONTAINER.size()) {
-			cerr << "WARNING: in ToSizedVector: aim NUMBER size is less than vector<bool> size";
+			//cerr << "WARNING: in ToSizedVector: aim NUMBER size is less than vector<bool> size";
 		}
 		T MASK{ T(1) << CONTAINER.size() - 1 };
 		for (size_t BIT_IDX = 0, SIZE = CONTAINER.size(); BIT_IDX < SIZE; BIT_IDX++) {
@@ -174,6 +175,11 @@ constexpr int CHB1 = CHAR_BIT - 1,
 
 	class ofinestream : public finestream {
 	public:
+		//ofinestream() = default;
+		//ofinestream() noexcept = default;
+		//ofinestream(const ofinestream& other) = default;
+		//ofinestream& operator=(const ofinestream& other) = default;
+
 		ofinestream(string FILE) : finestream(FILE) {	}
 		~ofinestream() {
 			if (BRLAST_BYTE.BITSN) { // output buffer for last byte before closing filestream
@@ -182,7 +188,12 @@ constexpr int CHB1 = CHAR_BIT - 1,
 			FILE_STREAM.close();
 		}
 
-
+		auto tellp() {
+			return FILE_STREAM.tellp();
+		}
+		void seekp(fstream::pos_type pos) {
+			FILE_STREAM.seekp(pos);
+		}
 		void Flush() {
 			if (BRLAST_BYTE.BITSN) { // output buffer for last byte before closing filestream
 				FILE_STREAM.put(BRLAST_BYTE.UCBYTE);
@@ -261,7 +272,7 @@ constexpr int CHB1 = CHAR_BIT - 1,
 		}
 		ofinestream& operator << (const bool BBYTE) {
 			if (!BRLAST_BYTE.MOVED_LEFT) {
-				cout << "Warning: last byte isn't left aligned" << endl;
+				//cout << "Warning: last byte isn't left aligned" << endl;
 				BRLAST_BYTE.MoveToLeft();
 			}
 			if (BBYTE) {
@@ -319,7 +330,7 @@ constexpr int CHB1 = CHAR_BIT - 1,
 					PutAnyReversed(DATA);
 				else
 					PutAny(DATA);
-				cerr << "Warning: are you sure about this type - " << typeid(T).name() << "?" << endl;
+				//cerr << "Warning: are you sure about this type - " << typeid(T).name() << "?" << endl;
 			}
 			return *this;
 		}
@@ -344,7 +355,7 @@ constexpr int CHB1 = CHAR_BIT - 1,
 			uchar 
 				UCREAD_BYTE = FILE_STREAM.get();
 			if (UCREAD_BYTE == (uchar) EOF) {
-				cerr << "Warning: reached end of file." << endl;
+				//cerr << "Warning: reached end of file." << endl;
 				return EOF;
 			}
 			else if (BRLAST_BYTE.BITSN) {
@@ -383,7 +394,7 @@ constexpr int CHB1 = CHAR_BIT - 1,
 				if (BRLAST_BYTE.BITSN < BRBYTE.BITSN) {
 					UCREAD_BYTE = (uchar)FILE_STREAM.get();
 					if (UCREAD_BYTE == (uchar)EOF) {
-						cerr << "Warning: reached end of file." << endl;
+						//cerr << "Warning: reached end of file." << endl;
 						return EOF;
 					}					bitremedy RIGHT_PART{ UCREAD_BYTE, BRBYTE.BITSN - BRLAST_BYTE.BITSN, true },
 					NEW_REMEDY = BRLAST_BYTE.MergeWith(RIGHT_PART);
@@ -398,7 +409,7 @@ constexpr int CHB1 = CHAR_BIT - 1,
 			else {
 				UCREAD_BYTE = (uchar)FILE_STREAM.get();
 				if (UCREAD_BYTE == (uchar)EOF) {
-					cerr << "Warning: reached end of file." << endl;
+					//cerr << "Warning: reached end of file." << endl;
 					return EOF;
 				}				int	LEFT_SIZE = BRBYTE.BITSN,
 				RIGHT_SIZE = CHB - LEFT_SIZE;
@@ -470,7 +481,7 @@ constexpr int CHB1 = CHAR_BIT - 1,
 		}
 		 ifinestream& operator >> (bool & BBYTE) {
 			if (BRLAST_BYTE.MOVED_LEFT) {
-				cerr << "Warning: BRLAST_BYTE is left aligned" << endl;
+				//cerr << "Warning: BRLAST_BYTE is left aligned" << endl;
 				BRLAST_BYTE.MoveToRight();
 			}
 			else if (!BRLAST_BYTE.BITSN) {
@@ -518,7 +529,7 @@ constexpr int CHB1 = CHAR_BIT - 1,
 					GetAnyReversed(DATA);
 			}
 			else {
-				cerr << "Warning: are you sure about this type - " << typeid(T).name() << "?" << endl;
+				//cerr << "Warning: are you sure about this type - " << typeid(T).name() << "?" << endl;
 				if (IsLittleEndian())
 					GetAny(DATA);
 				else

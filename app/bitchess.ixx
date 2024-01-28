@@ -10,6 +10,7 @@ import <vector>;
 import <string>;
 import <cmath>;
 import <map>;
+import <stdexcept>;
 using namespace std;
 
 enum piece_ty {
@@ -160,11 +161,11 @@ public:
 	// moves. To make iBytes_num_bytes == 1 it should be around 220 or less.
 	// Otherwise it will use 2 bytes throughout the file to write down byte sizes 
 	// of games
-		size_t bytes_num = ceil( (long double)(max_game_length * 9) / CHAR_BIT );
+		size_t max_bytes_num = ceil( (long double)(max_game_length * 9) / CHAR_BIT );
 		// the number of bytes to write the longest game in the file
 		// FIX: if it's a very long game of bots, for example, it should use 
 		// long arithmancy
-		long double bytes_num_bits = ceil(log2(bytes_num)); 
+		long double bytes_num_bits = ceil(log2(max_bytes_num));
 		// the number of bits to write
 		// the byte size before of the longest game in the file
 		// (written in the beggining of the file)
@@ -178,13 +179,21 @@ public:
 			idxs_on_board[coord.first][coord.second] = i + 16;
 		}
 	};
-	void write_game(endnum end_type, std::vector<halfmove> history, fsm::ofinestream& ofs){
+	int write_game(endnum end_type, std::vector<halfmove> history, std::string filename)
+	{
+		try {
+			fsm::ofinestream ofs(filename);
+		}
+		catch (const exception& E) {
+			return 1;
+		}
+		fsm::ofinestream ofs(filename);
 		bitremedy bytes_num_bytes{ iBytes_num_bytes, 4, false};
 		bitremedy moves_num_bytes{ 0, 4, false};
 		size_t moves_num = history.size();
 		if (moves_num > UCHAR_MAX){
-			cerr << "ERROR: this data compressor version doesn't allow to save such big games";
-			return;
+			//cerr << "ERROR: this data compressor version doesn't allow to save such big games";
+			return 2;
 		}
 		long double moves_num_bits = ceil(log2(moves_num));
 		size_t iMoves_num_bytes = ceil(moves_num_bits / CHAR_BIT);
@@ -192,15 +201,17 @@ public:
 		vector<bool> vbMoves_num(iMoves_num_bytes * CHAR_BIT);
 		fsm::ToSizedVector(moves_num, vbMoves_num);
 		vector<bool> vbBytes_num(iBytes_num_bytes * CHAR_BIT);
-		fsm::ToSizedVector(char(0), vbBytes_num);
+		fsm::ToSizedVector(size_t(0), vbBytes_num);
 		int end_min_bits = ceil(log2((int)endnum::ENDNUM_MAX));
 		// FIX: end_min_bits should be a constant class field and be equal for 
 		// every game notation
 		bitremedy brEnd_type{end_type, end_min_bits, false}; 
+		auto begin_pos = ofs.tellp();
 		ofs << decoder_version
 			<< bytes_num_bytes
-			<< moves_num_bytes
-			<< vbBytes_num
+			<< moves_num_bytes;
+		auto bytes_num_pos = ofs.tellp();
+		ofs << vbBytes_num
 			<< vbMoves_num
 			<< brEnd_type;
 			// FIX: the stream should return back here later and rewrite bytes_num_bytes;
@@ -230,6 +241,12 @@ public:
 			write_move(from_coord, to_coord, promo, ofs);
 		}
 		ofs.Flush();
+		auto end_pos = ofs.tellp();
+		size_t bytes_num = end_pos - begin_pos;
+		fsm::ToSizedVector(bytes_num, vbBytes_num);
+		ofs.seekp(bytes_num_pos);
+		ofs << vbBytes_num;
+		return 0;
 	}
 	void read_game(endnum& end_type, std::vector<halfmove>& history);
 	void read_move(
@@ -353,7 +370,7 @@ public:
 				to_color = false;
 			bool enemy_color = !white_turn;
 			if (to_color != enemy_color) {
-				cerr << "ERROR: in read_move(): you can't eat your own piece";
+				//cerr << "ERROR: in read_move(): you can't eat your own piece";
 				return;
 			}
 			if (to_color) {
@@ -490,7 +507,7 @@ public:
 		ofs << move;
 		if (piece_type == pawn && (white_turn && y1 == 7 || !white_turn && y1 == 0)) {
 			if (promo == no_promotion) {
-				cerr << "ERROR: you need to choose a piece to transform pawn to." << endl;
+				//cerr << "ERROR: you need to choose a piece to transform pawn to." << endl;
 			}
 			ofs << bitset<2>(promo);
 		}
@@ -499,7 +516,7 @@ public:
 	};
 };
 void print_chess_coords(pair<int, int> coord) {
-	cout << char('a' + coord.first) << coord.second + 1 << endl;
+	//cout << char('a' + coord.first) << coord.second + 1 << endl;
 }
 //int main() {
 //	//Move 
@@ -513,7 +530,7 @@ void print_chess_coords(pair<int, int> coord) {
 //	//	additional_info;
 //	////bool is_valid{ true };
 //	////moveobj.validate_move(is_valid, pawn, { 0, 1 }, { 1, 8 });
-//	////cout << is_valid << endl;
+//	//////cout << is_valid << endl;
 //
 //	////fsm::ofinestream ofs("output.txt");
 //	////for (int i = 0; i < 20; i++) {
@@ -534,10 +551,10 @@ void print_chess_coords(pair<int, int> coord) {
 //	////extra_ty 
 //	////	additional_info;
 //	////moveobj.read_move(piece_idx, to_coords, promotion_type, additional_info, ifs);
-//	////cout << piece_names[pieces_by_idx[piece_idx]] << endl;
+//	//////cout << piece_names[pieces_by_idx[piece_idx]] << endl;
 //	////print_chess_coords(to_coords);
 //	////moveobj.read_move(piece_idx, to_coords, promotion_type, additional_info, ifs);
-//	////cout << piece_names[pieces_by_idx[piece_idx]] << endl;
+//	//////cout << piece_names[pieces_by_idx[piece_idx]] << endl;
 //	////print_chess_coords(to_coords);
 //	// // 
 //
@@ -545,7 +562,7 @@ void print_chess_coords(pair<int, int> coord) {
 //	//	ifs("output.txt");
 //	//while (!ifs.Eof()) {
 //	//	moveobj.read_move(from_coord, to_coord, promotion_type, additional_info, ifs);
-//	//	cout << piece_names[pieces_by_idx[idxs_on_board[from_coord.first][from_coord.second] ]] << endl;
+//	//	//cout << piece_names[pieces_by_idx[idxs_on_board[from_coord.first][from_coord.second] ]] << endl;
 //	//	print_chess_coords(to_coord);
 //	//}
 //}

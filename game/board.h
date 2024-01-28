@@ -45,6 +45,7 @@ public:
 	QString promo_css;
     char last_promotion;
     virtu last_virtually_passed;
+	endnum end_type;
 
 	void saveMove(Tile* from, Tile* to, pove& move);
     void revertVirtualMove(pove& move);

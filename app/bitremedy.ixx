@@ -1,7 +1,7 @@
 export module bitremedy;
+import <iostream>;
 import <bitset>;
 import <stdexcept>;
-import <iostream>;
 using uchar = unsigned char;
 constexpr int CHB = CHAR_BIT;
 using namespace std;
@@ -68,7 +68,7 @@ public:
 			CheckBitsn();
 		}
 		catch (const exception& E) {
-			cout << E.what() << endl;
+			//cout << E.what() << endl;
 			abort();
 		}
 	}
@@ -77,7 +77,7 @@ public:
 			CheckValidity();
 		}
 		catch (const exception& E) {
-			cout << E.what() << endl;
+			//cout << E.what() << endl;
 			abort();
 		}
 	}
@@ -133,7 +133,7 @@ public:
 		// merges two unfull bytes moving them to the left and returns left aligned remedy as bitremedy NEW_REMEDY
 		int BIT_SUM = this->BITSN + _ADDEND.BITSN;
 		if (BIT_SUM == CHAR_BIT << 1) {
-			cout << "Warning: merging 2 full bytes will not change them." << endl;
+			//cout << "Warning: merging 2 full bytes will not change them." << endl;
 			return { 0, 0, 0 };
 		}
 		bitremedy ADDEND{ _ADDEND }, NEW_REMEDY;

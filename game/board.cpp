@@ -34,7 +34,8 @@ Board::Board(QLabel* background = 0, const QSettings& settings_par = QSettings()
 		"background-color: rgb(170,85,127);}"
     ),
     last_promotion('e'),
-    last_virtually_passed{}
+    last_virtually_passed{},
+	end_type(endnum::interrupt)
 {
 	setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
 	setMinimumSize(396, 396);

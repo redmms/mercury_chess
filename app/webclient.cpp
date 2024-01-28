@@ -29,9 +29,9 @@ WebClient::WebClient(MainWindow* parent) :
 
 void WebClient::initSocket()
 {
-    socket.reset(new QTcpSocket(this)); //FIX: how to destruct previous socket?
+    socket = (new QTcpSocket(this)); //FIX: how to destruct previous socket?
     // FIX: will note QScopedPointer deleter mess with socket->deleteLater()?
-    connect(socket.data(), &QTcpSocket::errorOccurred, [&](QAbstractSocket::SocketError socketError){
+    connect(socket, &QTcpSocket::errorOccurred, [&](QAbstractSocket::SocketError socketError){
         if (socket->state() == QAbstractSocket::UnconnectedState){
             qDebug() << curTime() << "Couldn't connect to server:";
             qDebug() << curTime() << socketError;
@@ -53,17 +53,18 @@ void WebClient::initSocket()
             qDebug() << curTime() << socketError;
         }
     });
-    connect(socket.data(), &QTcpSocket::connected, [&](){
+    connect(socket, &QTcpSocket::connected, [&](){
         qDebug() << curTime() << "Connected to server.";
     });
-    connect(socket.data(), &QTcpSocket::readyRead, [&](){
+    connect(socket, &QTcpSocket::readyRead, [&](){
             while(socket->bytesAvailable() > 0){
                 this->readFromServer();
             }
     });
-    connect(socket.data(), &QTcpSocket::disconnected, [&](){
+    connect(socket, &QTcpSocket::disconnected, [&](){
         qDebug() << curTime() << "Lost connection with server";
         socket->deleteLater();
+        //initSocket();
         if (mainwindow->game_active)
             mainwindow->endSlot(endnum::server_disconnected);
         showBox("Connection failed",
@@ -71,6 +72,10 @@ void WebClient::initSocket()
                 QMessageBox::Critical);
         mainwindow->openTab(mainwindow->ui->pre_tab);
     });
+    connect(socket, &QTcpSocket::destroyed, [&]() {
+            qDebug() << curTime() << "Socket destroyed. Trying to init an new one";
+            initSocket();
+        });  
 }
 
 void WebClient::checkConnection(package_ty type)

@@ -64,12 +64,15 @@ enum tatus : quint8 {
 struct scoord{
     int x = 0;
     int y = 0;
-    
-    bool operator != (const scoord right) const {
+    //scoord(const std::pair<int, int>& p) : x(p.first), y(p.second) {}
+    bool operator == (const scoord& right) const {
+        return x == right.x && y == right.y;
+    }
+    bool operator != (const scoord& right) const {
         return x != right.x || y != right.y;
     }
-    bool operator == (const scoord right) const {
-        return x == right.x && y == right.y;
+    bool operator<(const scoord& right) const {
+        return (y < right.y ? true : x < right.x);
     }
     operator std::pair<int, int>() const {
         return std::make_pair(x, y);

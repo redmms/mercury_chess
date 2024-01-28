@@ -26,6 +26,7 @@
 #include <QKeyEvent>
 #include <QCryptographicHash>
 #include <cmath>
+#include <string>
 
 MainWindow::MainWindow(QWidget* parent) :
 	QMainWindow(parent),
@@ -53,7 +54,7 @@ MainWindow::MainWindow(QWidget* parent) :
     ui(new Ui::MainWindow),
     default_address("40.113.33.140"),
     default_port(49001),
-    history_area(new RoundedScrollArea(this, QColor(111, 196, 81))),
+    history_area(new HorizontalScrollArea(this, QColor(111, 196, 81))),
     history_label(new QLabel(this))
 {
 	// .ui file finish strokes
@@ -365,6 +366,7 @@ void MainWindow::endSlot(endnum end_type)  // FIX: white_wins and black_wins enu
     game_active = false;
     ui->statusBar->hide();
     ui->message_edit->removeEventFilter(this);
+    board->end_type = end_type;
 
     QString opp_name = settings.value("opp_name").toString();
     QString info_message;
@@ -525,15 +527,21 @@ void MainWindow::printMessage(QString name, bool own, QString text)
 void MainWindow::on_actionAbout_triggered()
 {
     QString title = "About Mercury Chess";
-    QString description = "I am Max Cury (MMD18) and this is my pet project written in C++ programming language with Qt framework.\n\n"
-            "It may seem that the main feature of the program is a chess game with a beautiful style, but it's absolutely not.\n\nThe main feature is its built-in archiver "
+    QString description = "I am Max Cury (MMD18) and this is my pet project written in C++ programming language with Qt framework.<br><br>"
+            "It may seem that the main feature of the program is a chess game with a beautiful style, but it is absolutely not.<br><br>The main feature is its built-in archiver "
             "with its own chess data format using a sophisticated algorithm to compress the data, so that it takes even less than 1 byte of space for every halfmove and uses its own "
-            "bitstream allowing it to operate individual bits in std::cout style (available on github by https://github.com/redmms/finestream.git).\n\nI also invented several algorithms for describing chess board positions "
+            "bitstream allowing it to operate individual bits in std::cout style (available on <a href = 'https://github.com/redmms/finestream.git'>github</a>).<br><br>I also invented several algorithms for describing chess board positions "
             "(like FEN but with a different structure and encoded in bits) and will code them if I find some "
             "interest of programmers or chess community. "
-            "\n\n"
+            "<br><br>"
             "To contact me, use this email: mmd18cury@yandex.ru";
-    QMessageBox::about(0, title, description);
+    QMessageBox msg_box;
+    msg_box.setWindowTitle(title);
+    msg_box.setTextFormat(Qt::RichText);   //this is what makes the links clickable
+    msg_box.setText(description);
+    msg_box.exec();
+    //QString description = "a" + QString(std::endl) + "<a href = 'https://github.com/redmms/finestream.git'>github< / a>";
+    //QMessageBox::about(0, title, description);
 }
 
 
@@ -544,8 +552,49 @@ void MainWindow::on_actionAbout_Qt_triggered()
 
 void MainWindow::on_actionSave_game_triggered()
 {
-//    Move decoder(220);
-    
+    // Create directory
+    QString dir_path = "saved_games";
+    QDir dir;
+    if (!dir.exists(dir_path)) {
+        if (dir.mkdir(dir_path)) {
+            qDebug() << curTime() << "saved_games folder created";
+        }
+        else {
+            qDebug() << "Couldn't create saved_games folder";
+        }
+    }
 
+    // Create archive file
+    QString  archive_name = dir_path
+            + "/"
+            + settings.value("opp_name").toString()
+            + QDateTime::currentDateTime().toString("_hh-mm-ss")
+            + ".mmd18";
+    QString selected_fullname = QFileDialog::getSaveFileName(this, "Save File",
+                                     archive_name,
+                                     tr("Chess Archive (*.mmd18)"));
+    if (!selected_fullname.isEmpty()) {
+        archive_name = selected_fullname;
+    }
+    QFile archive(archive_name);
+    if (archive.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        archive.close();
+        qDebug() << curTime() << "Archive file" << archive_name << "successfuly created.";
+    }
+    else {
+        qDebug() << "Couldn't open archive file" << archive_name;
+    }
+
+    // Write game to the file
+    Move decoder(220);
+    int error = decoder.write_game(board->end_type, board->history, archive_name.toStdString());
+    if (!error) {
+        showBox("Good news",
+                "Operation done successfuly.");
+    }
+    else {
+        showBox("Oops",
+                "Something went wrong. Error code: " + QString::number(error));
+    }
 }
 

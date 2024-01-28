@@ -1,4 +1,4 @@
-//import bitchess;
+import bitchess;
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 #include "qbitmap.h"
@@ -8,6 +8,7 @@
 #include "qsettings.h"
 #include "qstring.h"
 #include "rounded_scrollarea.h"
+#include "rounded_scrollarea_horizontal.h"
 #include "webclient.h"
 #include "qobject.h"
 #include <bitset>
@@ -56,7 +57,7 @@ class MainWindow : public QMainWindow
     bool waiting_for_invite_respond;
     QString default_address;
     int default_port;
-    QScopedPointer<RoundedScrollArea> history_area;
+    QScopedPointer<HorizontalScrollArea> history_area;
     QScopedPointer<QLabel> history_label;
 
 	void showStatus(const QString& status);  // FIX: will const& cause problems or not?

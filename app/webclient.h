@@ -18,7 +18,7 @@ class WebClient : public QObject
 	Q_OBJECT
 
     QPointer<MainWindow> mainwindow;
-    QScopedPointer<QTcpSocket> socket;
+    QPointer<QTcpSocket> socket;
 	QByteArray read_package;
 	QByteArray send_package;
 	QDataStream read_stream;
