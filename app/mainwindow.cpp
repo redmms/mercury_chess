@@ -201,13 +201,13 @@ void MainWindow::openTab(QWidget* page)
     //QScopedPointer<QWidget> tab_ptr(ui->tabWidget->currentWidget());
     if (!ui || !ui->tabWidget || !page)
      {
-        qDebug() << "ERROR: in open tab with pointers";
+        qWarning() << "ERROR: in open tab with pointers";
         return;
      }
     last_tab = ui->tabWidget->currentWidget();
     if (!last_tab)
      {
-        qDebug() << "ERROR: in open tab with last_tab pointer";
+        qWarning() << "ERROR: in open tab with last_tab pointer";
         return;
      }
     ui->tabWidget->setCurrentWidget(page);

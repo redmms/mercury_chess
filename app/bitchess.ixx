@@ -2,11 +2,10 @@ module;
 #include "..\game\tile.h"
 #include "..\game\local_types.h"
 #include "..\game\board.h"
-#include <iostream>
 export module bitchess;
 import bitremedy;
 import finestream;
-//import <iostream>;
+import <iostream>;
 import <bitset>;
 import <vector>;
 import <string>;
@@ -207,7 +206,7 @@ public:
 				to_color = false;
 			bool enemy_color = !white_turn;
 			if (to_color != enemy_color) {
-				cerr << "ERROR: in read_move(): you can't eat your own piece";
+				cerr << "ERROR: in read_move(): you can't eat your own piece" << endl;
 				return 1;
 			}
 			if (to_color) {
@@ -256,7 +255,7 @@ public:
 		bitremedy moves_num_bytes{ 0, 4, false};
 		int moves_num = history.size();
 		if (moves_num > UCHAR_MAX){
-			//cerr << "ERROR: this data compressor version doesn't allow to save such big games";
+			cerr << "ERROR: this data compressor version doesn't allow to save such big games" << endl;
 			return 2;
 		}
 		int end_min_bits = ceil(log2((int)endnum::ENDNUM_MAX));
@@ -335,7 +334,7 @@ public:
 		bitremedy brEnd_type{ 0, end_min_bits, false };
 		ifs >> input_version;
 		if (decoder_version != input_version) {
-			cerr << "ERROR: you use inappropriate version of devoder";
+			cerr << "ERROR: you use inappropriate version of devoder" << endl;
 			return 2;
 		}
 		ifs	>> bytes_num_bytes
@@ -574,7 +573,7 @@ public:
 		ofs << move;
 		if (piece_type == pawn && (white_turn && y == 7 || !white_turn && y == 0)) {
 			if (promo == no_promotion) {
-				//std::cerr << "ERROR: you need to choose a piece to transform pawn to." << endl;
+				cerr << "ERROR: you need to choose a piece to transform pawn to." << endl;
 			}
 			ofs << bitset<2>(promo);
 		}
