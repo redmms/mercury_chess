@@ -91,7 +91,7 @@ void Tile::setPiece(char elem, bool color)
 		piece = QString(":images/bishop_" + add);
 	}
 	if (piece.isNull()) {
-		qDebug() << curTime() << "Can't get acces to pieces images. Use pseudonames "
+		qDebug() << "Can't get acces to pieces images. Use pseudonames "
 			"for the files. Add them again to .qrc file if you've changed the project's"
 			"structure.";
 	}

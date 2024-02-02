@@ -19,12 +19,12 @@ WebClient::WebClient(MainWindow* parent) :
     read_stream(&read_package, QIODevice::ReadOnly),
     send_stream(&send_package, QIODevice::WriteOnly)
 {
-    read_stream.setVersion(QDataStream::Qt_6_1/*QDataStream::Qt_5_15*/);
-    send_stream.setVersion(QDataStream::Qt_6_1/*QDataStream::Qt_5_15*/);
+    read_stream.setVersion(/*QDataStream::Qt_6_1*/QDataStream::Qt_5_15);
+    send_stream.setVersion(/*QDataStream::Qt_6_1*/QDataStream::Qt_5_15);
     if (read_stream.status() != QDataStream::Ok)
-        qDebug() << curTime() << "read_stream error!";
+        qDebug() << "read_stream error!";
     if (send_stream.status() != QDataStream::Ok)
-        qDebug() << curTime() << "send_stream error!";
+        qDebug() << "send_stream error!";
 }
 
 void WebClient::initSocket()
@@ -33,8 +33,8 @@ void WebClient::initSocket()
     // FIX: will note QScopedPointer deleter mess with socket->deleteLater()?
     connect(socket, &QTcpSocket::errorOccurred, [&](QAbstractSocket::SocketError socketError){
         if (socket->state() == QAbstractSocket::UnconnectedState){
-            qDebug() << curTime() << "Couldn't connect to server:";
-            qDebug() << curTime() << socketError;
+            qDebug() << "Couldn't connect to server:";
+            qDebug() << socketError;
             showBox("No connection",
                     "You are offline. Contact me by mmd18cury@yandex.ru to start the server.",
                     QMessageBox::Warning);
@@ -42,19 +42,19 @@ void WebClient::initSocket()
 //            mainwindow->startGame();
         }
         else if (socket->state() != QAbstractSocket::ConnectedState){
-            qDebug() << curTime() << "Error occured while trying to connect to server:";
-            qDebug() << curTime() << socketError;
+            qDebug() << "Error occured while trying to connect to server:";
+            qDebug() << socketError;
             showBox("No connection",
                     "No connection, some error occured. Contact me by mmd18cury@yandex.ru.",
                     QMessageBox::Warning);
         }
         else{
-            qDebug() << curTime() << "Socket error signal received, but socket state is connected:";
-            qDebug() << curTime() << socketError;
+            qDebug() << "Socket error signal received, but socket state is connected:";
+            qDebug() << socketError;
         }
     });
     connect(socket, &QTcpSocket::connected, [&](){
-        qDebug() << curTime() << "Connected to server.";
+        qDebug() << "Connected to server.";
     });
     connect(socket, &QTcpSocket::readyRead, [&](){
             while(socket->bytesAvailable() > 0){
@@ -62,7 +62,7 @@ void WebClient::initSocket()
             }
     });
     connect(socket, &QTcpSocket::disconnected, [&](){
-        qDebug() << curTime() << "Lost connection with server";
+        qDebug() << "Lost connection with server";
         socket->deleteLater();
         //initSocket();
         if (mainwindow->game_active)
@@ -73,7 +73,7 @@ void WebClient::initSocket()
         mainwindow->openTab(mainwindow->ui->pre_tab);
     });
     connect(socket, &QTcpSocket::destroyed, [&]() {
-            qDebug() << curTime() << "Socket destroyed. Trying to init an new one";
+            qDebug() << "Socket destroyed. Trying to init an new one";
             initSocket();
         });  
 }
@@ -82,7 +82,7 @@ void WebClient::checkConnection(package_ty type)
 {
     if (!socket){
         if (type != package_ty::registration && type != package_ty::login)
-            qDebug() << curTime() << "Warning: you need to register or log in before sending any data to the server";
+            qDebug() << "Warning: you need to register or log in before sending any data to the server";
         initSocket();
         connectToServer();
     }
@@ -95,8 +95,7 @@ void WebClient::checkConnection(package_ty type)
     }
     else{
         //auto state_copy = socket->state();
-        qDebug() << curTime()
-                 << "Socket is fine. Connection also seems to be fine. Socket state is "
+        qDebug() << "Socket is fine. Connection also seems to be fine. Socket state is "
                  << socket->state();
     }
 }
@@ -118,7 +117,7 @@ void WebClient::packFromSock(QTcpSocket *socket, QByteArray &read_package)
     //auto avail_copy = socket->bytesAvailable();
     while(socket->bytesAvailable() < 2){
         if (!socket->waitForReadyRead()) {
-            qDebug() << curTime() << "waitForReadyRead() timed out";
+            qDebug() << "waitForReadyRead() timed out";
             return;
         }
     }
@@ -126,33 +125,33 @@ void WebClient::packFromSock(QTcpSocket *socket, QByteArray &read_package)
     //QDataStream package_stream(read_package);
     quint16 pack_size;
     read_stream >> pack_size;
-    qDebug() << curTime() << "Received package size supposed to be" << pack_size;
+    qDebug() << "Received package size supposed to be" << pack_size;
     // else can be done: (((pack_size = 0) &= buffer[0]) <<= 8) &= buffer[1]
     // but it will depend on endiannes;
 
     int need_to_add = pack_size - read_package.size();
     if (socket->bytesAvailable() >= need_to_add){
-        qDebug() << curTime() << "Full package arrived";
+        qDebug() << "Full package arrived";
         read_package.append(socket->read(need_to_add));
     }
     else{
-        qDebug() << curTime() << "Only a part of package arrived. Waiting for other parts";
+        qDebug() << "Only a part of package arrived. Waiting for other parts";
         while (socket->bytesAvailable() < need_to_add) {
             if (!socket->waitForReadyRead()) {
-                qDebug() << curTime() << "Error waiting for more data";
+                qDebug() << "Error waiting for more data";
                 return;
             }
         }
         read_package.append(socket->read(need_to_add));
-        qDebug() << curTime() << "Package is fulfilled";
+        qDebug() << "Package is fulfilled";
     }
 
     if (read_package.isEmpty()){
-        qDebug() << curTime() << "Received package was empty or most likely there was an error";
+        qDebug() << "Received package was empty or most likely there was an error";
         return;
     }
     else{
-        qDebug() << curTime() << "Received package size is" << read_package.size();
+        qDebug() << "Received package size is" << read_package.size();
     }
     read_stream.device()->reset();
 }
@@ -232,17 +231,17 @@ void WebClient::sendToServer(package_ty type, bool respond, QString message, sco
 //        }
 //        auto bytes_written = socket->write(little_copy);
 //        if (!socket->waitForBytesWritten()) // FIX: it may cause the problem with pictures
-//            qDebug() << curTime() << "Couldn't wait for bytes to be written";
+//            qDebug() << "Couldn't wait for bytes to be written";
 //        little_copy.clear();
 //    }
 
     auto bytes_written = socket->write(send_package);
     if (!socket->waitForBytesWritten(10000)) // FIX: it may cause the problem with pictures
-        qDebug() << curTime() << "Couldn't wait for bytes to be written";
+        qDebug() << "Couldn't wait for bytes to be written";
     if (bytes_written == -1)
-        qDebug() << curTime() << "Couldn't write send_package to server";
+        qDebug() << "Couldn't write send_package to server";
     else if (bytes_written != send_package.size())
-        qDebug() << curTime() << "Bytes writen to server are not as wanted";
+        qDebug() << "Bytes writen to server are not as wanted";
 
     send_package.clear();
     send_stream.device()->reset();
@@ -259,7 +258,7 @@ void WebClient::readFromServer()
     switch(type){
     case package_ty::invite:  //show message box and send invite respond
     {
-        qDebug() << curTime() << "Invite received";
+        qDebug() << "Invite received";
         QString user_name;
         readPack(user_name);
         QString opp_name;
@@ -300,7 +299,7 @@ void WebClient::readFromServer()
         // future there should be a message box showing was it rejected or just waiting too long for an
         // answer)
     {
-        qDebug() << curTime() << "Invite respond received";
+        qDebug() << "Invite respond received";
         bool respond;
         readPack(respond);
         if (respond){
@@ -318,7 +317,7 @@ void WebClient::readFromServer()
     }
     case package_ty::move:
     {
-        qDebug() << curTime() << "Move received";
+        qDebug() << "Move received";
         quint8 from_k;
         readPack(from_k);
         scoord from{from_k % 8, from_k / 8};
@@ -326,7 +325,7 @@ void WebClient::readFromServer()
         readPack(to_k);
         scoord to{to_k % 8, to_k / 8};
         if (!mainwindow->board){
-            qDebug() << curTime() << "ERROR: trying to write a move to nonexisting board";
+            qDebug() << "ERROR: trying to write a move to nonexisting board";
             return;
         }
         mainwindow->board->halfMove(from, to);
@@ -342,7 +341,7 @@ void WebClient::readFromServer()
     }
     case package_ty::chat_message:
     {
-        qDebug() << curTime() << "Message received";
+        qDebug() << "Message received";
         QString message;
         readPack(message);
         QString name = mainwindow->settings.value("opp_name").toString();
@@ -351,7 +350,7 @@ void WebClient::readFromServer()
     }
     case package_ty::draw_suggestion: //show message box with opponent's name and draw suggestion
     {
-        qDebug() << curTime() << "Draw suggestion received";
+        qDebug() << "Draw suggestion received";
         QMessageBox msg_box;
         msg_box.setWindowTitle("Draw suggestion");
         QString name = mainwindow->settings.value("opp_name").toString();
@@ -371,7 +370,7 @@ void WebClient::readFromServer()
     }
     case package_ty::draw_respond: //if true stop the game as draw, else nothing
     {
-        qDebug() << curTime() << "Draw respond received";
+        qDebug() << "Draw respond received";
         bool respond;
         readPack(respond);
         if (respond)
@@ -380,13 +379,13 @@ void WebClient::readFromServer()
     }
     case package_ty::resignation:
     {
-        qDebug() << curTime() << "Resignation from opponent received";
+        qDebug() << "Resignation from opponent received";
         mainwindow->endSlot(endnum::opponent_resignation);
         break;
     }
     case package_ty::no_such_user:
     {
-        qDebug() << curTime() << "No such user signal received";
+        qDebug() << "No such user signal received";
         showBox("No such user",
                 "Player with this nickname wasn't found",
                 QMessageBox::Warning);
@@ -395,13 +394,13 @@ void WebClient::readFromServer()
     }
     case package_ty::opponent_disconnected:
     {
-        qDebug() << curTime() << "Opponent disconnected signal received";
+        qDebug() << "Opponent disconnected signal received";
         mainwindow->endSlot(endnum::opponent_disconnected_end);
         break;
     }
     case package_ty::already_registered:
     {
-        qDebug() << curTime() << "Already registered signal received";
+        qDebug() << "Already registered signal received";
         showBox("Already registered",
                 "A user with this nickname is already registered. You need to work out a new one.",
                 QMessageBox::Warning);
@@ -410,7 +409,7 @@ void WebClient::readFromServer()
     }
     case package_ty::success:
     {
-        qDebug() << curTime() << "Success signal received";
+        qDebug() << "Success signal received";
         showBox("Good news",
                 "Operation done successfuly.");
 

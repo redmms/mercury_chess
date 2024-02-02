@@ -1,4 +1,3 @@
-import bitchess;
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 #include "qbitmap.h"
@@ -24,6 +23,8 @@ import bitchess;
 #include "ui_mainwindow.h"
 #include <QSharedPointer>
 #include <QPointer>
+#include "../game/local_types.h"
+import bitchess;
 
 class QEvent;
 class QObject;
@@ -59,6 +60,7 @@ class MainWindow : public QMainWindow
     int default_port;
     QScopedPointer<HorizontalScrollArea> history_area;
     QScopedPointer<QLabel> history_label;
+    QString app_dir;
 
 	void showStatus(const QString& status);  // FIX: will const& cause problems or not?
 	void switchGlow();
@@ -80,7 +82,7 @@ protected:
     void openTab(QWidget* page);
 
 public:
-	MainWindow(QWidget* parent = 0);
+	MainWindow(QWidget* parent = 0, QString app_dir_ = "");
     ~MainWindow(){
         delete ui;
     }
@@ -116,6 +118,7 @@ private slots:
     void on_actionAbout_triggered();
     void on_actionAbout_Qt_triggered();
     void on_actionSave_game_triggered();
+    void on_actionLoad_game_triggered();
 
 protected slots:
 	void endSlot(endnum end_type);

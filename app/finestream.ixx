@@ -115,11 +115,11 @@ constexpr int CHB1 = CHAR_BIT - 1,
 	template <typename T>
 	void ToSizedVector(T NUMBER, std::vector <bool>& CONTAINER) {
 		if (CONTAINER.empty()){
-			//cerr << "ERROR: in ToSizedVector: initial vector<bool> is empty";
+			cerr << "ERROR: in ToSizedVector: initial vector<bool> is empty. Size shouldn't be 0";
 			return;
 		}
-		if (sizeof(NUMBER) < CONTAINER.size()) {
-			//cerr << "WARNING: in ToSizedVector: aim NUMBER size is less than vector<bool> size";
+		if (sizeof(T) * CHB < CONTAINER.size()) {
+			cerr << "WARNING: in ToSizedVector: aim NUMBER size is less than vector<bool> size";
 		}
 		T MASK{ T(1) << CONTAINER.size() - 1 };
 		for (size_t BIT_IDX = 0, SIZE = CONTAINER.size(); BIT_IDX < SIZE; BIT_IDX++) {
@@ -396,7 +396,8 @@ constexpr int CHB1 = CHAR_BIT - 1,
 					if (UCREAD_BYTE == (uchar)EOF) {
 						//cerr << "Warning: reached end of file." << endl;
 						return EOF;
-					}					bitremedy RIGHT_PART{ UCREAD_BYTE, BRBYTE.BITSN - BRLAST_BYTE.BITSN, true },
+					}					
+					bitremedy RIGHT_PART{ UCREAD_BYTE, BRBYTE.BITSN - BRLAST_BYTE.BITSN, true },
 					NEW_REMEDY = BRLAST_BYTE.MergeWith(RIGHT_PART);
 					BRBYTE = BRLAST_BYTE;
 					BRLAST_BYTE = NEW_REMEDY;

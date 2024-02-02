@@ -19,7 +19,7 @@ void MainWindow::on_change_photo_button_clicked()
 {
     // open dialog window to choose a photo
     QString avatar_address = QFileDialog::getOpenFileName(this, "Open File",
-        QString("Choose a photo for avatar. Avatar picture will be scaled to 100x100 pixel image."),
+        QString("Choose a photo for avatar. Avatar picture will be scaled to 100x00 pixel image."),
         tr("Images (*.png *.jpg *.jpeg *.pgm)"));
     QSize user_size = ui->user_avatar->size();
     if (!avatar_address.isEmpty()){
@@ -133,7 +133,7 @@ void MainWindow::on_guest_button_clicked()
 void MainWindow::on_send_invite_button_clicked() // FIX: here - package_ty::invite, user's name, user's image,
 {
 //    if (waiting_for_invite_respond){
-//        qDebug() << curTime() << "Tried to send match invite several times";
+//        qDebug() << "Tried to send match invite several times";
 //        return;
 //    }
     int chosen_time = settings.value("time_setup").toInt();

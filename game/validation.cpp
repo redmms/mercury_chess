@@ -97,7 +97,7 @@ void Validation::hideValid()
     if (board.from_tile != nullptr)
         board.from_tile->dyeNormal();
     else
-        qDebug() << curTime() << "You try to dyeNormal() from_tile that is nullptr";
+        qDebug() << "You try to dyeNormal() from_tile that is nullptr";
 	for (auto tile : valid_moves)
 		tile->dyeNormal();
 	valid_moves.clear();
@@ -557,7 +557,7 @@ qint64 Validation::countMovesTest(int depth, int i)
 //                                            QString::number(move->coord.y + 1)
 //                                         << "-"
 //                                         << mc;
-//                                qDebug() << curTime()
+//                                qDebug()
 //                                         << "From"
 //                                         << char('a' + x) + QString::number(y + 1)
 //                                         << "to"

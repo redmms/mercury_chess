@@ -1,10 +1,12 @@
 module;
-#include "C:\Qt_projects\multicolor_chess\src\game\tile.h"
-#include "C:\Qt_projects\multicolor_chess\src\game\local_types.h"
+#include "..\game\tile.h"
+#include "..\game\local_types.h"
+#include "..\game\board.h"
+#include <iostream>
 export module bitchess;
 import bitremedy;
 import finestream;
-import <iostream>;
+//import <iostream>;
 import <bitset>;
 import <vector>;
 import <string>;
@@ -12,6 +14,7 @@ import <cmath>;
 import <map>;
 import <stdexcept>;
 using namespace std;
+constexpr auto CHB = CHAR_BIT;
 
 enum piece_ty {
 	knight,
@@ -45,12 +48,19 @@ enum promo_ty {
 	no_promotion
 };
 //N, B, R, Q
-map<char, promo_ty> promoByChar{
+map<char, promo_ty> promo_by_char{
 	{'N', to_knight},
 	{'B', to_bishop},
 	{'R', to_castle},
 	{'Q', to_queen},
 	{'e', no_promotion}
+};
+map<promo_ty, char> char_by_promo{
+	{to_knight, 'N'},
+	{to_bishop, 'B'},
+	{to_castle, 'R'},
+	{to_queen, 'Q'},
+	{no_promotion, 'e'}
 };
 //enum extra_ty {
 //	end_by_board_situation,
@@ -179,6 +189,60 @@ public:
 			idxs_on_board[coord.first][coord.second] = i + 16;
 		}
 	};
+	int update_idxs(int x0, int y0, int x, int y, int iPiece_idx, promo_ty promo) {
+		//white_pieces_by_idx white_pieces_coords  idxs_on_board
+
+		// UPDATE white_pieces_coords[][]
+		int to_idx = idxs_on_board[x][y];
+		if (to_idx != -1) {
+			// FIX: need to change idx so that by idx I could understand if it is white
+			// or black piece and in the coding just do minus 16.
+			// P.S. but at the moment if consider that all input moves
+			// are valid, we can just say that to_idx is the idx of the counter
+			// color, because we can't eat our friend piece
+			bool to_color;
+			if (to_idx < 16)
+				to_color = true;
+			else
+				to_color = false;
+			bool enemy_color = !white_turn;
+			if (to_color != enemy_color) {
+				cerr << "ERROR: in read_move(): you can't eat your own piece";
+				return 1;
+			}
+			if (to_color) {
+				white_pieces_coords[to_idx] = { -1, -1 };
+				// we ate it, it has no coord now
+			}
+			else {
+				black_pieces_coords[to_idx] = { -1, -1 };
+			}
+		}
+		if (white_turn) {
+			white_pieces_coords[iPiece_idx] = {x, y};
+		}
+		else {
+			black_pieces_coords[iPiece_idx] = {x, y};
+		}
+
+		// UPDATE idxs_on_board
+		idxs_on_board[x0][y0] = -1;
+		idxs_on_board[x][y] = iPiece_idx;
+
+		// UPDATE white_pieces_by_idx if pawn was promoted
+		// FIX: later should change array to vector and update it if only 8 4 2 1
+		// pieces remain
+		if (promo != promo_ty::no_promotion) {
+			if (white_turn) {
+				white_pieces_by_idx[iPiece_idx] = (piece_ty)promo;
+			}
+			else {
+				black_pieces_by_idx[iPiece_idx] = (piece_ty)promo;
+			}
+		}
+		white_turn = !white_turn;
+		return 0;
+	}
 	int write_game(endnum end_type, std::vector<halfmove> history, std::string filename)
 	{
 		try {
@@ -190,22 +254,29 @@ public:
 		fsm::ofinestream ofs(filename);
 		bitremedy bytes_num_bytes{ iBytes_num_bytes, 4, false};
 		bitremedy moves_num_bytes{ 0, 4, false};
-		size_t moves_num = history.size();
+		int moves_num = history.size();
 		if (moves_num > UCHAR_MAX){
 			//cerr << "ERROR: this data compressor version doesn't allow to save such big games";
 			return 2;
 		}
-		long double moves_num_bits = ceil(log2(moves_num));
-		size_t iMoves_num_bytes = ceil(moves_num_bits / CHAR_BIT);
-		moves_num_bytes.UCBYTE = (unsigned char) iMoves_num_bytes;
-		vector<bool> vbMoves_num(iMoves_num_bytes * CHAR_BIT);
-		fsm::ToSizedVector(moves_num, vbMoves_num);
-		vector<bool> vbBytes_num(iBytes_num_bytes * CHAR_BIT);
-		fsm::ToSizedVector(size_t(0), vbBytes_num);
 		int end_min_bits = ceil(log2((int)endnum::ENDNUM_MAX));
 		// FIX: end_min_bits should be a constant class field and be equal for 
 		// every game notation
-		bitremedy brEnd_type{end_type, end_min_bits, false}; 
+		bitremedy brEnd_type{ end_type, end_min_bits, false };
+		size_t iMoves_num_bytes;
+		long double moves_num_bits;
+		if (moves_num == 0) {
+			moves_num_bits = 0;
+		}
+		else {
+			moves_num_bits = ceil(log2(moves_num));
+		}
+		iMoves_num_bytes = ceil((long double)(moves_num_bits + end_min_bits) / CHAR_BIT);
+		moves_num_bytes.UCBYTE = (unsigned char) iMoves_num_bytes;
+		vector<bool> vbMoves_num(iMoves_num_bytes * CHB);
+		fsm::ToSizedVector(moves_num, vbMoves_num);
+		vector<bool> vbBytes_num(iBytes_num_bytes * CHB);
+		fsm::ToSizedVector(size_t(0), vbBytes_num);
 		auto begin_pos = ofs.tellp();
 		ofs << decoder_version
 			<< bytes_num_bytes
@@ -236,7 +307,7 @@ public:
 			//};
 			pair <int, int> from_coord = move.move.first.tile->coord;
 			pair <int, int> to_coord = move.move.second.tile->coord;
-			promo_ty promo = promoByChar[move.promo];
+			promo_ty promo = promo_by_char[move.promo];
 			//extra_ty extra_type = extra_ty::usual_move;
 			write_move(from_coord, to_coord, promo, ofs);
 		}
@@ -248,11 +319,61 @@ public:
 		ofs << vbBytes_num;
 		return 0;
 	}
-	void read_game(endnum& end_type, std::vector<halfmove>& history);
-	void read_move(
-		pair <int, int>& from_coord, 
-		pair<int, int>& to_coord, 
-		promo_ty & promo,
+	int read_game(endnum& end_type, std::vector<halfmove>& history, std::string filename, Board& board) {
+		try {
+			fsm::ifinestream ifs(filename);
+		}
+		catch (const exception& E) {
+			return 1;
+		}
+		fsm::ifinestream ifs(filename); // FIX: will not work with several games
+		// in one file
+		uint8_t input_version;
+		bitremedy bytes_num_bytes{ 0, 4, false };
+		bitremedy moves_num_bytes{ 0, 4, false };
+		int end_min_bits = ceil(log2((int)endnum::ENDNUM_MAX));
+		bitremedy brEnd_type{ 0, end_min_bits, false };
+		ifs >> input_version;
+		if (decoder_version != input_version) {
+			cerr << "ERROR: you use inappropriate version of devoder";
+			return 2;
+		}
+		ifs	>> bytes_num_bytes
+			>> moves_num_bytes;
+		vector<bool> vbMoves_num(bytes_num_bytes * CHAR_BIT);
+		vector<bool> vbBytes_num(moves_num_bytes * CHAR_BIT);
+		ifs	>> vbBytes_num
+			>> vbMoves_num
+			>> brEnd_type;
+		end_type = endnum(int(brEnd_type));
+		int size;
+		fsm::FromVector(size, vbMoves_num);
+		history.clear();
+		for (int i = 0; i < size; i++) {
+			//struct halfmove {
+			//	pove move;
+			//	char promo = 'e';
+			//	bool castling = false;
+			//	bool pass = false;
+			//	bool turn = false;
+			//};
+			pair <int, int> from_coord;
+			pair <int, int> to_coord;
+			promo_ty promo;
+			read_move(from_coord, to_coord, promo, ifs);
+			halfmove move;
+			int x0 = from_coord.first,
+				y0 = from_coord.second,
+				x1 = to_coord.first,
+				y1 = to_coord.second;
+			move.move = {board[x0][y0]->toVirtu(), board[x1][y1]->toVirtu()};
+			move.promo = char_by_promo[promo];
+			move.turn = white_turn;
+			history.push_back(move);
+		}
+		return 0;
+	}
+	void read_move(pair <int, int>& from_coord, pair<int, int>& to_coord, promo_ty & promo,
 		fsm::ifinestream & ifs) 
 	{
 		//first go known parameters, than goes place to write result
@@ -353,64 +474,10 @@ public:
 		to_coord.first = x;
 		to_coord.second = y;
 
-		//white_pieces_by_idx white_pieces_coords  idxs_on_board
-
-		// UPDATE white_pieces_coords[][]
-		int to_idx = idxs_on_board[x][y];
-		if (to_idx != -1){
-			// FIX: need to change idx so that by idx I could understand if it is white
-			// or black piece and in the coding just do minus 16.
-			// P.S. but at the moment if consider that all input moves
-			// are valid, we can just say that to_idx is the idx of the counter
-			// color, because we can't eat our friend piece
-			bool to_color;
-			if (to_idx < 16)
-				to_color = true;
-			else 
-				to_color = false;
-			bool enemy_color = !white_turn;
-			if (to_color != enemy_color) {
-				//cerr << "ERROR: in read_move(): you can't eat your own piece";
-				return;
-			}
-			if (to_color) {
-				white_pieces_coords[to_idx] = {-1, -1}; 
-				// we ate it, it has no coord now
-			}
-			else {
-				black_pieces_coords[to_idx] = {-1, -1};
-			}
-		}
-		if (white_turn) {
-			white_pieces_coords[iPiece_idx] = to_coord;
-		}
-		else {
-			black_pieces_coords[iPiece_idx] = to_coord;
-		}
-
-		// UPDATE idxs_on_board
-		idxs_on_board[x0][y0] = -1;
-		idxs_on_board[x][y] = iPiece_idx;
-
-		// UPDATE white_pieces_by_idx if pawn was promoted
-		// FIX: later should change array to vector and update it if only 8 4 2 1
-		// pieces remain
-		if (promo != promo_ty::no_promotion) {
-			if (white_turn){
-				white_pieces_by_idx[iPiece_idx] = (piece_ty) promo;
-			}
-			else {
-				black_pieces_by_idx[iPiece_idx] = (piece_ty) promo;
-			}
-		}
-		white_turn = !white_turn;
-
+		update_idxs(x0, y0, x, y, iPiece_idx, promo);
 	}
-	void write_move(
-		pair <int, int> from_coord, 
-		pair <int, int> to_coord, 
-		promo_ty promo, 
-		fsm::ofinestream& ofs) 
+	void write_move(pair <int, int> from_coord, pair <int, int> to_coord, 
+		promo_ty promo, fsm::ofinestream& ofs) 
 	{
 
 		int iPiece_idx = idxs_on_board[from_coord.first][from_coord.second];
@@ -420,12 +487,12 @@ public:
 		piece_ty
 			piece_type = white_turn ? white_pieces_by_idx[iPiece_idx] : black_pieces_by_idx[iPiece_idx];
 		int 
-			x1 = to_coord.first, 
+			x = to_coord.first, 
 			x0 = from_coord.first, 
-			y1 = to_coord.second, 
+			y = to_coord.second, 
 			y0 = from_coord.second,
-			X = x1 - x0,
-			Y = y1 - y0,
+			X = x - x0,
+			Y = y - y0,
 			n;
 
 		switch(int xstrt, ystrt; piece_type){
@@ -438,8 +505,8 @@ public:
 			case knight:
 				xstrt = x0 - 2;
 				ystrt = y0 - 2;
-				X = x1 - xstrt;
-				Y = y1 - ystrt;
+				X = x - xstrt;
+				Y = y - ystrt;
 				switch(X){
 					case 0:
 						if (Y == 1)
@@ -473,27 +540,27 @@ public:
 				//else{
 					xstrt = x0 - 1;
 					ystrt = y0 - 1;
-					X = x1 - xstrt;
-					Y = y1 - ystrt;
+					X = x - xstrt;
+					Y = y - ystrt;
 					n = X * 3 + Y;
 					if (n > 4) n--;					
 				//}
 			break;
 			case castle:
-				n = Y ? y1 + 8 : x1;
+				n = Y ? y + 8 : x;
 			break;
 			case bishop:
-				n = X == Y ? x1 : 15 - x1;
+				n = X == Y ? x : 15 - x;
 			break;
 			case queen:
 				if (!Y)
-					n = x1;
+					n = x;
 				else if (!X)
-					n = y1 + 8;
+					n = y + 8;
 				else if (X == Y)
-					n = x1 + 16;
+					n = x + 16;
 				else
-					n = 31 - x1;
+					n = 31 - x;
 		}
 		int 
 			size = move_sizes[piece_type];
@@ -505,14 +572,14 @@ public:
 		// check if assigning of CBYTE is OK here
 		// check that the stream doesn't change aligning of bitredmedy
 		ofs << move;
-		if (piece_type == pawn && (white_turn && y1 == 7 || !white_turn && y1 == 0)) {
+		if (piece_type == pawn && (white_turn && y == 7 || !white_turn && y == 0)) {
 			if (promo == no_promotion) {
-				//cerr << "ERROR: you need to choose a piece to transform pawn to." << endl;
+				//std::cerr << "ERROR: you need to choose a piece to transform pawn to." << endl;
 			}
 			ofs << bitset<2>(promo);
 		}
 
-		white_turn = !white_turn;
+		update_idxs(x0, y0, x, y, iPiece_idx, promo);
 	};
 };
 void print_chess_coords(pair<int, int> coord) {

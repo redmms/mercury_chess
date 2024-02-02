@@ -37,17 +37,17 @@ void ChessClock::stopTimer()
     if (black_timer)
         black_timer->stop();
     else
-        qDebug() << curTime() << "ERROR: tried to stop deleted timer";
+        qDebug() << "ERROR: tried to stop deleted timer";
 
     if (white_timer)
         white_timer->stop();
     else
-        qDebug() << curTime() << "ERROR: tried to stop deleted timer";
+        qDebug() << "ERROR: tried to stop deleted timer";
 
     if (sec_counter)
         sec_counter->stop();
     else
-        qDebug() << curTime() << "ERROR: tried to stop deleted timer";
+        qDebug() << "ERROR: tried to stop deleted timer";
 }
 
 void ChessClock::updateTimer()

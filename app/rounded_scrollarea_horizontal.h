@@ -26,15 +26,11 @@ protected:
     }
     void wheelEvent(QWheelEvent* event) override {
         if (event->angleDelta().y() > 0) {
-            // ≈сли вращение колеса вверх, прокрутите вправо
             horizontalScrollBar()->setValue(horizontalScrollBar()->value() - horizontalScrollBar()->singleStep());
         }
         else {
-            // ≈сли вращение колеса вниз, прокрутите влево
             horizontalScrollBar()->setValue(horizontalScrollBar()->value() + horizontalScrollBar()->singleStep());
         }
-
-        // ѕередайте событие дальше дл€ обработки по умолчанию
         QScrollArea::wheelEvent(event);
     }
 };

@@ -64,7 +64,16 @@ enum tatus : quint8 {
 struct scoord{
     int x = 0;
     int y = 0;
-    //scoord(const std::pair<int, int>& p) : x(p.first), y(p.second) {}
+    scoord(std::initializer_list<int> values) {
+        if (values.size() != 2) {
+            throw std::invalid_argument("Initializer list must contain exactly 2 values.");
+        }
+        auto it = values.begin();
+        x = *it++;
+        y = *it;
+    }
+    scoord() : x(0), y(0) {}
+    scoord(const std::pair<int, int>& p) : x(p.first), y(p.second) {}
     bool operator == (const scoord& right) const {
         return x == right.x && y == right.y;
     }
@@ -99,7 +108,7 @@ struct halfmove{
 #include <QDateTime>
 inline QString curTime()
 {
-    return QDateTime::currentDateTime().toString("hh:mm:ss.zzz");
+    return QDateTime::currentDateTime().toString("dd_MMM_hh_mm_ss_zzz");
 }
 
 #include <QMessageBox>

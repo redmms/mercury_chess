@@ -1,7 +1,7 @@
 #include "mainwindow.h"
-#include "C:\Qt_projects\multicolor_chess\src\game\board.h"
-#include "C:\Qt_projects\multicolor_chess\src\game\validation.h"
-#include "C:\Qt_projects\multicolor_chess\src\game\local_types.h"
+#include "..\game\board.h"
+#include "..\game\validation.h"
+#include "..\game\local_types.h"
 #include "webclient.h"
 #include <QPainter>
 #include <cstdlib>
@@ -28,8 +28,9 @@
 #include <cmath>
 #include <string>
 
-MainWindow::MainWindow(QWidget* parent) :
+MainWindow::MainWindow(QWidget* parent, QString app_dir_) :
 	QMainWindow(parent),
+    app_dir(app_dir_),
     board{},
     clock{},
 	net(new WebClient(this)),
@@ -189,6 +190,8 @@ MainWindow::MainWindow(QWidget* parent) :
     history_area->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
 
     history_area->setWidgetResizable(true);
+
+    openTab(ui->training_tab);
 }
 
 #include "mainwindow_buttons.h"
@@ -198,13 +201,13 @@ void MainWindow::openTab(QWidget* page)
     //QScopedPointer<QWidget> tab_ptr(ui->tabWidget->currentWidget());
     if (!ui || !ui->tabWidget || !page)
      {
-        qDebug() << curTime() << "ERROR: in open tab with pointers";
+        qDebug() << "ERROR: in open tab with pointers";
         return;
      }
     last_tab = ui->tabWidget->currentWidget();
     if (!last_tab)
      {
-        qDebug() << curTime() << "ERROR: in open tab with last_tab pointer";
+        qDebug() << "ERROR: in open tab with last_tab pointer";
         return;
      }
     ui->tabWidget->setCurrentWidget(page);
@@ -311,7 +314,7 @@ void MainWindow::startGame() // side true for user - white
         ui->board_background->~QLabel();
     }
     else
-        qDebug() << curTime() << "ERROR: in MainWindow::startGame() with board/ui->background pointer";
+        qDebug() << "ERROR: in MainWindow::startGame() with board/ui->background pointer";
 
     // old board will be destroyed inside Board constructor
     connect(board.data(), &Board::newStatus, this, &MainWindow::statusSlot);
@@ -353,7 +356,7 @@ void MainWindow::endSlot(endnum end_type)  // FIX: white_wins and black_wins enu
 // be changed to user_wins and opp_wins, and what color user plays should be checked in Board::reactOnClick();
 {
     if (!game_active){
-        qDebug() << curTime() << "Application tried to close inactive game";
+        qDebug() << "Application tried to close inactive game";
         return;
     }
     if (clock)
@@ -436,7 +439,7 @@ void MainWindow::statusSlot(tatus status)
 {
 //    int i = 3;
 ////    for (int i = 1; i <= 5; i++)
-//        qDebug() << curTime() << "Counted moves:" << board->valid->countMovesTest(i);
+//        qDebug() << "Counted moves:" << board->valid->countMovesTest(i);
 	switch (status) {
 	case tatus::check_to_user:
 		sounds["check to user"]->play();
@@ -552,12 +555,17 @@ void MainWindow::on_actionAbout_Qt_triggered()
 
 void MainWindow::on_actionSave_game_triggered()
 {
+    if (!game_active) {
+        showBox("Nothing to save",
+                "You need to have an open game to save for this option.");
+                return;
+    }
     // Create directory
-    QString dir_path = "saved_games";
+    QString archive_dir = app_dir + "/saved_games";
     QDir dir;
-    if (!dir.exists(dir_path)) {
-        if (dir.mkdir(dir_path)) {
-            qDebug() << curTime() << "saved_games folder created";
+    if (!dir.exists(archive_dir)) {
+        if (dir.mkdir(archive_dir)) {
+            qDebug() << "saved_games folder created";
         }
         else {
             qDebug() << "Couldn't create saved_games folder";
@@ -565,29 +573,100 @@ void MainWindow::on_actionSave_game_triggered()
     }
 
     // Create archive file
-    QString  archive_name = dir_path
+    QString  archive_fullname = 
+            archive_dir
             + "/"
             + settings.value("opp_name").toString()
-            + QDateTime::currentDateTime().toString("_hh-mm-ss")
+            + curTime()
             + ".mmd18";
-    QString selected_fullname = QFileDialog::getSaveFileName(this, "Save File",
-                                     archive_name,
-                                     tr("Chess Archive (*.mmd18)"));
-    if (!selected_fullname.isEmpty()) {
-        archive_name = selected_fullname;
+    //QString selected_fullname = QFileDialog::getSaveFileName(this, 
+    //                                "Save File",
+    //                                 archive_fullname,
+    //                                 tr("Chess Archive (*.mmd18)"));
+    auto save_dialog = QFileDialog(this,
+        "Save File",
+        archive_fullname,
+        tr("Chess Archive (*.mmd18)"));
+    save_dialog.setAcceptMode(QFileDialog::AcceptSave);
+    save_dialog.setFileMode(QFileDialog::AnyFile);
+    QString selected_fullname;
+    if (save_dialog.exec()) {
+        selected_fullname = save_dialog.selectedFiles().first();
+    } else {
+        return;
     }
-    QFile archive(archive_name);
+    if (!selected_fullname.isEmpty()) {
+        archive_fullname = selected_fullname;
+    }
+    QFile archive(archive_fullname);
     if (archive.open(QIODevice::WriteOnly | QIODevice::Text)) {
         archive.close();
-        qDebug() << curTime() << "Archive file" << archive_name << "successfuly created.";
+        qDebug() << "Archive file" << archive_fullname << "successfuly created.";
     }
     else {
-        qDebug() << "Couldn't open archive file" << archive_name;
+        qDebug() << "Couldn't open archive file" << archive_fullname;
     }
 
     // Write game to the file
     Move decoder(220);
-    int error = decoder.write_game(board->end_type, board->history, archive_name.toStdString());
+    int error = decoder.write_game(board->end_type, board->history, archive_fullname.toStdString());
+    if (!error) {
+        showBox("Good news",
+                "Operation done successfuly.");
+    }
+    else {
+        showBox("Oops",
+                "Something went wrong. Error code: " + QString::number(error));
+    }
+}
+
+
+void MainWindow::on_actionLoad_game_triggered()
+{
+    //if (game_active) {
+    //    openStopGameDialog();
+    //}
+    // Find out directory name
+    QString archive_dir = app_dir + "/saved_games";
+
+    // Create archive file
+//    QString  archive_fullname =
+//            archive_dir
+//            + "/"
+//            + settings.value("opp_name").toString()
+//            + curTime()
+//            + ".mmd18";
+    QString  archive_fullname = QFileDialog::getOpenFileName(this,
+                                    "Open File",
+                                     archive_dir,
+                                     tr("Chess Archive (*.mmd18)"));
+//    auto save_dialog = QFileDialog(this,
+//        "Save File",
+//        archive_fullname,
+//        tr("Chess Archive (*.mmd18)"));
+//    save_dialog.setAcceptMode(QFileDialog::AcceptSave);
+//    save_dialog.setFileMode(QFileDialog::AnyFile);
+//    QString selected_fullname;
+//    if (save_dialog.exec()) {
+//        selected_fullname = save_dialog.selectedFiles().first();
+//    } else {
+//        return;
+//    }
+    if (archive_fullname.isEmpty()) {
+        return;
+    }
+    QFile archive(archive_fullname);
+    if (archive.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        archive.close();
+        qDebug() << "Archive file" << archive_fullname << "is ready to be open.";
+    }
+    else {
+        qDebug() << "Couldn't open archive file" << archive_fullname;
+    }
+
+    // Read game from the file
+    Move decoder(220);
+    int error = decoder.read_game(board->end_type, board->history, archive_fullname.toStdString(), *board);
     if (!error) {
         showBox("Good news",
                 "Operation done successfuly.");

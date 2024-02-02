@@ -33,7 +33,7 @@ void WebClient::readPack(package_ty &data)
     quint8 byte;
     read_stream >> byte;
     if (byte < package_ty::registration || byte > package_ty::already_registered)
-        qDebug() << curTime() << "Error: package_ty from read_package is out of range";
+        qDebug() << "Error: package_ty from read_package is out of range";
     else
         data = package_ty(byte);
 }
@@ -58,7 +58,7 @@ void WebClient::readPack(QPixmap& data)
     QByteArray arr;
     readPack(arr);
     if (!data.loadFromData(arr, "PNG"))
-        qDebug() << curTime() << "Error: couldn't load QPixmap from QByteArray in read_package";
+        qDebug() << "Error: couldn't load QPixmap from QByteArray in read_package";
 }
 
 void WebClient::readPack(bool& data) {

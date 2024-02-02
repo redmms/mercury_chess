@@ -37,7 +37,17 @@ public:
 	}
 	bitremedy() {};
 	virtual ~bitremedy() {};
+	// TODO: add constructor from char and other 1 byte types
 
+	operator int() const {
+		return int(UCBYTE);
+	}
+	operator unsigned char() const {
+		return UCBYTE;
+	}
+	operator char() const {
+		return char(UCBYTE);
+	}
 
 	virtual void CheckBitsn() const {
 		if ((BITSN > CHAR_BIT || BITSN < 0)) {
