@@ -149,7 +149,15 @@ pair<int, int> black_pieces_coords[16]{
 	{6, 6},
 	{7, 6}
 };
-int8_t idxs_on_board[8][8]{ -1 };
+int8_t idxs_on_board[8][8] = 
+	{ {-1, -1, -1, -1, -1, -1, -1, -1}, 
+	{-1, -1, -1, -1, -1, -1, -1, -1}, 
+	{-1, -1, -1, -1, -1, -1, -1, -1}, 
+	{-1, -1, -1, -1, -1, -1, -1, -1}, 
+	{-1, -1, -1, -1, -1, -1, -1, -1}, 
+	{-1, -1, -1, -1, -1, -1, -1, -1}, 
+	{-1, -1, -1, -1, -1, -1, -1, -1}, 
+	{-1, -1, -1, -1, -1, -1, -1, -1}};
 
 export class Move {
 private:
@@ -157,7 +165,7 @@ private:
 		piece_idx;
 	bitremedy 
 		move{ 0, 0, 0 };
-	inline static bool 
+	bool 
 		white_turn = true;
 	int 
 		iBytes_num_bytes = 1;
@@ -365,6 +373,12 @@ public:
 				y0 = from_coord.second,
 				x1 = to_coord.first,
 				y1 = to_coord.second;
+			for (auto coord : { x0, y0, x1, y1 }) {
+				if (coord < 0 || coord > 7) {
+					cerr << "Readed coords are invalid" << endl;
+					return 3;
+				}
+			}
 			move.move = {board[x0][y0]->toVirtu(), board[x1][y1]->toVirtu()};
 			move.promo = char_by_promo[promo];
 			move.turn = white_turn;

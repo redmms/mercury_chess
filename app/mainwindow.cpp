@@ -577,6 +577,7 @@ void MainWindow::on_actionSave_game_triggered()
             archive_dir
             + "/"
             + settings.value("opp_name").toString()
+            + "_"
             + curTime()
             + ".mmd18";
     //QString selected_fullname = QFileDialog::getSaveFileName(this, 
@@ -666,7 +667,7 @@ void MainWindow::on_actionLoad_game_triggered()
 
     // Read game from the file
     Move decoder(220);
-    int error = decoder.read_game(board->end_type, board->history, archive_fullname.toStdString(), *board);
+    int error = decoder.read_game(board->end_type, board->history, archive_fullname.toStdString(), *(board.data()));
     if (!error) {
         showBox("Good news",
                 "Operation done successfuly.");

@@ -410,9 +410,10 @@ constexpr int CHB1 = CHAR_BIT - 1,
 			else {
 				UCREAD_BYTE = (uchar)FILE_STREAM.get();
 				if (UCREAD_BYTE == (uchar)EOF) {
-					//cerr << "Warning: reached end of file." << endl;
+					cerr << "Warning: reached end of file." << endl;
 					return EOF;
-				}				int	LEFT_SIZE = BRBYTE.BITSN,
+				}				
+				int	LEFT_SIZE = BRBYTE.BITSN,
 				RIGHT_SIZE = CHB - LEFT_SIZE;
 				BRBYTE = { UCREAD_BYTE, LEFT_SIZE, true };
 				BRLAST_BYTE = { UCREAD_BYTE, RIGHT_SIZE, false };
@@ -482,11 +483,12 @@ constexpr int CHB1 = CHAR_BIT - 1,
 		}
 		 ifinestream& operator >> (bool & BBYTE) {
 			if (BRLAST_BYTE.MOVED_LEFT) {
-				//cerr << "Warning: BRLAST_BYTE is left aligned" << endl;
+				cerr << "Warning: BRLAST_BYTE is left aligned" << endl;
 				BRLAST_BYTE.MoveToRight();
 			}
 			else if (!BRLAST_BYTE.BITSN) {
 				GetByte(BRLAST_BYTE.UCBYTE);
+				BRLAST_BYTE.BITSN = CHB;
 			}
 			BBYTE = BRLAST_BYTE.UCBYTE & true;
 			BRLAST_BYTE.UCBYTE >>= 1;

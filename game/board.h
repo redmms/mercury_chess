@@ -33,7 +33,7 @@ public:
     std::vector<halfmove> history;
     //std::vector<scoord> piece_coords;
     QScopedPointer<Validation> valid;
-    QScopedPointer<Tile> tiles[8][8];
+    QSharedPointer<Tile> tiles[8][8];
 	bool turn;
 	bool side;
     QPointer<Tile> from_tile;
