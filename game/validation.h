@@ -1,6 +1,7 @@
 #ifndef VALIDATION_H
 #define VALIDATION_H
 #include "local_types.h"
+#include "../game/tile.h"
 #include <functional>
 #include <set>
 #include <list>
@@ -13,8 +14,11 @@ using checker = std::function<bool(scoord, bool&)>;
 
 class Validation
 {
-    Board& board; 
-    std::set<QPointer<Tile>> valid_moves;
+friend class Archiver;
+protected:
+    Board& board;
+    std::set<QPointer<Tile>, TileCmp> movable_pieces;
+    std::set<QPointer<Tile>, TileCmp> valid_moves;
     bool check;
     bool has_moved[6];
     scoord rooks_kings[6];

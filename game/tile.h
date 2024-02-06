@@ -41,4 +41,12 @@ signals:
 	void tileClicked(Tile* tile);
 };
 
+struct TileCmp
+{
+	bool operator()(const Tile* lt, const Tile* rt) const
+	{
+		return lt->coord < rt->coord;
+	}
+};
+
 #endif // TILE_H

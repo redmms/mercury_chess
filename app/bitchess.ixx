@@ -255,7 +255,8 @@ public:
 		try {
 			fsm::ofinestream ofs(filename);
 		}
-		catch (const exception& E) {
+		catch (const exception& e) {
+			cerr << e.what() << endl;
 			return 1;
 		}
 		fsm::ofinestream ofs(filename);
@@ -263,7 +264,7 @@ public:
 		bitremedy moves_num_bytes{ 0, 4, false};
 		int moves_num = history.size();
 		if (moves_num > UCHAR_MAX){
-			cerr << "ERROR: this data compressor version doesn't allow to save such big games" << endl;
+			cerr << "ERROR: this archiver version doesn't allow to save such big games" << endl;
 			return 2;
 		}
 		int end_min_bits = ceil(log2((int)endnum::ENDNUM_MAX));
@@ -330,7 +331,8 @@ public:
 		try {
 			fsm::ifinestream ifs(filename);
 		}
-		catch (const exception& E) {
+		catch (const exception& e) {
+			cerr << e.what() << endl;
 			return 1;
 		}
 		fsm::ifinestream ifs(filename); // FIX: will not work with several games

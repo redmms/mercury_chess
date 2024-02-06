@@ -127,12 +127,16 @@ bool Validation::inCheckmate(bool color)
 
 bool Validation::inStalemate(bool color)
 {
+	movable_pieces.clear();
 	for (int x = 0; x < 8; x++) {
 		for (int y = 0; y < 8; y++) {
-			if (occupied({ x, y }) && !differentColor({ x, y })) {
-				findValid(theTile({ x, y }));
+			scoord coord{x, y};
+			Tile* tile = theTile(coord);
+			if (occupied(coord) && !differentColor(coord)) {
+				findValid(tile);
                 if (!empty()) {
 					valid_moves.clear();
+					movable_pieces.emplace(tile);
 					return false;
 				}
 			}

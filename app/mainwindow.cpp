@@ -555,126 +555,126 @@ void MainWindow::on_actionAbout_Qt_triggered()
 
 void MainWindow::on_actionSave_game_triggered()
 {
-    if (!game_active) {
-        showBox("Nothing to save",
-                "You need to have an open game to save for this option.");
-                return;
-    }
-    // Create directory
-    QString archive_dir = app_dir + "/saved_games";
-    QDir dir;
-    if (!dir.exists(archive_dir)) {
-        if (dir.mkdir(archive_dir)) {
-            qDebug() << "saved_games folder created";
-        }
-        else {
-            qDebug() << "Couldn't create saved_games folder";
-        }
-    }
+    //if (!game_active) {
+    //    showBox("Nothing to save",
+    //            "You need to have an open game to save for this option.");
+    //            return;
+    //}
+    //// Create directory
+    //QString archive_dir = app_dir + "/saved_games";
+    //QDir dir;
+    //if (!dir.exists(archive_dir)) {
+    //    if (dir.mkdir(archive_dir)) {
+    //        qDebug() << "saved_games folder created";
+    //    }
+    //    else {
+    //        qDebug() << "Couldn't create saved_games folder";
+    //    }
+    //}
 
-    // Create archive file
-    QString  archive_fullname = 
-            archive_dir
-            + "/"
-            + settings.value("opp_name").toString()
-            + "_"
-            + curTime()
-            + ".mmd18";
-    //QString selected_fullname = QFileDialog::getSaveFileName(this, 
-    //                                "Save File",
-    //                                 archive_fullname,
-    //                                 tr("Chess Archive (*.mmd18)"));
-    auto save_dialog = QFileDialog(this,
-        "Save File",
-        archive_fullname,
-        tr("Chess Archive (*.mmd18)"));
-    save_dialog.setAcceptMode(QFileDialog::AcceptSave);
-    save_dialog.setFileMode(QFileDialog::AnyFile);
-    QString selected_fullname;
-    if (save_dialog.exec()) {
-        selected_fullname = save_dialog.selectedFiles().first();
-    } else {
-        return;
-    }
-    if (!selected_fullname.isEmpty()) {
-        archive_fullname = selected_fullname;
-    }
-    QFile archive(archive_fullname);
-    if (archive.open(QIODevice::WriteOnly | QIODevice::Text)) {
-        archive.close();
-        qDebug() << "Archive file" << archive_fullname << "successfuly created.";
-    }
-    else {
-        qDebug() << "Couldn't open archive file" << archive_fullname;
-    }
+    //// Create archive file
+    //QString  archive_fullname = 
+    //        archive_dir
+    //        + "/"
+    //        + settings.value("opp_name").toString()
+    //        + "_"
+    //        + curTime()
+    //        + ".mmd18";
+    ////QString selected_fullname = QFileDialog::getSaveFileName(this, 
+    ////                                "Save File",
+    ////                                 archive_fullname,
+    ////                                 tr("Chess Archive (*.mmd18)"));
+    //auto save_dialog = QFileDialog(this,
+    //    "Save File",
+    //    archive_fullname,
+    //    tr("Chess Archive (*.mmd18)"));
+    //save_dialog.setAcceptMode(QFileDialog::AcceptSave);
+    //save_dialog.setFileMode(QFileDialog::AnyFile);
+    //QString selected_fullname;
+    //if (save_dialog.exec()) {
+    //    selected_fullname = save_dialog.selectedFiles().first();
+    //} else {
+    //    return;
+    //}
+    //if (!selected_fullname.isEmpty()) {
+    //    archive_fullname = selected_fullname;
+    //}
+    //QFile archive(archive_fullname);
+    //if (archive.open(QIODevice::WriteOnly | QIODevice::Text)) {
+    //    archive.close();
+    //    qDebug() << "Archive file" << archive_fullname << "successfuly created.";
+    //}
+    //else {
+    //    qDebug() << "Couldn't open archive file" << archive_fullname;
+    //}
 
-    // Write game to the file
-    Move decoder(220);
-    int error = decoder.write_game(board->end_type, board->history, archive_fullname.toStdString());
-    if (!error) {
-        showBox("Good news",
-                "Operation done successfuly.");
-    }
-    else {
-        showBox("Oops",
-                "Something went wrong. Error code: " + QString::number(error));
-    }
+    //// Write game to the file
+    //Move decoder(220);
+    //int error = decoder.write_game(board->end_type, board->history, archive_fullname.toStdString());
+    //if (!error) {
+    //    showBox("Good news",
+    //            "Operation done successfuly.");
+    //}
+    //else {
+    //    showBox("Oops",
+    //            "Something went wrong. Error code: " + QString::number(error));
+    //}
 }
 
 
 void MainWindow::on_actionLoad_game_triggered()
 {
-    //if (game_active) {
-    //    openStopGameDialog();
-    //}
-    // Find out directory name
-    QString archive_dir = app_dir + "/saved_games";
-
-    // Create archive file
-//    QString  archive_fullname =
-//            archive_dir
-//            + "/"
-//            + settings.value("opp_name").toString()
-//            + curTime()
-//            + ".mmd18";
-    QString  archive_fullname = QFileDialog::getOpenFileName(this,
-                                    "Open File",
-                                     archive_dir,
-                                     tr("Chess Archive (*.mmd18)"));
-//    auto save_dialog = QFileDialog(this,
-//        "Save File",
-//        archive_fullname,
-//        tr("Chess Archive (*.mmd18)"));
-//    save_dialog.setAcceptMode(QFileDialog::AcceptSave);
-//    save_dialog.setFileMode(QFileDialog::AnyFile);
-//    QString selected_fullname;
-//    if (save_dialog.exec()) {
-//        selected_fullname = save_dialog.selectedFiles().first();
-//    } else {
+//    //if (game_active) {
+//    //    openStopGameDialog();
+//    //}
+//    // Find out directory name
+//    QString archive_dir = app_dir + "/saved_games";
+//
+//    // Create archive file
+////    QString  archive_fullname =
+////            archive_dir
+////            + "/"
+////            + settings.value("opp_name").toString()
+////            + curTime()
+////            + ".mmd18";
+//    QString  archive_fullname = QFileDialog::getOpenFileName(this,
+//                                    "Open File",
+//                                     archive_dir,
+//                                     tr("Chess Archive (*.mmd18)"));
+////    auto save_dialog = QFileDialog(this,
+////        "Save File",
+////        archive_fullname,
+////        tr("Chess Archive (*.mmd18)"));
+////    save_dialog.setAcceptMode(QFileDialog::AcceptSave);
+////    save_dialog.setFileMode(QFileDialog::AnyFile);
+////    QString selected_fullname;
+////    if (save_dialog.exec()) {
+////        selected_fullname = save_dialog.selectedFiles().first();
+////    } else {
+////        return;
+////    }
+//    if (archive_fullname.isEmpty()) {
 //        return;
 //    }
-    if (archive_fullname.isEmpty()) {
-        return;
-    }
-    QFile archive(archive_fullname);
-    if (archive.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        archive.close();
-        qDebug() << "Archive file" << archive_fullname << "is ready to be open.";
-    }
-    else {
-        qDebug() << "Couldn't open archive file" << archive_fullname;
-    }
-
-    // Read game from the file
-    Move decoder(220);
-    int error = decoder.read_game(board->end_type, board->history, archive_fullname.toStdString(), *(board.data()));
-    if (!error) {
-        showBox("Good news",
-                "Operation done successfuly.");
-    }
-    else {
-        showBox("Oops",
-                "Something went wrong. Error code: " + QString::number(error));
-    }
+//    QFile archive(archive_fullname);
+//    if (archive.open(QIODevice::ReadOnly | QIODevice::Text)) {
+//        archive.close();
+//        qDebug() << "Archive file" << archive_fullname << "is ready to be open.";
+//    }
+//    else {
+//        qDebug() << "Couldn't open archive file" << archive_fullname;
+//    }
+//
+//    // Read game from the file
+//    Move decoder(220);
+//    int error = decoder.read_game(board->end_type, board->history, archive_fullname.toStdString(), *(board.data()));
+//    if (!error) {
+//        showBox("Good news",
+//                "Operation done successfuly.");
+//    }
+//    else {
+//        showBox("Oops",
+//                "Something went wrong. Error code: " + QString::number(error));
+//    }
 }
 

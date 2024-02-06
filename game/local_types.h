@@ -1,4 +1,5 @@
 #pragma once
+import bitremedy;
 #include <utility>
 #include <QDataStream>
 #ifndef pove
@@ -11,6 +12,8 @@
 #ifndef coorder
 #define coorder const scoord& 
 #endif // !coorder
+
+
 
 enum package_ty : quint8 {
     registration,
@@ -101,7 +104,7 @@ struct virtu{
 //    virtu(){tile = nullptr; color = false; name = 'e';}
     QPointer<Tile> tile;
     bool color = true;
-    char name = 'K';
+    char name = 'K'; // this way you will soon know if something went wrong
 };
 
 struct halfmove{
@@ -132,27 +135,33 @@ inline void showBox(QString header,
     msg_box.exec();
 }
 
+enum promo_ty {
+    to_knight,
+    to_bishop,
+    to_castle,
+    to_queen,
+    no_promotion
+};
 
-//#include <QMessageBox>
-//#include <functional>
-//inline void showBox(QString header,
-//                    QString text,
-//                    QMessageBox::Icon icon_type = QMessageBox::Information,
-//                    std::function<void()> accept_func = nullptr,
-//                    std::function<void()> reject_func = nullptr)
-//{
-//    QMessageBox msg_box;
-//    msg_box.setWindowTitle(header);
-//    msg_box.setText(text);
-//    msg_box.setIcon(icon_type);
-//    msg_box.addButton("Ok", QMessageBox::AcceptRole);
-//    msg_box.addButton("Hate you, but Ok", QMessageBox::RejectRole);
-//    if (accept_func != nullptr){
-//        QObject::connect(&msg_box, QMessageBox::AcceptRole, accept_func);
-//    }
-//    if (reject_func != nullptr){
-//        QObject::connect(&msg_box, QMessageBox::RejectRole, reject_func);
-//    }
-//    msg_box.exec();
-//}
+#include <map>
+const static std::map<char, promo_ty> promo_by_char{
+    {'N', to_knight},
+    {'B', to_bishop},
+    {'R', to_castle},
+    {'Q', to_queen},
+    {'e', no_promotion}
+};
 
+const static std::map<promo_ty, char> char_by_promo{
+    {to_knight, 'N'},
+    {to_bishop, 'B'},
+    {to_castle, 'R'},
+    {to_queen, 'Q'},
+    {no_promotion, 'e'}
+};
+
+struct bitmove {
+    bitremedy piece = {};
+    bitremedy move = {};
+    promo_ty promo = promo_ty::no_promotion;
+};

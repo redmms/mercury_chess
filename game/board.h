@@ -31,9 +31,10 @@ public:
     Board(QLabel* background, const QSettings& settings);
 
     std::vector<halfmove> history;
+	std::vector<bitmove> bistory;
     //std::vector<scoord> piece_coords;
     QScopedPointer<Validation> valid;
-    QSharedPointer<Tile> tiles[8][8];
+    QScopedPointer<Tile> tiles[8][8];
 	bool turn;
 	bool side;
     QPointer<Tile> from_tile;

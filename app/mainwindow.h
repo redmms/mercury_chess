@@ -24,7 +24,7 @@
 #include <QSharedPointer>
 #include <QPointer>
 #include "../game/local_types.h"
-import bitchess;
+//import bitchess;
 
 class QEvent;
 class QObject;
