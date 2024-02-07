@@ -144,7 +144,7 @@ enum promo_ty {
 };
 
 #include <map>
-const static std::map<char, promo_ty> promo_by_char{
+static std::map<char, promo_ty> promo_by_char{
     {'N', to_knight},
     {'B', to_bishop},
     {'R', to_castle},
@@ -152,7 +152,7 @@ const static std::map<char, promo_ty> promo_by_char{
     {'e', no_promotion}
 };
 
-const static std::map<promo_ty, char> char_by_promo{
+static std::map<promo_ty, char> char_by_promo{
     {to_knight, 'N'},
     {to_bishop, 'B'},
     {to_castle, 'R'},
