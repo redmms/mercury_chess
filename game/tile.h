@@ -1,6 +1,6 @@
 #ifndef TILE_H
 #define TILE_H
-#include "local_types.h"
+#include "../app/local_types.hpp"
 #include "qcolor.h"
 #include "qlabel.h"
 #include "qstring.h"

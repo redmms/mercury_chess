@@ -1,7 +1,7 @@
 #pragma once
-#include "validation.h"
+#include "validator.h"
 #include "board.h"
-#include "local_types.h"
+#include "local_types.hpp"
 #include "tile.h"
 #include <QDebug>
 #include <iostream>
@@ -11,7 +11,7 @@ using lambda = function<bool(scoord)>;
 using checker = function<bool(scoord, bool&)>;
 using func = bool (*)(scoord);
 
-Validation::Validation(Board* mother_board) :
+Validator::Validator(Board* mother_board) :
 	board(*mother_board),
 	valid_moves{},
 	check(false),
@@ -82,7 +82,7 @@ Validation::Validation(Board* mother_board) :
 		})
 {}
 
-void Validation::showValid(Tile* from)
+void Validator::showValid(Tile* from)
 {
 	findValid(from);
 	if (!valid_moves.empty()) {
@@ -92,7 +92,7 @@ void Validation::showValid(Tile* from)
 	}
 }
 
-void Validation::hideValid()
+void Validator::hideValid()
 {
     if (board.from_tile != nullptr)
         board.from_tile->dyeNormal();
@@ -103,29 +103,29 @@ void Validation::hideValid()
 	valid_moves.clear();
 }
 
-bool Validation::isValid(Tile* tile)
+bool Validator::isValid(Tile* tile)
 {
 	return valid_moves.count(tile);
 }
 
-bool Validation::empty()
+bool Validator::empty()
 {
     return valid_moves.empty();
 }
 
-bool Validation::inCheck(bool color)
+bool Validator::inCheck(bool color)
 {
     Tile* king = color ? board.white_king.data() : board.black_king.data();
 	return (check = underAttack(king->coord));
 }
 
-bool Validation::inCheckmate(bool color)
+bool Validator::inCheckmate(bool color)
 {
     Tile* king = color ? board.white_king.data() : board.black_king.data();
 	return (check = underAttack(king->coord)) && inStalemate(king->piece_color);
 }
 
-bool Validation::inStalemate(bool color)
+bool Validator::inStalemate(bool color)
 {
 	movable_pieces.clear();
 	for (int x = 0; x < 8; x++) {
@@ -145,7 +145,7 @@ bool Validation::inStalemate(bool color)
 	return true;
 }
 
-void Validation::kingPotential(scoord coord, list<scoord>& coords)
+void Validator::kingPotential(scoord coord, list<scoord>& coords)
 {
 	int x = coord.x, y = coord.y;
 	coords = { { x - 1, y + 1 }, { x, y + 1 }, { x + 1, y + 1 },
@@ -153,14 +153,14 @@ void Validation::kingPotential(scoord coord, list<scoord>& coords)
 			   { x - 1, y - 1 }, { x, y - 1 }, { x + 1, y - 1 } };
 }
 
-void Validation::knightPotential(scoord coord, list<scoord>& coords)
+void Validator::knightPotential(scoord coord, list<scoord>& coords)
 {
 	int x = coord.x, y = coord.y;
 	coords = { { x - 2, y + 1 }, { x - 1, y + 2 }, { x + 1, y + 2 }, { x + 2, y + 1 },
 			   { x - 2, y - 1 }, { x - 1, y - 2 }, { x + 1, y - 2 }, { x + 2, y - 1 } };
 }
 
-bool Validation::underAttack(scoord coord)
+bool Validator::underAttack(scoord coord)
 {
 	// better make it return threatening tile
 	// and even better to return all threatening tiles,
@@ -205,7 +205,7 @@ bool Validation::underAttack(scoord coord)
 	return fastLine(coord, checkDiag, diag_dir);
 }
 
-void Validation::findValid(Tile* from_tile)
+void Validator::findValid(Tile* from_tile)
 {
 	// NOTE: for the use of this code, we consider that board goes [x][y]
 	// instead of [i][j] that is equal to [y][x];
@@ -454,7 +454,7 @@ void Validation::findValid(Tile* from_tile)
 	};
 }
 
-bool Validation::canCastle(Tile* from, Tile* to, Tile** rook)
+bool Validator::canCastle(Tile* from, Tile* to, Tile** rook)
 {
 	std::list<int> castling_side;
 	if (board.turn && from->piece_name == 'K' && !has_moved[1])
@@ -475,7 +475,7 @@ bool Validation::canCastle(Tile* from, Tile* to, Tile** rook)
 	return false;
 }
 
-bool Validation::canPass(Tile* from, Tile* to)
+bool Validator::canPass(Tile* from, Tile* to)
 {
     if (board.history.empty())
         return false;
@@ -489,7 +489,7 @@ bool Validation::canPass(Tile* from, Tile* to)
             from->coord.y == opp_to.tile->coord.y);
 }
 
-bool Validation::canPassVirtually(Tile *from, Tile *to, pove virtual_move)
+bool Validator::canPassVirtually(Tile *from, Tile *to, pove virtual_move)
 {
     if (board.history.empty())
         return false;
@@ -503,19 +503,19 @@ bool Validation::canPassVirtually(Tile *from, Tile *to, pove virtual_move)
             from->coord.y == opp_to.tile->coord.y);
 }
 
-bool Validation::canPromote(Tile* pawn, Tile* destination)
+bool Validator::canPromote(Tile* pawn, Tile* destination)
 {
 	return pawn->piece_name == 'P' && destination->coord.y == (board.turn ? 7 : 0);
 }
 
-void Validation::reactOnMove(scoord from, scoord to)
+void Validator::reactOnMove(scoord from, scoord to)
 {
 	for (int i = 0; i < 6; i++)
 		if (from == rooks_kings[i] || to == rooks_kings[i])
             has_moved[i] = true;
 }
 
-qint64 Validation::countMovesTest(int depth, int i)
+qint64 Validator::countMovesTest(int depth, int i)
 {
     static bool initial_turn_copy = board.turn;
     static virtu tiles_copy [8][8];

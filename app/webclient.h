@@ -2,7 +2,7 @@
 #define WEBCLIENT_H
 #include <QByteArray>
 #include <QDataStream>
-#include "../game/local_types.h"
+#include "../app/local_types.hpp"
 #include "qbytearray.h"
 #include "qdatastream.h"
 #include "qobject.h"

@@ -162,7 +162,7 @@ void WebClient::connectNewHost()
     checkConnection(package_ty::login);
 }
 
-#include "webclient_pack_tools.h"
+#include "webclient_pack_tools.hpp"
 
 void WebClient::sendToServer(package_ty type, bool respond, QString message, scoord from, scoord to, char promotion_type)
 {

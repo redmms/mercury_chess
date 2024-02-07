@@ -1,7 +1,7 @@
 #pragma once
 #include "board.h"
 #include "tile.h"
-#include "validation.h"
+#include "validator.h"
 #include <QEventLoop>
 #include <QGridLayout>
 #include <QTimer>
@@ -11,7 +11,7 @@ Board::Board(QLabel* background = 0, const QSettings& settings_par = QSettings()
 	tile_size(background->width() / 9),
     settings(settings_par),
     side(settings.value("match_side").toBool()),  // true for user on white side
-	valid(new Validation(this)),
+	valid(new Validator(this)),
     //tiles{ { } },
     turn(true),  // true for white turn;
     from_tile{},  // always actualized in Tile::setPiece()

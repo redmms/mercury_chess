@@ -1,6 +1,6 @@
-#ifndef VALIDATION_H
-#define VALIDATION_H
-#include "local_types.h"
+#ifndef VALIDATOR_H
+#define VALIDATOR_H
+#include "../app/local_types.hpp"
 #include "../game/tile.h"
 #include <functional>
 #include <set>
@@ -12,7 +12,7 @@ class Tile;
 using lambda = std::function<bool(scoord)>;
 using checker = std::function<bool(scoord, bool&)>;
 
-class Validation
+class Validator
 {
 friend class Archiver;
 protected:
@@ -39,7 +39,7 @@ protected:
     void findValid(Tile* from);
 
 public:
-    Validation(Board* mother_board);
+    Validator(Board* mother_board);
 
     std::function<Tile*(scoord)> theTile;
     std::function<bool(scoord)> inBoard;
@@ -62,4 +62,4 @@ public:
     qint64 countMovesTest(int depth = 5, int i = 0);
 };
 
-#endif // VALIDATION_H
+#endif // VALIDATOR_H

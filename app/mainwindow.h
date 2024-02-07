@@ -6,8 +6,8 @@
 #include "qpixmap.h"
 #include "qsettings.h"
 #include "qstring.h"
-#include "rounded_scrollarea.h"
-#include "rounded_scrollarea_horizontal.h"
+#include "rounded_scrollarea.hpp"
+#include "rounded_scrollarea_horizontal.hpp"
 #include "webclient.h"
 #include "qobject.h"
 #include <bitset>
@@ -23,7 +23,7 @@
 #include "ui_mainwindow.h"
 #include <QSharedPointer>
 #include <QPointer>
-#include "../game/local_types.h"
+#include "../app/local_types.hpp"
 //import bitchess;
 
 class QEvent;

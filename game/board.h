@@ -1,8 +1,8 @@
 #pragma once
-#include "local_types.h"
+#include "../app/local_types.hpp"
 #include <QLabel>
 #include <QSettings>
-#include "validation.h"
+#include "validator.h"
 #include "tile.h"
 #include <QPointer>
 #include <vector>
@@ -33,7 +33,7 @@ public:
     std::vector<halfmove> history;
 	std::vector<bitmove> bistory;
     //std::vector<scoord> piece_coords;
-    QScopedPointer<Validation> valid;
+    QScopedPointer<Validator> valid;
     QScopedPointer<Tile> tiles[8][8];
 	bool turn;
 	bool side;

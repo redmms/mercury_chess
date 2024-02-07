@@ -10,7 +10,7 @@
 #include <iostream>
 #include <streambuf>
 #include <stdexcept>
-#include "../game/local_types.h"
+#include "../app/local_types.hpp"
 
 static std::ofstream* text_stream;
 
@@ -73,7 +73,7 @@ public:
                 << "\n"
                 << (curTime() + ": ").toStdString()
                 << msg.toStdString()
-                << "\n";
+                << "\n\n";
             if (type == QtFatalMsg) {
                 text_stream->close();
                 delete text_stream;

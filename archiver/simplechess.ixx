@@ -1,6 +1,6 @@
 module;
-#include "../game/local_types.h"
-#include "../game/validation.h"
+#include "../game/local_types.hpp"
+#include "../game/validator.h"
 #include "../game/board.h"
 export module simplechess;
 import bitremedy;
@@ -49,7 +49,7 @@ export class Archiver {
 		return 0;
 	}
 	int ReadGame(Board& board, std::string filename) {
-		Validation* valid = board.valid.data();
+		Validator* valid = board.valid.data();
 		try {
 			fsm::ifinestream ifs(filename);
 		}

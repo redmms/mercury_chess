@@ -1,7 +1,7 @@
 #include "mainwindow.h"
 #include "..\game\board.h"
-#include "..\game\validation.h"
-#include "..\game\local_types.h"
+#include "..\game\validator.h"
+#include "..\game\local_types.hpp"
 #include "webclient.h"
 #include <QPainter>
 #include <cstdlib>
@@ -194,7 +194,7 @@ MainWindow::MainWindow(QWidget* parent, QString app_dir_) :
     openTab(ui->training_tab);
 }
 
-#include "mainwindow_buttons.h"
+#include "mainwindow_buttons.hpp"
 
 void MainWindow::openTab(QWidget* page)
 {

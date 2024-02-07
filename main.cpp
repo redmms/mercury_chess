@@ -1,6 +1,6 @@
 #include <QApplication>
 #include "app/mainwindow.h"
-#include "app/debug_message_handler.h"
+#include "app/debug_message_handler.hpp"
 #include <iostream>
 
 int main(int argc, char *argv[])
