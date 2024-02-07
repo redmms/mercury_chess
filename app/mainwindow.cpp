@@ -1,7 +1,6 @@
 #include "mainwindow.h"
 #include "..\game\board.h"
 #include "..\game\validator.h"
-#include "..\game\local_types.hpp"
 #include "webclient.h"
 #include <QPainter>
 #include <cstdlib>

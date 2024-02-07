@@ -80,14 +80,14 @@ struct scoord{
     bool isValid(){
         return x >=0 && x <= 7 && y >= 0 && y <= 7;
     }
-    bool operator == (const scoord& right) const {
-        return x == right.x && y == right.y;
+    bool operator == (const scoord& r) const {
+        return x == r.x && y == r.y;
     }
-    bool operator != (const scoord& right) const {
-        return x != right.x || y != right.y;
+    bool operator != (const scoord& r) const {
+        return x != r.x || y != r.y;
     }
-    bool operator<(const scoord& right) const {
-        return (y < right.y ? true : x < right.x); // necessary for placing 
+    bool operator<(const scoord& r) const {
+        return (y != r.y ? y < r.y : x < r.x); // necessary for placing 
         // piece idxs on board in archiver
     }
     operator std::pair<int, int>() const {

@@ -43,9 +43,9 @@ signals:
 
 struct TileCmp
 {
-	bool operator()(const Tile* lt, const Tile* rt) const
+	bool operator()(const Tile* l, const Tile* r) const
 	{
-		return lt->coord < rt->coord;
+		return l->coord < r->coord;
 	}
 };
 

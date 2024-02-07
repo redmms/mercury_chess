@@ -1,5 +1,5 @@
 module;
-#include "../game/local_types.hpp"
+#include "../app/local_types.hpp"
 #include "../game/validator.h"
 #include "../game/board.h"
 export module simplechess;

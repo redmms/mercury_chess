@@ -1,7 +1,6 @@
 #pragma once
 #include "validator.h"
 #include "board.h"
-#include "local_types.hpp"
 #include "tile.h"
 #include <QDebug>
 #include <iostream>
