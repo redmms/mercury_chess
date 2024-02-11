@@ -15,6 +15,7 @@ using checker = std::function<bool(scoord, bool&)>;
 class Validator
 {
 friend class Archiver;
+friend class Board;
 protected:
     Board& board;
     std::set<QPointer<Tile>, TileCmp> movable_pieces;
@@ -54,7 +55,7 @@ public:
     bool inCheck(bool color);
     bool inCheckmate(bool color);
     bool inStalemate(bool color);
-    bool canCastle(Tile* from, Tile* to, Tile** rook);
+    bool canCastle(Tile* from, Tile* to, Tile*& rook);
     bool canPass(Tile* from, Tile* to);
     bool canPassVirtually(Tile* from, Tile* to, pove virtual_move);
     bool canPromote(Tile* pawn, Tile* destination);

@@ -12,8 +12,6 @@ using namespace std;
 
 
 export namespace fsm {
-
-
 template <typename T>
 concept container = requires(T STRUCTURE){
 	begin(STRUCTURE);
@@ -33,8 +31,8 @@ constexpr int CHB1 = CHAR_BIT - 1,
 		requires (sizeof(ARRAY_VALUES_TYPE) == 1)
 	void ToBytes(ORIGINAL_TYPE& NUMBER, ARRAY_VALUES_TYPE(&BYTES_ARRAY)[N]) {
 		if (N != sizeof(ORIGINAL_TYPE)) {
-			//std::cerr << "Error: use array of same size as original data in ToBytes()" << std::endl;
-			throw std::out_of_range("Error: use array of same size as original data in ToBytes()");
+			cerr << "ERROR: use array of same size as original data in ToBytes()" << endl;
+			throw out_of_range("ERROR: use array of same size as original data in ToBytes()");
 		}
 		ARRAY_VALUES_TYPE* BYTE_PTR = reinterpret_cast<ARRAY_VALUES_TYPE*>(&NUMBER);
 		for (int I = 0, SIZE = sizeof(NUMBER); I < SIZE; I++) {
@@ -45,8 +43,8 @@ constexpr int CHB1 = CHAR_BIT - 1,
 		requires fsm::container<CONTAINER_TYPE> && (sizeof(typename CONTAINER_TYPE::value_type) == 1)
 	void ToBytes(ORIGINAL_TYPE& NUMBER, CONTAINER_TYPE& BYTES_ARRAY) {
 		if (!BYTES_ARRAY.empty()) {
-			//std::cerr << "Warning: in ToBytes(): you are adding NUMBER representation to "
-				//"nonempty container" << std::endl;
+			cerr << "WARNING: in ToBytes(): you are adding NUMBER representation to "
+				"nonempty container" << endl;
 		}
 		typename CONTAINER_TYPE::value_type* BYTE_PTR = reinterpret_cast<typename
 			CONTAINER_TYPE::value_type*>(&NUMBER);
@@ -141,11 +139,21 @@ constexpr int CHB1 = CHAR_BIT - 1,
 	inline void FromBitset(T& NUMBER, std::bitset <N> BITSET) {
 		NUMBER = (T)BITSET.to_ullong();
 	}
-
+	template<typename T>
+	int MinBits(T number) {
+		if (number == 1 || number == 0) {
+			cerr << "WARNING: minBits input was 0 or 1, output is 1 (1 bit)" << endl;
+			return 1;
+		}
+		else {
+			//int bits_num = ceil(log2(number));
+			return ceil(log2(number));
+		}
+	}
 
 	class finestream {
 	protected:
-		bitremedy BRLAST_BYTE;
+		bitremedy LAST;
 
 
 	public:
@@ -155,15 +163,15 @@ constexpr int CHB1 = CHAR_BIT - 1,
 			if (!FILE_STREAM.is_open()) {
 				throw runtime_error("File wasn't open.");
 			}
-			BRLAST_BYTE.MOVED_LEFT = true;
+			LAST.MOVED_LEFT = true;
 		}
 
 
 		bitremedy LastByte() {
-			return BRLAST_BYTE;
+			return LAST;
 		}
 		inline int ExtraZerosN() {
-			return BRLAST_BYTE.BITSN ? CHB - BRLAST_BYTE.BITSN : 0;
+			return LAST.BITSN ? CHB - LAST.BITSN : 0;
 		}
 		auto Eof() {
 			return FILE_STREAM.eof();
@@ -182,8 +190,8 @@ constexpr int CHB1 = CHAR_BIT - 1,
 
 		ofinestream(string FILE) : finestream(FILE) {	}
 		~ofinestream() {
-			if (BRLAST_BYTE.BITSN) { // output buffer for last byte before closing filestream
-				FILE_STREAM.put(BRLAST_BYTE.UCBYTE);
+			if (LAST.BITSN) { // output buffer for last byte before closing filestream
+				FILE_STREAM.put(LAST.UCBYTE);
 			}
 			FILE_STREAM.close();
 		}
@@ -195,9 +203,9 @@ constexpr int CHB1 = CHAR_BIT - 1,
 			FILE_STREAM.seekp(pos);
 		}
 		void Flush() {
-			if (BRLAST_BYTE.BITSN) { // output buffer for last byte before closing filestream
-				FILE_STREAM.put(BRLAST_BYTE.UCBYTE);
-				BRLAST_BYTE.ClearToLeft();
+			if (LAST.BITSN) { // output buffer for last byte before closing filestream
+				FILE_STREAM.put(LAST.UCBYTE);
+				LAST.ClearToLeft();
 			}
 		}
 		inline void PutByte(const uchar UCBYTE) {
@@ -208,10 +216,10 @@ constexpr int CHB1 = CHAR_BIT - 1,
 		}
 		inline void PutByte(const bitremedy& BRBYTE) {
 			//BRBYTE.ValidityTest(); // it will be on the user's discretion when uses PutByte(), don't want to double check every bitremedy, it would slow down the stream
-			bitremedy BRNEW_REMEDY = BRLAST_BYTE.MergeWith(BRBYTE);
-			if (BRLAST_BYTE.BITSN == CHB) {
-				FILE_STREAM.put(BRLAST_BYTE.UCBYTE);
-				BRLAST_BYTE = BRNEW_REMEDY;
+			bitremedy BRNEW_REMEDY = LAST.AddToRight(BRBYTE);
+			if (LAST.BITSN == CHB) {
+				FILE_STREAM.put(LAST.UCBYTE);
+				LAST = BRNEW_REMEDY;
 			}
 		}
 		template <typename T>  // if you know how to safely use reference type parameter here - commit it
@@ -236,21 +244,21 @@ constexpr int CHB1 = CHAR_BIT - 1,
 		}
 		template <int N> // N - int operations occur
 		ofinestream& operator << (const bitset <N>& BSLINE) {
-			int LPZSIZE = CHB - BRLAST_BYTE.BITSN;  // left puzzle size
+			int LPZSIZE = CHB - LAST.BITSN;  // left puzzle size
 			if (N <= LPZSIZE) {
-				//(BRLAST_BYTE.MoveToRight().UCBYTE <<= N) |= (char) BSLINE.to_ulong();
-				//BRLAST_BYTE.BITSN += N;
-				//BRLAST_BYTE.MoveToLeft();
-				//if (BRLAST_BYTE.BITSN == CHB) {
-				//	FILE_STREAM.put(BRLAST_BYTE.UCBYTE);
-				//	BRLAST_BYTE.Clear();
+				//(LAST.MoveToRight().UCBYTE <<= N) |= (char) BSLINE.to_ulong();
+				//LAST.BITSN += N;
+				//LAST.MoveToLeft();
+				//if (LAST.BITSN == CHB) {
+				//	FILE_STREAM.put(LAST.UCBYTE);
+				//	LAST.Clear();
 				//}
 				PutByte((bitremedy) BSLINE);  // use my functions, if you want to shorten code, no more than 5% slower but harder to make mistake and shorter
 			}
 			else {
 				bitset <N> MASK((2u << CHB) - 1);
 				MASK <<= max(N - CHB, 0);
-				if (BRLAST_BYTE.BITSN) {
+				if (LAST.BITSN) {
 					PutByte({ (BSLINE & MASK) >> (N - LPZSIZE), LPZSIZE, false });  //? N-LPZSIZE?
 					MASK >>= LPZSIZE;
 				}
@@ -271,20 +279,20 @@ constexpr int CHB1 = CHAR_BIT - 1,
 			return *this;
 		}
 		ofinestream& operator << (const bool BBYTE) {
-			if (!BRLAST_BYTE.MOVED_LEFT) {
-				//cout << "Warning: last byte isn't left aligned" << endl;
-				BRLAST_BYTE.MoveToLeft();
+			if (!LAST.MOVED_LEFT) {
+				cout << "WARNING: last byte isn't left aligned" << endl;
+				LAST.MoveToLeft();
 			}
 			if (BBYTE) {
-				BRLAST_BYTE.UCBYTE |= (true << (CHB1 - BRLAST_BYTE.BITSN)); // CHB - curr. seq. len. - new seq. len. = CHB - BRLAST_BYTE.BITSN - 1 = CHB1 - BRLAST_BYTE.BITSN
-				BRLAST_BYTE.BITSN++;
+				LAST.UCBYTE |= (true << (CHB1 - LAST.BITSN)); // CHB - curr. seq. len. - new seq. len. = CHB - LAST.BITSN - 1 = CHB1 - LAST.BITSN
+				LAST.BITSN++;
 			}
 			else {
-				BRLAST_BYTE.BITSN++;
+				LAST.BITSN++;
 			}
-			if (BRLAST_BYTE.BITSN == CHB) {
-				FILE_STREAM.put(BRLAST_BYTE.UCBYTE);
-				BRLAST_BYTE.ClearToLeft();
+			if (LAST.BITSN == CHB) {
+				FILE_STREAM.put(LAST.UCBYTE);
+				LAST.ClearToLeft();
 			}
 			return *this;
 		}
@@ -330,7 +338,7 @@ constexpr int CHB1 = CHAR_BIT - 1,
 					PutAnyReversed(DATA);
 				else
 					PutAny(DATA);
-				//cerr << "Warning: are you sure about this type - " << typeid(T).name() << "?" << endl;
+				cerr << "WARNING: are you sure about this type - " << typeid(T).name() << "?" << endl;
 			}
 			return *this;
 		}
@@ -354,16 +362,19 @@ constexpr int CHB1 = CHAR_BIT - 1,
 		inline int GetByte(uchar& UCBYTE) {
 			uchar 
 				UCREAD_BYTE = FILE_STREAM.get();
+				// FIX: here we should check if LAST.BITSN is not equal to CHB
+				// otherwise we don't need to read from file, it will be done in the 
+				// next getSomething() call
 			if (UCREAD_BYTE == (uchar) EOF) {
-				//cerr << "Warning: reached end of file." << endl;
+				cerr << "WARNING: reached end of file." << endl;
 				return EOF;
 			}
-			else if (BRLAST_BYTE.BITSN) {
+			else if (LAST.BITSN) {
 				bitremedy 
-					BRNEW_REMEDY = BRLAST_BYTE.MergeWith({ UCREAD_BYTE, CHB, true });
-				UCBYTE = BRLAST_BYTE.UCBYTE;
-				BRLAST_BYTE = BRNEW_REMEDY;
-			}  ///*(const char)*/ what will it return with inline key word? will it be a copy or original BRLAST_BYTE.UCBYTE?
+					BRNEW_REMEDY = LAST.AddToRight({ UCREAD_BYTE, CHB, true });
+				UCBYTE = LAST.UCBYTE;
+				LAST = BRNEW_REMEDY;
+			}  ///*(const char)*/ what will it return with inline key word? will it be a copy or original LAST.UCBYTE?
 			else {
 				UCBYTE = UCREAD_BYTE;
 			}
@@ -390,33 +401,44 @@ constexpr int CHB1 = CHAR_BIT - 1,
 			//return 0;
 			uchar UCREAD_BYTE;
 			bool MOVED_LEFT = BRBYTE.MOVED_LEFT;
-			if (BRLAST_BYTE.BITSN) {
-				if (BRLAST_BYTE.BITSN < BRBYTE.BITSN) {
-					UCREAD_BYTE = (uchar)FILE_STREAM.get();
-					if (UCREAD_BYTE == (uchar)EOF) {
-						//cerr << "Warning: reached end of file." << endl;
-						return EOF;
-					}					
-					bitremedy RIGHT_PART{ UCREAD_BYTE, BRBYTE.BITSN - BRLAST_BYTE.BITSN, true },
-					NEW_REMEDY = BRLAST_BYTE.MergeWith(RIGHT_PART);
-					BRBYTE = BRLAST_BYTE;
-					BRLAST_BYTE = NEW_REMEDY;
+			if (LAST.BITSN) {
+				if (LAST.BITSN >= BRBYTE.BITSN) {
+				
+					//bitremedy RIGHT_PART{ UCREAD_BYTE, BRBYTE.BITSN - LAST.BITSN, true },
+					//NEW_REMEDY = LAST.AddToRight(RIGHT_PART); // FIX: new remedy here will always be 0, because BRBYTE can't be bigger than CHB
+					//BRREAD_BYTE = {UCREAD_BYTE, CHB, true};
+					//bitremedy EXTRA_BITS = LAST.AddToRight(BRREAD_BYTE);
+
+					//BRBYTE = LAST;
+					//LAST = NEW_REMEDY;
+					LAST.ExtractFromLeft(BRBYTE);
 				}
 				else {
-					BRBYTE = { BRLAST_BYTE.MoveToLeft().UCBYTE, BRBYTE.BITSN, true };
-					BRLAST_BYTE.Clear();
+					UCREAD_BYTE = (uchar)FILE_STREAM.get();
+					if (UCREAD_BYTE == (uchar)EOF) {
+						cerr << "WARNING: reached end of file." << endl;
+						return EOF;
+					}
+					bitremedy READ = {UCREAD_BYTE, CHB, true};
+					bitremedy READ_REMEDY = LAST.AddToRight(READ);
+					LAST.ExtractFromLeft(BRBYTE);
+					LAST.AddToRight(READ_REMEDY);
+/*					BRBYTE = { LAST.MoveToLeft().UCBYTE, BRBYTE.BITSN, true };
+					LAST.Clear(); */// FIX: shouldn't be cleared !!!
 				}
 			}
 			else {
 				UCREAD_BYTE = (uchar)FILE_STREAM.get();
 				if (UCREAD_BYTE == (uchar)EOF) {
-					cerr << "Warning: reached end of file." << endl;
+					cerr << "WARNING: reached end of file." << endl;
 					return EOF;
-				}				
-				int	LEFT_SIZE = BRBYTE.BITSN,
-				RIGHT_SIZE = CHB - LEFT_SIZE;
-				BRBYTE = { UCREAD_BYTE, LEFT_SIZE, true };
-				BRLAST_BYTE = { UCREAD_BYTE, RIGHT_SIZE, false };
+				}	
+				LAST = {UCREAD_BYTE, CHB, true};
+				LAST.ExtractFromLeft(BRBYTE);
+				//int	LEFT_SIZE = BRBYTE.BITSN,
+				//RIGHT_SIZE = CHB - LEFT_SIZE;
+				//BRBYTE = { UCREAD_BYTE, LEFT_SIZE, true };
+				//LAST = { UCREAD_BYTE, RIGHT_SIZE, false };
 			}
 			if (!MOVED_LEFT)
 				BRBYTE.MoveToRight();
@@ -445,7 +467,7 @@ constexpr int CHB1 = CHAR_BIT - 1,
 			return ERR;
 		}
 		void Flush() {
-			BRLAST_BYTE.Clear();
+			LAST.Clear();
 		}
 		
 
@@ -455,15 +477,15 @@ constexpr int CHB1 = CHAR_BIT - 1,
 		}
 		template <int N>
 		ifinestream& operator >> (bitset <N>& BSLINE) {
-			if (N <= BRLAST_BYTE.BITSN) {
-				BSLINE = (BRLAST_BYTE.MoveToRight().UCBYTE >> (BRLAST_BYTE.BITSN - N));
-				BRLAST_BYTE.BITSN -= N;
-				BRLAST_BYTE.ClearMargins();
+			if (N <= LAST.BITSN) {
+				BSLINE = (LAST.MoveToRight().UCBYTE >> (LAST.BITSN - N));
+				LAST.BITSN -= N;
+				LAST.ClearMargins();
 			}
 			else {
-				(BSLINE <<= BRLAST_BYTE.BITSN) |= BRLAST_BYTE.MoveToRight().UCBYTE;
-				int BSSIZE = N - BRLAST_BYTE.BITSN;
-				BRLAST_BYTE.Clear(); // don't forget to clear, other functions such as GetByte() can depend on BRLAST_BYTE
+				(BSLINE <<= LAST.BITSN) |= LAST.MoveToRight().UCBYTE;
+				int BSSIZE = N - LAST.BITSN;
+				LAST.Clear(); // don't forget to clear, other functions such as GetByte() can depend on LAST
 				for (char INPUT_CBYTE; BSSIZE > CHB1; BSSIZE -= CHB) {
 					FILE_STREAM.get(INPUT_CBYTE);
 					(BSLINE <<= CHB) |= (uchar) INPUT_CBYTE; 
@@ -472,7 +494,7 @@ constexpr int CHB1 = CHAR_BIT - 1,
 					int NEW_REMEDY_SIZE = CHB - BSSIZE;
 					uchar INPUT_UCBYTE = GetByte();
 					(BSLINE <<= BSSIZE) |= (INPUT_UCBYTE >> NEW_REMEDY_SIZE);
-					BRLAST_BYTE = { INPUT_UCBYTE,  NEW_REMEDY_SIZE, false };  // old remedy will be erased by .ClearMargins() here
+					LAST = { INPUT_UCBYTE,  NEW_REMEDY_SIZE, false };  // old remedy will be erased by .ClearMargins() here
 				}
 			}
 			return *this;
@@ -482,17 +504,17 @@ constexpr int CHB1 = CHAR_BIT - 1,
 			return *this;
 		}
 		 ifinestream& operator >> (bool & BBYTE) {
-			if (BRLAST_BYTE.MOVED_LEFT) {
-				cerr << "Warning: BRLAST_BYTE is left aligned" << endl;
-				BRLAST_BYTE.MoveToRight();
+			if (LAST.MOVED_LEFT) {
+				cerr << "WARNING: BRLAST_BYTE is left aligned" << endl;
+				LAST.MoveToRight();
 			}
-			else if (!BRLAST_BYTE.BITSN) {
-				GetByte(BRLAST_BYTE.UCBYTE);
-				BRLAST_BYTE.BITSN = CHB;
+			if (!LAST.BITSN) {
+				GetByte(LAST.UCBYTE);
+				LAST.BITSN = CHB;
 			}
-			BBYTE = BRLAST_BYTE.UCBYTE & true;
-			BRLAST_BYTE.UCBYTE >>= 1;
-			BRLAST_BYTE.BITSN--;
+			BBYTE = LAST.UCBYTE & (true << (LAST.BITSN - 1));
+			//LAST.UCBYTE >>= 1;
+			LAST.BITSN--;
 			return *this;
 		}
 		ifinestream& operator >> (vector <bool> & VB) {
@@ -532,7 +554,7 @@ constexpr int CHB1 = CHAR_BIT - 1,
 					GetAnyReversed(DATA);
 			}
 			else {
-				//cerr << "Warning: are you sure about this type - " << typeid(T).name() << "?" << endl;
+				cerr << "WARNING: are you sure about this type - " << typeid(T).name() << "?" << endl;
 				if (IsLittleEndian())
 					GetAny(DATA);
 				else

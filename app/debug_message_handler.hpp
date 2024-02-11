@@ -22,6 +22,7 @@ public:
     LogHandler(QString log_file_name_) : 
             log_file_name(log_file_name_)
     {
+
         text_stream = new std::ofstream(log_file_name.toStdString(), std::ios::app);
         if (text_stream->is_open()) {
             coutbuf = std::cout.rdbuf(text_stream->rdbuf());

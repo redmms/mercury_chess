@@ -127,6 +127,8 @@ bool Validator::inCheckmate(bool color)
 bool Validator::inStalemate(bool color)
 {
 	movable_pieces.clear();
+	valid_moves.clear();
+	bool stalemate = true;
 	for (int x = 0; x < 8; x++) {
 		for (int y = 0; y < 8; y++) {
 			scoord coord{x, y};
@@ -135,13 +137,13 @@ bool Validator::inStalemate(bool color)
 				findValid(tile);
                 if (!empty()) {
 					valid_moves.clear();
-					movable_pieces.emplace(tile);
-					return false;
+					movable_pieces.insert(tile);
+					stalemate = false;
 				}
 			}
 		}
 	}
-	return true;
+	return stalemate;
 }
 
 void Validator::kingPotential(scoord coord, list<scoord>& coords)
@@ -438,7 +440,7 @@ void Validator::findValid(Tile* from_tile)
 		castlingPotential(potenial_moves);
 		Tile* rook_stub;
 		for (auto coord : potenial_moves)
-			if (canCastle(from_tile, theTile(coord), &rook_stub))
+			if (canCastle(from_tile, theTile(coord), rook_stub))
 				addValid(coord);
 		break;
 	case 'B':  // bishop
@@ -453,7 +455,7 @@ void Validator::findValid(Tile* from_tile)
 	};
 }
 
-bool Validator::canCastle(Tile* from, Tile* to, Tile** rook)
+bool Validator::canCastle(Tile* from, Tile* to, Tile*& rook)
 {
 	std::list<int> castling_side;
 	if (board.turn && from->piece_name == 'K' && !has_moved[1])
@@ -468,7 +470,7 @@ bool Validator::canCastle(Tile* from, Tile* to, Tile** rook)
 			for (auto coord : should_be_safe[i])
 				if (underAttack(coord))
 					return false;
-			*rook = theTile(rooks_kings[i]);
+			rook = theTile(rooks_kings[i]);
 			return true;
 		}
 	return false;

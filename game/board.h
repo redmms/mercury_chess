@@ -6,33 +6,26 @@
 #include "tile.h"
 #include <QPointer>
 #include <vector>
+#include <QDebug>
+import bitremedy;
+import finestream;
 
 class WebClient;
-
+class MainWindow;
 class Board : public QLabel {
 	Q_OBJECT
-
-    const QSettings& settings;
 
     void drawLetters(bool side);
 	void drawNumbers(bool side);
 	void drawTiles(bool side);
 	void openPromotion(Tile* from);
 
-	friend class Tile;
-	friend class WebClient;
-protected:
-	int tile_size;
-
-	void halfMove(scoord from, scoord to);
-	void halfMove(Tile* from, Tile* to);
-
 public:
-    Board(QLabel* background, const QSettings& settings);
+    Board(QLabel* background, QSettings& settings_, MainWindow* mainwindow_);
 
+	MainWindow* mainwindow;
     std::vector<halfmove> history;
 	std::vector<bitmove> bistory;
-    //std::vector<scoord> piece_coords;
     QScopedPointer<Validator> valid;
     QScopedPointer<Tile> tiles[8][8];
 	bool turn;
@@ -47,7 +40,11 @@ public:
     char last_promotion;
     virtu last_virtually_passed;
 	endnum end_type;
+	int tile_size;
+	QSettings& settings;
 
+	void halfMove(scoord from, scoord to);
+	void halfMove(Tile* from, Tile* to);
 	void saveMove(Tile* from, Tile* to, pove& move);
     void revertVirtualMove(pove& move);
     void moveVirtually(Tile* from, Tile* to, pove& move);
@@ -55,6 +52,10 @@ public:
 	void castleKing(Tile* king, Tile* destination, Tile* rook);
 	void passPawn(Tile* from, Tile* to);
     void restoreTile(virtu saved);
+	void promotePawn(Tile* from, char into);
+	bitmove toBitmove(halfmove hmove);
+	bitremedy toPieceIdx(Tile* from);
+	bitremedy toMoveIdx(Tile* to);
     //int idx(scoord coord);
 
 	auto operator [](int i) {
@@ -66,6 +67,7 @@ signals:
 	void theEnd(endnum end_type);
 	void promotionEnd();
     void moveMade(scoord from, scoord to, char promotion_type);
+	void needBoardUpdate();
 	//void moveMade(Tile* from, Tile* to);
 
 private slots:

@@ -247,3 +247,58 @@ void MainWindow::on_restore_default_button_clicked()
     ui->port_edit->clear();
 }
 
+void MainWindow::on_offline_stop_button_clicked()
+{
+    endSlot(endnum::interrupt);
+}
+
+void MainWindow::on_offline_back_button_clicked()
+{
+    openTab(last_tab);
+}
+
+void MainWindow::on_history_next_button_clicked()
+{
+    showInDevDialog();
+    //auto& history = board->history;
+    //halfmove move = history[current_move];
+    //Tile* from = move.move.first.tile;
+    //Tile* to = move.move.second.tile;
+    //board->halfMove(from, to);
+    //current_move++;
+}
+
+void MainWindow::on_history_previous_button_clicked()
+{
+    showInDevDialog();
+    //auto& history = *board->history;
+    //halfmove move = history[current_move];
+    //board.revertMove(move);
+    //current_move--;
+}
+
+void MainWindow::on_actionAbout_triggered()
+{
+    QString title = "About Mercury Chess";
+    QString description = "I am Max Cury (MMD18) and this is my pet project written in C++ programming language with Qt framework.<br><br>"
+        "It may seem that the main feature of the program is a chess game with a beautiful style, but it is absolutely not.<br><br>The main feature is its built-in archiver "
+        "with its own chess data format using a sophisticated algorithm to compress the data, so that it takes even less than 1 byte of space for every halfmove and uses its own "
+        "bitstream allowing it to operate individual bits in std::cout style (available on <a href = 'https://github.com/redmms/finestream.git'>github</a>).<br><br>I also invented several algorithms for describing chess board positions "
+        "(like FEN but with a different structure and encoded in bits) and will code them if I find some "
+        "interest of programmers or chess community. "
+        "<br><br>"
+        "To contact me, use this email: mmd18cury@yandex.ru";
+    QMessageBox msg_box;
+    msg_box.setWindowTitle(title);
+    msg_box.setTextFormat(Qt::RichText);   //this is what makes the links clickable
+    msg_box.setText(description);
+    msg_box.exec();
+    //QString description = "a" + QString(std::endl) + "<a href = 'https://github.com/redmms/finestream.git'>github< / a>";
+    //QMessageBox::about(0, title, description);
+}
+
+
+void MainWindow::on_actionAbout_Qt_triggered()
+{
+    QMessageBox::aboutQt(0, "About Qt");
+}

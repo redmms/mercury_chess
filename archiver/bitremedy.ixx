@@ -2,69 +2,92 @@ export module bitremedy;
 import <iostream>;
 import <bitset>;
 import <stdexcept>;
+import <algorithm>;
+import <string>;
+import <ostream>;
 using uchar = unsigned char;
 constexpr int CHB = CHAR_BIT;
+constexpr int CHB1 = CHAR_BIT - 1;
 using namespace std;
 
 
 // TODO:
 // // add an operator = to bitremedy, so that there would be no need to do checks manually
 export struct bitremedy {
+//private :
+//	bool LAST_ALIGN{ false };
 public:
-	uchar UCBYTE{ 0 };
-	int BITSN{ 0 };
-	bool MOVED_LEFT{ false }; // alias for leftAligned
+	uchar UCBYTE{0};
+	int BITSN{0};
+	bool MOVED_LEFT{false}; // alias for leftAligned
 
 
 	template <size_t N>
-	bitremedy(bitset <N> _BSBYTE, int _BITSN, bool _MOVED_LEFT) :
-		UCBYTE(static_cast<uchar>(_BSBYTE.to_ulong())), BITSN(_BITSN), MOVED_LEFT(_MOVED_LEFT)
+	bitremedy(bitset <N> BSBYTE_, int BITSN_, bool MOVED_LEFT_) :
+		UCBYTE((uchar)BSBYTE_.to_ulong()), BITSN(BITSN_), MOVED_LEFT(MOVED_LEFT_)
 	{
 		ConstructorBitsnTest();
 		ClearMargins();
 	}
 	template <size_t N>
-	bitremedy(bitset <N> _BSBYTE) :
-		UCBYTE(static_cast<uchar>(_BSBYTE.to_ulong())), BITSN(N > CHB ? CHB : N), MOVED_LEFT(false)
+	bitremedy(bitset <N> BSBYTE_) :
+		UCBYTE((uchar)BSBYTE_.to_ulong()), BITSN(MinBits(UCBYTE)), MOVED_LEFT(false)
 	{
+		if (MinBits(BSBYTE_.to_ulong()) > BITSN) {
+			cerr << "WARNING: the number in bitremedy constructor is bigger than 1 byte can contain and will be cut" << endl;
+		}
 	}
 	template <typename T>
-	bitremedy(T _TBYTE, int _BITSN, bool _MOVED_LEFT) :
-		UCBYTE(static_cast <uchar> (_TBYTE) ), BITSN(_BITSN), MOVED_LEFT(_MOVED_LEFT)
+	bitremedy(T TBYTE_, int BITSN_, bool MOVED_LEFT_) :
+		UCBYTE((uchar)TBYTE_), BITSN(BITSN_), MOVED_LEFT(MOVED_LEFT_)
 	{
 		ConstructorBitsnTest();
 		ClearMargins();
+	}
+	template <typename T>
+	bitremedy(T TBYTE_) :
+		UCBYTE((uchar) TBYTE_), BITSN(MinBits(UCBYTE)), MOVED_LEFT(false)
+	{
+		if (MinBits(TBYTE_) > BITSN) {
+			cerr << "WARNING: the number in bitremedy constructor is bigger than 1 byte can contain and will be cut" << endl;
+		}
 	}
 	bitremedy() {};
 	virtual ~bitremedy() {};
 	// TODO: add constructor from char and other 1 byte types
 
 	operator int() const {
-		return int(UCBYTE);
+		bitremedy COPY = *this;
+		COPY.MoveToRight();
+		return int(COPY.UCBYTE);
 	}
 	operator unsigned char() const {
-		return UCBYTE;
+		bitremedy COPY = *this;
+		COPY.MoveToRight();
+		return COPY.UCBYTE;
 	}
 	operator char() const {
-		return char(UCBYTE);
+		bitremedy COPY = *this;
+		COPY.MoveToRight();
+		return char(COPY.UCBYTE);
 	}
 
 	virtual void CheckBitsn() const {
-		if ((BITSN > CHAR_BIT || BITSN < 0)) {
-			throw out_of_range("Error: invalid BITSN value. It should be from 0 to 8"
+		if ((BITSN > CHB || BITSN < 0)) {
+			throw out_of_range("ERROR: invalid BITSN value. It should be from 0 to 8"
 							   "(or up to byte size of your machine).");
 		}
 	}
 	virtual void CheckMargins() const {
 		if (MOVED_LEFT) {
-			if (bool(UCBYTE << BITSN)) { // will it work with CHAR_BIT > 8? Or we need to use (uchar)()?
-				throw logic_error("Error: extra '1' bits in bitremedy.CBYTE. Use "
+			if (bool(UCBYTE << BITSN)) { // will it work with CHB > 8? Or we need to use (uchar)()?
+				throw logic_error("ERROR: extra '1' bits in bitremedy.CBYTE. Use "
 								  "method ClearMargins()");
 			}
 		}
 		else {
 			if (bool(UCBYTE >> BITSN)) {
-				throw logic_error("Error: extra '1' bits in bitremedy.CBYTE. Use "
+				throw logic_error("ERROR: extra '1' bits in bitremedy.CBYTE. Use "
 								  "method ClearMargins()");
 			}
 		}
@@ -107,15 +130,15 @@ public:
 			UCBYTE &= ~((uchar)(-1) >> BITSN);  // don't change the spelling, 
 			// otherwise it may fail to build in other compilers except MSVC, 
 			// because of a problem with long type names in type casts
-			// 1) cBYTE >>= CHAR_BIT - BITSN;
-			//    cBYTE <<= CHAR_BIT - BITSN;
-			// 2) (cBYTE >>= (CHAR_BIT - BITSN)) <<= (CHAR_BIT - BITSN);
-			// 3) cBYTE &= 0xFF << (CHAR_BIT - BITSN); // dangerous for CHAR_BIT more than 8
+			// 1) cBYTE >>= CHB - BITSN;
+			//    cBYTE <<= CHB - BITSN;
+			// 2) (cBYTE >>= (CHB - BITSN)) <<= (CHB - BITSN);
+			// 3) cBYTE &= 0xFF << (CHB - BITSN); // dangerous for CHB more than 8
 			// // can be modifed with (uchar)(-1) instead of 0xFF to substitute 7) variant, but the benifit is disputable
 			// // though it's definitely better than the 2d variant: it has 3o instead of 4o there
-			// 4) cBYTE &= ~(0xFF >> BITSN);  // dangerous for CHAR_BIT more than 8
+			// 4) cBYTE &= ~(0xFF >> BITSN);  // dangerous for CHB more than 8
 			// 5) cBYTE &= ~(0xFFFFFFFF >> BITSN); // will not work
-			// 6) cBYTE &= 0xFFFFFFFF << (CHAR_BIT - BITSN); // dangerous for CHAR_BIT more than 32 and will not work for MOVED_LEFT == false;
+			// 6) cBYTE &= 0xFFFFFFFF << (CHB - BITSN); // dangerous for CHB more than 32 and will not work for MOVED_LEFT == false;
 			// 7) Modified 5): UCBYTE &= ~((unsigned char)(-1) >> BITSN);
 		}
 		else {
@@ -125,39 +148,120 @@ public:
 	}
 	inline bitremedy& MoveToLeft() {
 		// moves bits to left border of cBYTE
+		//LAST_ALIGN = MOVED_LEFT;
 		if (!this->MOVED_LEFT) {
-			UCBYTE <<= (CHAR_BIT - BITSN);
+			UCBYTE <<= (CHB - BITSN);
 			MOVED_LEFT = true;
 		}
 		return *this;
 	}
 	inline bitremedy& MoveToRight() {
 		// moves bits to right border of cBYTE
+		//LAST_ALIGN = MOVED_LEFT;
 		if (this->MOVED_LEFT) {
-			UCBYTE >>= (CHAR_BIT - BITSN);
+			UCBYTE >>= (CHB - BITSN);
 			MOVED_LEFT = false;
 		}
 		return *this;
 	}
-	virtual bitremedy MergeWith(bitremedy _ADDEND) {
-		// merges two unfull bytes moving them to the left and returns left aligned remedy as bitremedy NEW_REMEDY
-		int BIT_SUM = this->BITSN + _ADDEND.BITSN;
-		if (BIT_SUM == CHAR_BIT << 1) {
-			cout << "Warning: merging 2 full bytes will not change them." << endl;
-			return { 0, 0, 0 };
+	virtual bitremedy AddToRight(bitremedy ADDEND_) {
+		// merges two unfull bytes moving them to the left and returns left aligned remedy as bitremedy REMEDY
+		int BIT_SUM = this->BITSN + ADDEND_.BITSN;
+		if (BIT_SUM == CHB << 1) {
+			cout << "WARNING: merging 2 full bytes will not change them." << endl;
+			return {};
 		}
-		bitremedy ADDEND{ _ADDEND }, NEW_REMEDY;
-		ADDEND.MoveToLeft();
+		bitremedy ADDEND{ ADDEND_ }, REMEDY{ ADDEND_ };
+		ADDEND.MoveToLeft(); this->MoveToLeft();
+		if (BIT_SUM > CHB) {
+			REMEDY.CutNFromLeft(ADDEND.BITSN - BIT_SUM % CHB);
+		}
+		else {
+			REMEDY = {};
+		}
+		*this = {UCBYTE | (ADDEND.UCBYTE >> BITSN), min(BIT_SUM, CHB), MOVED_LEFT };
+		return REMEDY;
+	}
+	virtual bitremedy AddToLeft(bitremedy ADDEND_) {
+		// merges two unfull bytes moving them to the left and returns left aligned remedy as bitremedy REMEDY
+		int BIT_SUM = this->BITSN + ADDEND_.BITSN;
+		if (BIT_SUM == CHB << 1) {
+			cout << "WARNING: merging 2 full bytes will not change them." << endl;
+			return {};
+		}
+		bitremedy ADDEND{ ADDEND_ }, REMEDY{ ADDEND_};
+		ADDEND.MoveToRight(); this->MoveToRight();
+		if (BIT_SUM > CHB) {
+			REMEDY.CutNFromRight(ADDEND.BITSN - BIT_SUM % CHB);
+		}
+		else {
+			REMEDY = {};
+		}
+		*this = { UCBYTE | (ADDEND.UCBYTE << BITSN), min(BIT_SUM, CHB), MOVED_LEFT };
+		return REMEDY;
+	}
+	inline bitremedy& ExtractFromLeft(bitremedy& LESS) {
+		if (LESS.BITSN > this->BITSN) {
+			cerr << "ERROR: you can't extract bigger bitremedy from less one" << endl;
+		}
+		this->MoveToLeft(); LESS.MoveToLeft();
+		LESS = {UCBYTE, LESS.BITSN, true};
+		*this = {UCBYTE << LESS.BITSN, BITSN - LESS.BITSN, true};
+		return *this;
+	}
+	inline bitremedy& ExtractFromRight(bitremedy& LESS) {
+		if (LESS.BITSN > this->BITSN) {
+			cerr << "ERROR: you can't extract bigger bitremedy from less one" << endl;
+		}
+		this->MoveToRight(); LESS.MoveToRight();
+		LESS = { UCBYTE, LESS.BITSN, false };
+		*this = { UCBYTE >> LESS.BITSN, BITSN - LESS.BITSN, false };
+		return *this;
+	}
+	inline bitremedy& CutNFromLeft(int N) {
 		this->MoveToLeft();
-		if (BIT_SUM > CHAR_BIT) {
-			int CHAR_REMEDY = BIT_SUM % CHAR_BIT;  // can't it go after this->UCBYTE assigning, to lessen calculations of BITSN etc.?
-			NEW_REMEDY.UCBYTE = ADDEND.UCBYTE << (ADDEND.BITSN - CHAR_REMEDY); // first (ADDEND.BITSN - CHAR_REMEDY - 1) bits is a part used to merge with this->cBYTE, we erase it in NEW_REMEDY
-			NEW_REMEDY.BITSN = CHAR_REMEDY;
-			NEW_REMEDY.MOVED_LEFT = true;
-		}
-		this->UCBYTE |= ADDEND.UCBYTE >> this->BITSN;
-		this->BITSN = BIT_SUM < CHAR_BIT ? BIT_SUM : CHAR_BIT;
-		return NEW_REMEDY;
+		*this = { UCBYTE << N, BITSN - N, true };
+		return *this;
+	}
+	inline bitremedy& CutNFromRight(int N) {
+		this->MoveToRight();
+		*this = { UCBYTE >> N, BITSN - N, false };
+		return *this;
+	}
+	inline bitremedy& AddNToLeft(int N) {
+		this->MoveToRight();
+		BITSN += N;
+		CheckBitsn();
+		return *this;
+	}
+	inline bitremedy& AddNToLeft(int N, bitremedy& FROM) {
+		bitremedy ADDEND = { 0, N, false };
+		ADDEND.CheckBitsn();
+		FROM.ExtractFromRight(ADDEND);
+		this->AddToLeft(ADDEND);
+		return *this;
+	}
+	inline bitremedy& AddNToRight(int N) {
+		this->MoveToLeft();
+		BITSN += N;
+		CheckBitsn();
+		return *this;
+	}
+	inline bitremedy& AddNToRight(int N, bitremedy& FROM) {
+	// cuts from left side of FROM bitremedy, because files always are written and read from left to right
+		bitremedy ADDEND = { 0, N, true };
+		ADDEND.CheckBitsn();
+		FROM.ExtractFromLeft(ADDEND);
+		this->AddToRight(ADDEND);
+		return *this;
+	}
+	inline bitremedy CopyNFromLeft(int N) {
+		this->MoveToLeft();
+		return {UCBYTE, N, MOVED_LEFT};
+	}
+	inline bitremedy CopyNFromRight(int N) {
+		this->MoveToRight();
+		return { UCBYTE, N, MOVED_LEFT };
 	}
 	inline void Clear() {
 		UCBYTE = 0;
@@ -169,4 +273,40 @@ public:
 		BITSN = 0;
 		MOVED_LEFT = true;
 	}
+	template<typename T>
+	int MinBits(T number) {
+		if (number == 0 || number == 1) {
+			cerr << "WARNING: MinBits input was 0 or 1, logarithm of 0 returns infinity, so output is 1 (1 bit is enough to write 0)" << endl;
+			return 1;
+		}
+		else {
+			//int bits_num = ceil(log2(number));
+			return ceil(log2(number));
+		}
+	}
+	//inline void RestoreLastAlign() {
+	//	if (LAST_ALIGN) {
+	//		MoveToLeft();
+	//	}
+	//	else {
+	//		MoveToRight();
+	//	}
+	//}
 };
+
+//export ostream& operator << (ostream& OUT, const bitremedy& BR) {
+//	bitremedy COPY = BR;
+//	COPY.MoveToLeft();
+//	uchar MASK{ true << CHB1 };
+//	for (int I = 0; I < COPY.BITSN; COPY.UCBYTE <<= 1, I++) {
+//		char C;
+//		if (COPY.UCBYTE & MASK) {
+//			C = '1';
+//		}
+//		else {
+//			C = '0';
+//		}	
+//		OUT << C;
+//	}
+//	return OUT;
+//}

@@ -6,11 +6,14 @@
 #include <QGridLayout>
 #include <QTimer>
 #include <string>
+#include "../app/mainwindow.h"
+#include <QThread>
 
-Board::Board(QLabel* background = 0, const QSettings& settings_par = QSettings()) :
+Board::Board(QLabel* background, QSettings& settings_, MainWindow* mainwindow_) :
+	mainwindow(mainwindow_),
 	tile_size(background->width() / 9),
-    settings(settings_par),
-    side(settings.value("match_side").toBool()),  // true for user on white side
+    settings(settings_),
+    side(settings_.value("match_side").toBool()),  // true for user on white side
 	valid(new Validator(this)),
     //tiles{ { } },
     turn(true),  // true for white turn;
@@ -53,7 +56,10 @@ Board::Board(QLabel* background = 0, const QSettings& settings_par = QSettings()
 }
 
 void Board::reactOnClick(Tile* tile) {
-    if (!from_tile) {
+	if (settings.value("game_regime").toString() == "history") {
+		return;
+	}
+    else if (!from_tile) {
 		// if it's first click then pick the piece and
 		// show valid moves
         if (turn == tile->piece_color &&
@@ -74,8 +80,8 @@ void Board::reactOnClick(Tile* tile) {
 	else if (valid->isValid(tile)) {
 		// if it's the second click and move is valid
 		// then move pieces
-        valid->hideValid();
         halfMove(from_tile.data(), tile);
+		//valid->hideValid(); // FIX: should go after halfMove
         valid->reactOnMove(from_tile->coord, tile->coord);
         from_tile = nullptr;
 	}
@@ -269,8 +275,6 @@ void Board::moveVirtually(Tile* from, Tile* to, pove& move)
 
 void Board::moveNormally(Tile* from, Tile* to)
 {
-    if (turn == side)
-        valid->hideValid(); // FIX: should be called only if it was our turn
 //    halfmove last_move;
 //    saveMove(from, to, last_move.move); // should be used before moving
 //    history.push_back(last_move);
@@ -300,6 +304,22 @@ void Board::restoreTile(virtu saved)
     saved.tile->piece_name = saved.name;
 }
 
+bitmove Board::toBitmove(halfmove hmove)
+{
+	QPointer<Tile> from = hmove.move.first.tile;
+	QPointer<Tile> to = hmove.move.second.tile;
+	return { toPieceIdx(from), toMoveIdx(to), promo_by_char[hmove.promo] };
+}
+
+bitremedy Board::toPieceIdx(Tile* from) {
+	unsigned char piece_idx = distance(valid->movable_pieces.begin(), valid->movable_pieces.find(from));
+	return { piece_idx, fsm::MinBits(valid->movable_pieces.size() - 1), false };
+}
+bitremedy Board::toMoveIdx(Tile* to) {
+	unsigned char move_idx = distance(valid->valid_moves.begin(), valid->valid_moves.find(to));
+	return { move_idx, fsm::MinBits(valid->valid_moves.size() - 1), false };
+}
+
 //int Board::idx(scoord coord)
 //{
 //    for (int i = 0; i < piece_coords.size(); i++){
@@ -307,11 +327,38 @@ void Board::restoreTile(virtu saved)
 //            return i;
 //    }
 //}
+// 
+//bitmove Board::toBitmove(halfmove hmove)
+//{
+//	bitmove bmove;
+//	QPointer<Tile> from = hmove.move.first.tile;
+//	QPointer<Tile> to = hmove.move.second.tile;
+//	unsigned char piece_idx = distance(valid->movable_pieces.begin(), valid->movable_pieces.find(from));
+//	piece_idx--;
+//	unsigned char move_idx = distance(valid->valid_moves.begin(), valid->valid_moves.find(to));
+//	move_idx--;
+//	bmove.piece = bitremedy(piece_idx);
+//	bmove.move = bitremedy(move_idx);
+//	bmove.promo = promo_by_char[hmove.promo];
+//	return bmove;
+//}
 
 void Board::promotePawn(Tile* from, Tile* into)
 {
     from->setPiece(into->piece_name, into->piece_color);
     last_promotion = into->piece_name;
+	for (int i = 0; i < 4; i++) {
+		menu[i].reset();
+	}
+	for (int x = 0; x < 8; x++)
+		for (int y = 0; y < 8; y++)
+			tiles[x][y]->setEnabled(true);
+	emit promotionEnd();
+}
+void Board::promotePawn(Tile* from, char into)
+{
+	from->setPiece(into, from->piece_color);
+	last_promotion = into;
 	for (int i = 0; i < 4; i++) {
 		menu[i].reset();
 	}
@@ -328,6 +375,29 @@ void Board::halfMove(scoord from, scoord to)
 
 void Board::halfMove(Tile* from, Tile* to)
 {
+	QString game_type = settings.value("game_regime").toString();
+
+	// we do it before new move, but after the last one, which we convert
+	// because at the moment of stalemate search we don't know what move we'll do -
+	// we check stalemate right after the move - for the opponent's color
+	bitmove bmove;
+	if (game_type == "friend_online" && turn != side) {
+		valid->findValid(from);
+	}
+	bmove.move = toMoveIdx(to);
+	valid->hideValid();
+	if (history.empty()){ // first move
+		if (turn != true) {
+			qWarning() << "Board::history is empty but turn is not white as it should be for the first move";
+		}
+		valid->inStalemate(true);
+		// should go afer findValid, because it cleares valid_move
+		// FIX: inStalemate() тоже меняет valid_moves во время поиска 
+	} 
+	bmove.piece = toPieceIdx(from);
+	// FIX: but the problem is - we don't call inStalemate for the first move
+	// and we need to call it externally. Or we don't?
+
     halfmove last_move;
     last_move.move = {from->toVirtu(), to->toVirtu()};
     char promotion_type = 'e';
@@ -336,7 +406,7 @@ void Board::halfMove(Tile* from, Tile* to)
         emit_status = turn == side ? tatus::opponent_piece_eaten : tatus::user_piece_eaten;
 
     Tile* rook;
-    if (valid->canCastle(from, to, &rook)) {
+    if (valid->canCastle(from, to, rook)) {
 		castleKing(from, to, rook);
         last_move.castling = true;
 		emit_status = tatus::castling;
@@ -350,12 +420,15 @@ void Board::halfMove(Tile* from, Tile* to)
 		moveNormally(from, to);
 
 	if (valid->canPromote(to, to)) {
-        QString game_regime = settings.value("game_regime").toString();
-        if ((game_regime == "friend_online" && turn == side) || game_regime == "friend_offline"){
+        if ((game_type == "friend_online" && turn == side) || game_type == "friend_offline"){
             openPromotion(to);  // waits until the signal from a tile received
             last_move.promo = last_promotion;
             promotion_type = last_promotion;
+			bmove.promo = promo_by_char[last_promotion];
         }
+		else if (game_type == "history") {
+			promotePawn(from, last_promotion);
+		}
 		emit_status = tatus::promotion;
 	}
 
@@ -364,6 +437,9 @@ void Board::halfMove(Tile* from, Tile* to)
 
     last_move.turn = turn;
     history.push_back(last_move);
+	if (game_type != "history")
+		bistory.push_back(bmove);
+
 	turn = !turn;
 	if (valid->inCheck(turn))
 		if (valid->inStalemate(turn))  // check + stalemate == checkmate
@@ -374,6 +450,11 @@ void Board::halfMove(Tile* from, Tile* to)
 		emit theEnd(endnum::draw_by_stalemate);
 	else
 		emit newStatus(emit_status);
+
+
+		// bitmove.move надо обновлять во время хода, а bitmove.piece перед ходом, 
+		// хоть и идут они по отдельности
+		//emit needBoardUpdate();
 }
 
 //void Board::virtualHalfMove(Tile* from, Tile* to, char promo_ty_par)
