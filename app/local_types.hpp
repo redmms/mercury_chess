@@ -33,6 +33,7 @@ enum package_ty : quint8 {
     none,
     wrong_password,
     user_offline,
+    interrupt_signal,
     already_registered
 };
 

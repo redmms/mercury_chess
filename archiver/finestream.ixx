@@ -165,7 +165,7 @@ constexpr int CHB1 = CHAR_BIT - 1,
 			}
 			LAST.MOVED_LEFT = true;
 		}
-
+		finestream(){}
 
 		bitremedy LastByte() {
 			return LAST;
@@ -175,6 +175,9 @@ constexpr int CHB1 = CHAR_BIT - 1,
 		}
 		auto Eof() {
 			return FILE_STREAM.eof();
+		}
+		void open(string FILE_PATH) {
+			FILE_STREAM.open(FILE_PATH);
 		}
 	};
 
@@ -188,7 +191,8 @@ constexpr int CHB1 = CHAR_BIT - 1,
 		//ofinestream(const ofinestream& other) = default;
 		//ofinestream& operator=(const ofinestream& other) = default;
 
-		ofinestream(string FILE) : finestream(FILE) {	}
+		ofinestream(string FILE) : finestream(FILE) {}
+		ofinestream() {}
 		~ofinestream() {
 			if (LAST.BITSN) { // output buffer for last byte before closing filestream
 				FILE_STREAM.put(LAST.UCBYTE);
@@ -350,6 +354,7 @@ constexpr int CHB1 = CHAR_BIT - 1,
 	class ifinestream : public finestream {
 	public:
 		ifinestream(string FILE) : finestream(FILE) {}
+		ifinestream() {}
 
 
 		inline uchar GetByte() {

@@ -71,10 +71,11 @@ public:
 	void switchGlow();
 	bool eventFilter(QObject* object, QEvent* event);
     void openStopGameDialog();
-    void showInDevDialog();
+    void openInDevDialog();
     void writeStory(int order, halfmove move);
     QString coordToString(scoord coord);
-
+    int changeLocalName(QString name);
+    //int changeOnlineName(QString name);
 
 
 
@@ -91,7 +92,7 @@ public:
     QPixmap default_pic;
     int login_regime;
 
-    void startGame();
+    void startGame(QString game_regime);
     void printMessage(QString name, bool own, QString text);
     void openTab(QWidget* page);
 
@@ -129,6 +130,14 @@ private slots:
     void on_actionAbout_Qt_triggered();
     void on_actionSave_game_triggered();
     void on_actionLoad_game_triggered();
+
+    // menu's actions in development
+    void on_actionWith_friend_2_triggered();
+    void on_actionTraining_triggered();
+    void on_actionRandomly_triggered();
+    void on_actionRules_triggered();
+    void on_actionSend_suggestion_triggered();
+    void on_actionReport_a_bug_triggered();
 
     // user defined button slots
     void on_offline_stop_button_clicked();

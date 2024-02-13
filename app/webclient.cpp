@@ -181,6 +181,10 @@ void WebClient::sendToServer(package_ty type, bool respond, QString message, sco
         writePack(mainwindow->settings.value("user_name").toString());
         writePack(mainwindow->settings.value("user_pass").toByteArray());
         break;
+    case package_ty::new_name:
+        writePack(package_ty::new_name);
+        writePack(message);
+        break;
     case package_ty::invite:
         writePack(package_ty::invite);
         writePack(mainwindow->settings.value("opp_name").toString());
@@ -217,6 +221,9 @@ void WebClient::sendToServer(package_ty type, bool respond, QString message, sco
         break;
     case package_ty::end_game:
         writePack(package_ty::end_game);
+        break;
+    case package_ty::interrupt_signal:
+        writePack(package_ty::interrupt_signal);
         break;
     }
     send_stream.device()->seek(0);
@@ -284,8 +291,8 @@ void WebClient::readFromServer()
                 mainwindow->opp_pic = mainwindow->default_pic;
             mainwindow->settings.setValue("match_side", side);
             mainwindow->settings.setValue("time_setup", int(time));
-            mainwindow->settings.setValue("game_regime", "friend_online");
-            mainwindow->startGame();
+            //mainwindow->settings.setValue("game_regime", "friend_online");
+            mainwindow->startGame("friend_online");
             sendToServer(package_ty::invite_respond, true);
         });
         connect(&msg_box, &QMessageBox::rejected, [&](){
@@ -309,8 +316,8 @@ void WebClient::readFromServer()
                 mainwindow->opp_pic = picture;
             else
                 mainwindow->opp_pic = mainwindow->default_pic;
-            mainwindow->settings.setValue("game_regime", "friend_online");
-            mainwindow->startGame();
+            //mainwindow->settings.setValue("game_regime", "friend_online");
+            mainwindow->startGame("friend_online");
         }
         emit endedReadingInvite();
         break;

@@ -28,33 +28,35 @@ constexpr auto CHB = CHAR_BIT;
 //import <utility>;
 export class Archiver {
 	const uint8_t archiver_version = 0;
-	Board& board;
-	Validator& valid;
+	Board* board;
+	Validator* valid;
 	QPointer<Tile> from;
 	QPointer<Tile> to;
 	QSettings& settings;
 	QApplication& app;
-
+	fsm::ofinestream ofs;
+	fsm::ifinestream ifs;
+	uint8_t moves_num;
 public:
-	Archiver(Board* board_, QSettings& settings_, QApplication* app_) : 
-		board(*board_),
-		valid(*board.valid),
+	Archiver(QSettings& settings_, QApplication* app_) : 
 		settings(settings_),
 		app(*app_)
 	{}
 
-	int writeGame(std::string filename) 
-	{
-		endnum end_type = board.end_type;
-		const auto& history = board.bistory;
+	int writeGame(Board* board_, std::string filename) 
+	{	
+		board = board_;
+		valid = board->valid.data();
+		endnum end_type = board->end_type;
+		const auto& history = board->bistory;
 		try {
-			fsm::ofinestream ofs(filename);
+			fsm::ofinestream pofs(filename);
 		}
 		catch (const exception& e) {
 			cerr << e.what() << endl;
 			return 1;
 		}
-		fsm::ofinestream ofs(filename);
+		ofs.open(filename);
 		if (history.empty()) {
 			cerr << "You are trying to write an empty game" << endl;
 			return 2;
@@ -77,19 +79,19 @@ public:
 		cout << "Ending bits number in the end of file is " << ofs.ExtraZerosN() << endl;
 		return 0;
 	}
-	int readGame(std::string filename) 
-	{
-		auto& history = board.history;
+	int readHeader(std::string filename) {
+		//auto& history = board->history;
 		try {
-			fsm::ifinestream ifs(filename);
+			fsm::ifinestream pifs(filename);
 		}
 		catch (const exception& e) {
 			cerr << e.what() << endl;
 			return 1;
 		}
-		fsm::ifinestream ifs(filename);
-		history.clear();
+		ifs.open(filename);
+		//history.clear();
 
+		//settings.setValue("game_regime", "history");
 		uint8_t version;
 		ifs >> version;
 		cout << "DEBUG: version number is " << int(version) << endl;
@@ -106,32 +108,44 @@ public:
 		ifs >> opp_name;
 		cout << "DEBUG: opp_name is " << opp_name << endl;
 		settings.setValue("opp_name", QString(opp_name.c_str()));
-		
+
 		bool user_side;
 		ifs >> user_side;
 		cout << "DEBUG: user side is " << (user_side ? "white" : "black") << endl;
 		settings.setValue("match_side", user_side);
 
-		uint8_t moves_num;
+		//uint8_t moves_num;
 		ifs >> moves_num;
 		cout << "DEBUG: moves number is " << int(moves_num) << endl;
-
+		return 0;
+	}
+	int readMoves(Board* board_) {
+		board = board_;
+		valid = board->valid.data();
 		bitremedy end_type{ 0, 4, false };
 		ifs >> end_type;
 		cout << "DEBUG: end type number is " << int(end_type) << endl;
-		board.end_type = endnum(int(end_type));
+		board->end_type = endnum(int(end_type));
 
-		valid.inStalemate(true);
+		valid->inStalemate(true);
 		for (int i = 0; i < moves_num; i++) {
 			cout << "DEBUG: move " << i + 1 << ":" << endl;
 			bitmove bmove;
-			readMove(bmove, ifs);
+			int err = readMove(bmove, ifs);
+			if (err) {
+				return err;
+			}
 			//halfmove hmove = toHalfmove(bmove);
-			
 			//history.push_back(hmove);
 		}
 		return 0;
 	}
+	//int readGame(std::string filename) 
+	//{
+
+
+
+	//}
 	inline int writeMove(bitmove move, fsm::ofinestream& ofs) {
 	// TODO: should go as an extern operator
 	// for ofinestream
@@ -143,42 +157,42 @@ public:
 		return 0;
 	}
 	inline int readMove(bitmove& bmove, fsm::ifinestream& ifs) {
-		bmove.piece.BITSN = minBits(valid.movable_pieces.size());
+		bmove.piece.BITSN = minBits(valid->movable_pieces.size());
 		ifs >> bmove.piece;
 		cout << "DEBUG: piece BITSN is " << bmove.piece.BITSN << endl;
 		cout << "DEBUG: piece idx is " << int(bmove.piece) << endl;
 		//cout << "DEBUG: piece pattern is " << hex << int(bmove.piece) << endl;
 		int pidx = bmove.piece;
-		if (pidx >= valid.movable_pieces.size()) {
+		if (pidx >= valid->movable_pieces.size()) {
 			cerr << "WARNING: piece idx is bigger than pieces to move available" << endl;
 			return 1;
 		}
-		from = *next(valid.movable_pieces.begin(), int(bmove.piece)); 
+		from = *next(valid->movable_pieces.begin(), int(bmove.piece)); 
 
-		valid.findValid(from);
-		bmove.move.BITSN = minBits(valid.valid_moves.size());
+		valid->findValid(from);
+		bmove.move.BITSN = minBits(valid->valid_moves.size());
 		ifs >> bmove.move;
 		cout << "DEBUG: move BITSN is " << bmove.move.BITSN << endl;
 		cout << "DEBUG: move idx is " << int(bmove.move) << endl;
 		//cout << "DEBUG: move pattern is " << hex << int(bmove.move) << endl;
 		int midx = bmove.move;
-		if (midx >= valid.valid_moves.size()) {
+		if (midx >= valid->valid_moves.size()) {
 			cerr << "WARNING: move idx is bigger than valid moves available" << endl;
 			return 2;
 		}
-		to = *next(valid.valid_moves.begin(), int(bmove.move));
+		to = *next(valid->valid_moves.begin(), int(bmove.move));
 		
 		// FIX: would be perfect to change to QPointer<>
-		if (valid.canPromote(from, to)) {
+		if (valid->canPromote(from, to)) {
 			bitset<2> promo;
 			ifs >> promo;
 			bmove.promo = promo_ty(promo.to_ulong());
-			board.last_promotion = char_by_promo[bmove.promo];
-			cout << "DEBUG: promotion type is " << board.last_promotion << endl;
+			board->last_promotion = char_by_promo[bmove.promo];
+			cout << "DEBUG: promotion type is " << board->last_promotion << endl;
 		}
+		board->halfMove(from, to);
 		app.processEvents();
 		QThread::sleep(1);
-		board.halfMove(from, to);
 		return 0;
 	}
 
@@ -197,23 +211,23 @@ public:
 		bitmove bmove;
 		QPointer<Tile> from = hmove.move.first.tile;
 		QPointer<Tile> to = hmove.move.second.tile;
-		unsigned char piece_idx = distance(valid.movable_pieces.begin(), valid.movable_pieces.find(from));
-		unsigned char move_idx = distance(valid.valid_moves.begin(), valid.valid_moves.find(to));
-		bmove.piece = bitremedy(piece_idx, minBits(valid.movable_pieces.size()), false);
-		bmove.move = bitremedy(move_idx, minBits(valid.valid_moves.size()), false);
+		unsigned char piece_idx = distance(valid->movable_pieces.begin(), valid->movable_pieces.find(from));
+		unsigned char move_idx = distance(valid->valid_moves.begin(), valid->valid_moves.find(to));
+		bmove.piece = bitremedy(piece_idx, minBits(valid->movable_pieces.size()), false);
+		bmove.move = bitremedy(move_idx, minBits(valid->valid_moves.size()), false);
 		bmove.promo = promo_by_char[hmove.promo];
 		return bmove;
 	}
 	halfmove toHalfmove(bitmove bmove) {
-		//from = *next(valid.movable_pieces.begin(), bmove.piece);
-		//to = *next(valid.valid_moves.begin(), bmove.move);
+		//from = *next(valid->movable_pieces.begin(), bmove.piece);
+		//to = *next(valid->valid_moves.begin(), bmove.move);
 		halfmove hmove;
 		hmove.move = { from->toVirtu(), to->toVirtu() };
 		hmove.promo = char_by_promo[bmove.promo];
 		Tile* rook_stub;
-		hmove.castling = valid.canCastle(from, to, rook_stub);
-		hmove.pass = valid.canPass(from, to);
-		hmove.turn = board.turn;
+		hmove.castling = valid->canCastle(from, to, rook_stub);
+		hmove.pass = valid->canPass(from, to);
+		hmove.turn = board->turn;
 		return hmove;
 	}
 };
@@ -221,7 +235,7 @@ public:
 
 //for (int i = 0; i < moves_num; i++) { // TODO: should go as an extern operator
 //	// for ofinestream
-//	bitmove& move = board.bistory.story[i];
+//	bitmove& move = board->bistory.story[i];
 //	ifs >> move.piece
 //		>> move.move;
 //	if (move.promo != no_promotion) {
@@ -232,13 +246,13 @@ public:
 //}
 
 //int ConvertMove(bitmove& bmove, halfmove& hmove, Validator& valid) {
-//	Tile* from = *next(valid.movable_pieces.begin(), bmove.piece);
-//	Tile* to = *next(valid.valid_moves.begin(), bmove.move);
+//	Tile* from = *next(valid->movable_pieces.begin(), bmove.piece);
+//	Tile* to = *next(valid->valid_moves.begin(), bmove.move);
 //	hmove.move = { from->toVirtu(), to->toVirtu() };
 //	hmove.promo = char_by_promo[bmove.promo];
 //	Tile* rook_stub;
-//	hmove.castling = valid.canCastle(from, to, rook_stub);
-//	hmove.pass = valid.canPass(from, to);
-//	hmove.turn = valid.board.turn;
+//	hmove.castling = valid->canCastle(from, to, rook_stub);
+//	hmove.pass = valid->canPass(from, to);
+//	hmove.turn = valid->board->turn;
 //	return 0;
 //}

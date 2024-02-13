@@ -34,15 +34,27 @@ void MainWindow::on_change_name_button_clicked()
 {
     QString new_name = ui->name_edit->text();
     ui->name_edit->clear();
-    if (new_name.size() <= max_nick) {
-        settings.setValue("user_name", new_name);
-        ui->user_name->setText(new_name);
-        ui->profile_name->setText(new_name);
+    if (net) {
+        try {
+            net->sendToServer(package_ty::new_name, 0, new_name);
+        }
+        catch (const exception& e) {
+            showBox("Can't change online nickname",
+                "You are offline, only local nickname has been changed. "
+                "To change online nickname you will need to reenter account. "
+                "Contact me by mmd18cury@yandex.ru to start the server");
+        }
     }
-    else {
+    int err = changeLocalName(new_name);
+    if (err == 1) {
+        showBox("Embarrasing!",
+            "This nickname is too small. It can't be empty.",
+            QMessageBox::Warning);
+    }
+    else if (err == 2) {
         showBox("So huge!",
-                "This nickname is too long. Maximum length is " + QString::number(max_nick),
-                QMessageBox::Warning);
+            "This nickname is too long. Maximum length is " + QString::number(max_nick),
+            QMessageBox::Warning);
     }
     //    QMessageBox msgBox;
     //    msgBox.setWindowTitle("Notification");
@@ -61,10 +73,7 @@ void MainWindow::on_back_from_settings_clicked()
 void MainWindow::on_actionWith_friend_triggered()
 {
     QString game_regime = settings.value("game_regime").toString();
-    if (game_active && game_regime == "friend_online")
-        openStopGameDialog(); //FIX: need to be added to all play action slots in the future, when actions'll be added
-    else
-        openTab(ui->friend_connect_tab);
+    openTab(ui->friend_connect_tab);
 }
 
 void MainWindow::on_login_button_clicked()
@@ -103,12 +112,11 @@ void MainWindow::on_end_login_button_clicked()
                 QMessageBox::Warning);
     }
     else {
-         settings.setValue("user_name", entered_username);
+         changeLocalName(entered_username);
          QCryptographicHash hasher(QCryptographicHash::Sha512);
          hasher.addData(ui->login_password->text().toLocal8Bit());
          QByteArray hashed_password = hasher.result();
          settings.setValue("user_pass", hashed_password);
-         ui->profile_name->setText(entered_username);
          if (login_regime == 2)
             net->sendToServer(package_ty::registration);
          else if (login_regime == 1)
@@ -125,7 +133,7 @@ void MainWindow::on_guest_button_clicked()
 {
     login_regime = 3;
     QString random_username = "Lazy" + QString::number(std::rand() % (int)std::pow(10, max_nick - 4));
-    settings.setValue("user_name", random_username);
+    changeLocalName(random_username);
     net->sendToServer(package_ty::registration);
     net->sendToServer(package_ty::login);
 }
@@ -216,12 +224,8 @@ void MainWindow::on_actionToggle_fullscreen_triggered()
 void MainWindow::on_actionWith_friend_offline_triggered()
 {
     QString game_regime = settings.value("game_regime").toString();
-    if (game_active && game_regime == "friend_online")
-        openStopGameDialog();
-    else{
-        settings.setValue("game_regime", "friend_offline");
-        startGame();
-    }
+    //settings.setValue("game_regime", "friend_offline");
+    startGame("friend_offline");
 }
 
 void MainWindow::on_actionEnter_triggered()
@@ -259,7 +263,7 @@ void MainWindow::on_offline_back_button_clicked()
 
 void MainWindow::on_history_next_button_clicked()
 {
-    showInDevDialog();
+    openInDevDialog();
     //auto& history = board->history;
     //halfmove move = history[current_move];
     //Tile* from = move.move.first.tile;
@@ -270,7 +274,7 @@ void MainWindow::on_history_next_button_clicked()
 
 void MainWindow::on_history_previous_button_clicked()
 {
-    showInDevDialog();
+    openInDevDialog();
     //auto& history = *board->history;
     //halfmove move = history[current_move];
     //board.revertMove(move);
@@ -301,4 +305,39 @@ void MainWindow::on_actionAbout_triggered()
 void MainWindow::on_actionAbout_Qt_triggered()
 {
     QMessageBox::aboutQt(0, "About Qt");
+}
+
+void MainWindow::on_actionWith_friend_2_triggered()
+{
+    openInDevDialog();
+}
+
+
+void MainWindow::on_actionTraining_triggered()
+{
+    openInDevDialog();
+}
+
+
+void MainWindow::on_actionRandomly_triggered()
+{
+    openInDevDialog();
+}
+
+
+void MainWindow::on_actionRules_triggered()
+{
+    openInDevDialog();
+}
+
+
+void MainWindow::on_actionSend_suggestion_triggered()
+{
+    openInDevDialog();
+}
+
+
+void MainWindow::on_actionReport_a_bug_triggered()
+{
+    openInDevDialog();
 }

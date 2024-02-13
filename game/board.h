@@ -14,13 +14,13 @@ class WebClient;
 class MainWindow;
 class Board : public QLabel {
 	Q_OBJECT
+public:
 
     void drawLetters(bool side);
 	void drawNumbers(bool side);
 	void drawTiles(bool side);
 	void openPromotion(Tile* from);
 
-public:
     Board(QLabel* background, QSettings& settings_, MainWindow* mainwindow_);
 
 	MainWindow* mainwindow;

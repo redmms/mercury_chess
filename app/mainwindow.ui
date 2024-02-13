@@ -2205,7 +2205,6 @@ background-color: qlineargradient(x: 0, y: 0, x2: 1, y2: 1, stop: 0 #634b30, sto
               <property name="font">
                <font>
                 <pointsize>12</pointsize>
-                <weight>75</weight>
                 <bold>true</bold>
                </font>
               </property>
@@ -6237,7 +6236,6 @@ border-radius: 14px;
               <property name="font">
                <font>
                 <pointsize>12</pointsize>
-                <weight>75</weight>
                 <bold>true</bold>
                 <strikeout>false</strikeout>
                 <kerning>true</kerning>
@@ -6503,7 +6501,6 @@ border-radius: 14px;
               <property name="font">
                <font>
                 <pointsize>12</pointsize>
-                <weight>75</weight>
                 <bold>true</bold>
                 <strikeout>false</strikeout>
                 <kerning>true</kerning>
@@ -7239,7 +7236,6 @@ border-radius: 14;
     <font>
      <family>Century</family>
      <pointsize>14</pointsize>
-     <weight>50</weight>
      <bold>false</bold>
      <underline>true</underline>
      <strikeout>false</strikeout>

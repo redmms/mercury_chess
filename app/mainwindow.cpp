@@ -26,6 +26,8 @@
 #include <QCryptographicHash>
 #include <cmath>
 #include <string>
+#include <stdexcept>
+using namespace std;
 
 MainWindow::MainWindow(QWidget* parent, QString app_dir_, QApplication* app) :
     app(app),
@@ -223,10 +225,10 @@ void MainWindow::openStopGameDialog()
             QMessageBox::Warning);
 }
 
-void MainWindow::showInDevDialog()
+void MainWindow::openInDevDialog()
 {
     showBox("Not available yet",
-            "This function hasn't been developed yet, but you can donate money to speed the process.");
+            "This function hasn't been developed yet, but you can donate money to speed up the process.");
 }
 
 void MainWindow::writeStory(int order, halfmove move)
@@ -269,6 +271,22 @@ QString MainWindow::coordToString(scoord coord)
     return QString(char('a' + coord.x)) + QString::number(coord.y + 1);
 }
 
+int MainWindow::changeLocalName(QString name)
+{
+    if (name.isEmpty()) {
+        return 1;
+    }
+    else if (name.size() > max_nick) {
+        return 2;
+    }
+    else {
+        settings.setValue("user_name", name);
+        ui->user_name->setText(name);
+        ui->profile_name->setText(name);
+    }
+    return 0;
+}
+
 void MainWindow::showStatus(const QString& status) {
     ui->statusBar->showMessage(status, 0);
 }
@@ -283,19 +301,19 @@ void MainWindow::switchGlow() // FIX: should be changed for different sides
     this->update();
 }
 
-void MainWindow::startGame() // side true for user - white
+void MainWindow::startGame(QString game_regime) // side true for user - white
 {
-    QString game_type = settings.value("game_regime").toString();
     if (game_active) {
-        if (game_type == "friend_online" || game_type == "history") {
-            endSlot(endnum::interrupt);
+        if (settings.value("game_regime").toString() == "friend_online") {
+            try {
+                net->sendToServer(package_ty::interrupt_signal);
+            }
+            catch (const std::exception& e) {}
         }
-        else {
-            openStopGameDialog();
-            return;
-        }
+        endSlot(endnum::interrupt);
     }
-    if (game_type == "friend_online"){
+    settings.setValue("game_regime", game_regime);
+    if (game_regime == "friend_online"){
         ui->actionProfile->setEnabled(false);
         ui->message_edit->setPlainText("Great move! Have you studied in a clown school?");
         ui->message_edit->installEventFilter(this);
@@ -311,7 +329,7 @@ void MainWindow::startGame() // side true for user - white
         }
         qDebug() << "editReturnPressed receivers number is" << receivers(SIGNAL(editReturnPressed));
     }
-    else if (game_type == "friend_offline"){
+    else if (game_regime == "friend_offline"){
         settings.setValue("match_side", true);
         opp_pic = default_pic;
         settings.setValue("opp_name", "Friend");
@@ -325,7 +343,11 @@ void MainWindow::startGame() // side true for user - white
         connect(ui->resign_button, &QPushButton::clicked, this, &MainWindow::on_offline_back_button_clicked);
         connect(ui->draw_button, &QPushButton::clicked, this, &MainWindow::on_offline_stop_button_clicked);
     }
-    else if (game_type == "history") {
+    else if (game_regime == "history") {
+    // FIX: for debug
+        //bool side = 
+
+    //
         opp_pic = default_pic;
         ui->message_edit->setPlainText("Chat is off. But you can chat with yourself if you are a hikikomori."); 
         ui->user_timer->setText("");
@@ -366,7 +388,7 @@ void MainWindow::startGame() // side true for user - white
     connect(board.data(), &Board::newStatus, this, &MainWindow::statusSlot);
     connect(board.data(), &Board::theEnd, this, &MainWindow::endSlot);
 
-    if (game_type == "friend_online"){
+    if (game_regime == "friend_online"){
         connect(board.data(), &Board::moveMade, [this](scoord from, scoord to, char promotion_type) {
             net->sendToServer(package_ty::move, {}, {}, from, to, promotion_type);
             });
@@ -408,6 +430,7 @@ void MainWindow::endSlot(endnum end_type)  // FIX: white_wins and black_wins enu
     game_active = false;
     ui->statusBar->hide();
     board->end_type = end_type;
+
 
     QString opp_name = settings.value("opp_name").toString();
     QString info_message;
@@ -458,8 +481,13 @@ void MainWindow::endSlot(endnum end_type)  // FIX: white_wins and black_wins enu
         return;
     }
 
-    if (settings.value("game_regime").toString() == "friend_online")
-        net->sendToServer(package_ty::end_game);
+    //if (settings.value("game_regime").toString() == "friend_online")
+    try {
+        net->sendToServer(package_ty::end_game); // FIX: will work incorrectly if we wa
+        // want to change online game to offline, because now regime is offline
+        // but board is still active/existing and server is running a game
+    }
+    catch (const std::exception& e) {}
     showStatus(info_message);
     QMessageBox msg_box;
     msg_box.setWindowTitle("The end");
@@ -564,14 +592,37 @@ void MainWindow::printMessage(QString name, bool own, QString text)
 		scroller->setValue(scroller->maximum());
 		});
 }
+//void SignalHandler(int signal)
+//{
+//    printf("Signal %d", signal);
+//    throw "!Access Violation!";
+//}
+#include <eh.h>
 
 void MainWindow::on_actionSave_game_triggered()
 {
-    if (!game_active) {
+    _set_se_translator([](unsigned int u, _EXCEPTION_POINTERS* pExp) {
+        std::string error = "SE Exception: ";
+        switch (u) {
+        case 0xC0000005:
+            error += "Access Violation";
+            break;
+        default:
+            char result[11];
+            sprintf_s(result, 11, "0x%08X", u);
+            error += result;
+        };
+        throw std::exception(error.c_str());
+        });
+    try {
+        board->valid->theTile({0, 0});
+        
+    } catch (const exception& e) {
         showBox("Nothing to save",
-                "You need to have an open game to save for this option.");
-                return;
+            "You need to have an open game to save to use this option.");
+            return;
     }
+
     // Create directory
     QString archive_dir = app_dir + "/saved_games";
     QDir dir;
@@ -621,8 +672,8 @@ void MainWindow::on_actionSave_game_triggered()
     }
 
     // Write game to the file
-    Archiver archiver(board.data(), settings, app);
-    int error = archiver.writeGame(archive_fullname.toStdString());
+    Archiver archiver(settings, app);
+    int error = archiver.writeGame(board.data(), archive_fullname.toStdString());
     if (!error) {
         showBox("Good news",
                 "Operation done successfuly.");
@@ -678,21 +729,21 @@ void MainWindow::on_actionLoad_game_triggered()
     }
 
     // Read game from the file
-    settings.setValue("game_regime", "history");
-    startGame();
-    board->valid->inStalemate(true);
-    Archiver archiver(board.data(), settings, app);
-    int error = archiver.readGame(archive_fullname.toStdString());
+    Archiver archiver(settings, app);
+    int error = archiver.readHeader(archive_fullname.toStdString());
     if (!error) {
+        startGame("history");
+        error = archiver.readMoves(board.data());
+        if (error) {
+            showBox("Incorrect file",
+                    "Archive file is incorrect",
+                    QMessageBox::Warning);
+        }
         showBox("Good news",
-                "Operation done successfuly.");
-        settings.setValue("game_regime", "history");
-        startGame();
+            "Operation done successfuly.");
     }
     else {
         showBox("Oops",
                 "Something went wrong. Error code: " + QString::number(error));
     }
 }
-
-
