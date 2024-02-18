@@ -14,10 +14,20 @@
    <string>Dialog</string>
   </property>
   <property name="autoFillBackground">
-   <bool>true</bool>
+   <bool>false</bool>
   </property>
   <property name="styleSheet">
-   <string notr="true">background-image: url(:/images/background);</string>
+   <string notr="true">OfflineDialog{background-image: url(:/images/background);}
+
+QPushButton{
+background-color: qlineargradient(x: 0,y: 0, x2: 1, y2: 1, stop: 0 #C78D50, stop: 1 #634b30 );
+border: 1 solid #54381E;
+border-radius: 14px;
+
+}:pressed{
+background-color: qlineargradient(x: 0, y: 0, x2: 1, y2: 1, stop: 0 #634b30, stop: 1 #C78D50 );
+}
+</string>
   </property>
   <layout class="QGridLayout" name="gridLayout" rowstretch="2,2,2,2,1">
    <item row="3" column="0" colspan="2">

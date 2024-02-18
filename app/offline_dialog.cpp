@@ -7,6 +7,7 @@
 OfflineDialog::OfflineDialog(QWidget *parent, QPixmap default_pic_) :
     QDialog(parent),
     default_pic(default_pic_),
+    opp_pic(default_pic_),
     ui(new Ui::OfflineDialog)
 {
     ui->setupUi(this);
@@ -22,6 +23,7 @@ OfflineDialog::OfflineDialog(QWidget *parent, QPixmap default_pic_) :
     QBitmap pic_mask = pix.createMaskFromColor(Qt::transparent);
 
     ui->friend_avatar->setMask(pic_mask);
+    setWindowTitle("Choose your opponent's name");
 }
 
 OfflineDialog::~OfflineDialog()
@@ -45,7 +47,7 @@ bool OfflineDialog::readName()
         return false;
     }
     else {
-        friend_name = new_name;
+        opp_name = new_name;
         return true;
     }
 }
@@ -58,8 +60,8 @@ void OfflineDialog::on_choose_photo_button_clicked()
         tr("Images (*.png *.jpg *.jpeg *.pgm)"));
     QSize user_size = {100, 100};
     if (!avatar_address.isEmpty()){
-        friend_pic = QPixmap(avatar_address).scaled(user_size);
-        ui->friend_avatar->setPixmap(friend_pic);
+        opp_pic = QPixmap(avatar_address).scaled(user_size);
+        ui->friend_avatar->setPixmap(opp_pic);
     }
 }
 
@@ -68,8 +70,8 @@ void OfflineDialog::on_save_button_clicked()
 {
     bool name_change_successful = readName();
     if (name_change_successful){
-        emit newOppPic(friend_pic);
-        emit newOppName(friend_name);
+        emit newOppPic(opp_pic);
+        emit newOppName(opp_name);
         accept();
     }
     //this->~OfflineDialog();

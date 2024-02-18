@@ -14,8 +14,8 @@ using namespace std;
 // TODO:
 // // add an operator = to bitremedy, so that there would be no need to do checks manually
 export struct bitremedy {
-//private :
-//	bool LAST_ALIGN{ false };
+private :
+	bool LAST_ALIGN{ false };
 public:
 	uchar UCBYTE{0};
 	int BITSN{0};
@@ -148,7 +148,7 @@ public:
 	}
 	inline bitremedy& MoveToLeft() {
 		// moves bits to left border of cBYTE
-		//LAST_ALIGN = MOVED_LEFT;
+		LAST_ALIGN = MOVED_LEFT;
 		if (!this->MOVED_LEFT) {
 			UCBYTE <<= (CHB - BITSN);
 			MOVED_LEFT = true;
@@ -157,7 +157,7 @@ public:
 	}
 	inline bitremedy& MoveToRight() {
 		// moves bits to right border of cBYTE
-		//LAST_ALIGN = MOVED_LEFT;
+		LAST_ALIGN = MOVED_LEFT;
 		if (this->MOVED_LEFT) {
 			UCBYTE >>= (CHB - BITSN);
 			MOVED_LEFT = false;
@@ -180,6 +180,7 @@ public:
 			REMEDY = {};
 		}
 		*this = {UCBYTE | (ADDEND.UCBYTE >> BITSN), min(BIT_SUM, CHB), MOVED_LEFT };
+		RestoreLastAlign();
 		return REMEDY;
 	}
 	virtual bitremedy AddToLeft(bitremedy ADDEND_) {
@@ -198,6 +199,7 @@ public:
 			REMEDY = {};
 		}
 		*this = { UCBYTE | (ADDEND.UCBYTE << BITSN), min(BIT_SUM, CHB), MOVED_LEFT };
+		RestoreLastAlign();
 		return REMEDY;
 	}
 	inline bitremedy& ExtractFromLeft(bitremedy& LESS) {
@@ -207,6 +209,7 @@ public:
 		this->MoveToLeft(); LESS.MoveToLeft();
 		LESS = {UCBYTE, LESS.BITSN, true};
 		*this = {UCBYTE << LESS.BITSN, BITSN - LESS.BITSN, true};
+		this->RestoreLastAlign(); LESS.RestoreLastAlign();
 		return *this;
 	}
 	inline bitremedy& ExtractFromRight(bitremedy& LESS) {
@@ -216,22 +219,26 @@ public:
 		this->MoveToRight(); LESS.MoveToRight();
 		LESS = { UCBYTE, LESS.BITSN, false };
 		*this = { UCBYTE >> LESS.BITSN, BITSN - LESS.BITSN, false };
+		this->RestoreLastAlign(); LESS.RestoreLastAlign();
 		return *this;
 	}
 	inline bitremedy& CutNFromLeft(int N) {
 		this->MoveToLeft();
 		*this = { UCBYTE << N, BITSN - N, true };
+		RestoreLastAlign();
 		return *this;
 	}
 	inline bitremedy& CutNFromRight(int N) {
 		this->MoveToRight();
 		*this = { UCBYTE >> N, BITSN - N, false };
+		RestoreLastAlign();
 		return *this;
 	}
 	inline bitremedy& AddNToLeft(int N) {
 		this->MoveToRight();
 		BITSN += N;
 		CheckBitsn();
+		RestoreLastAlign();
 		return *this;
 	}
 	inline bitremedy& AddNToLeft(int N, bitremedy& FROM) {
@@ -245,6 +252,7 @@ public:
 		this->MoveToLeft();
 		BITSN += N;
 		CheckBitsn();
+		RestoreLastAlign();
 		return *this;
 	}
 	inline bitremedy& AddNToRight(int N, bitremedy& FROM) {
@@ -257,11 +265,15 @@ public:
 	}
 	inline bitremedy CopyNFromLeft(int N) {
 		this->MoveToLeft();
-		return {UCBYTE, N, MOVED_LEFT};
+		bitremedy ret{ UCBYTE, N, MOVED_LEFT };
+		RestoreLastAlign();
+		return ret;
 	}
 	inline bitremedy CopyNFromRight(int N) {
 		this->MoveToRight();
-		return { UCBYTE, N, MOVED_LEFT };
+		bitremedy ret{ UCBYTE, N, MOVED_LEFT };
+		RestoreLastAlign();
+		return ret;
 	}
 	inline void Clear() {
 		UCBYTE = 0;
@@ -284,14 +296,14 @@ public:
 			return ceil(log2(number));
 		}
 	}
-	//inline void RestoreLastAlign() {
-	//	if (LAST_ALIGN) {
-	//		MoveToLeft();
-	//	}
-	//	else {
-	//		MoveToRight();
-	//	}
-	//}
+	inline void RestoreLastAlign() {
+		if (LAST_ALIGN) {
+			MoveToLeft();
+		}
+		else {
+			MoveToRight();
+		}
+	}
 };
 
 //export ostream& operator << (ostream& OUT, const bitremedy& BR) {

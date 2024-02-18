@@ -145,19 +145,19 @@ void MainWindow::on_send_invite_button_clicked() // FIX: here - package_ty::invi
 //        return;
 //    }
     int chosen_time = settings.value("time_setup").toInt();
-    QString friend_name = ui->friend_name_edit->text();
+    QString opp_name = ui->friend_name_edit->text();
     QString user_name = settings.value("user_name").toString();
     if (!chosen_time) {
         showBox("Set up match timer",
                 "You need to choose initial time for chess clock.",
                 QMessageBox::Warning);
     }
-    else if (friend_name.isEmpty()) {
+    else if (opp_name.isEmpty()) {
         showBox("Enter friend's name",
                 "You need to choose friend's name.",
                 QMessageBox::Warning);
     }
-    else if (friend_name == user_name) {
+    else if (opp_name == user_name) {
         showBox("Too cunning",
                 "You can't send invite to yourself",
                 QMessageBox::Warning);
@@ -171,7 +171,7 @@ void MainWindow::on_send_invite_button_clicked() // FIX: here - package_ty::invi
 //        });
         bool match_side = std::rand() % 2;
         settings.setValue("match_side", match_side);
-        settings.setValue("opp_name", friend_name);
+        settings.setValue("opp_name", opp_name);
         net->sendToServer(package_ty::invite);
        // QApplication::setOverrideCursor(Qt::WaitCursor);
         waiting_for_invite_respond = true;
@@ -230,7 +230,11 @@ void MainWindow::on_actionWith_friend_offline_triggered()
     connect(&dialog, &OfflineDialog::newOppPic, [&](QPixmap pic) {
         opp_pic = pic;
     });
-    dialog.exec();
+    auto res = dialog.exec();
+    if (res == QDialog::Rejected){
+        opp_pic = default_pic;
+        settings.setValue("opp_name", "Friend");
+    }
     //QString game_regime = settings.value("game_regime").toString();
     //settings.setValue("game_regime", "friend_offline");
     startGame("friend_offline");

@@ -15,8 +15,8 @@ class OfflineDialog : public QDialog
     Q_OBJECT
 
     QPixmap default_pic;
-    QPixmap friend_pic;
-    QString friend_name;
+    QPixmap opp_pic;
+    QString opp_name;
     Ui::OfflineDialog *ui;
 
     bool readName();
