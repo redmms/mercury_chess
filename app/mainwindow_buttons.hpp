@@ -19,7 +19,7 @@ void MainWindow::on_change_photo_button_clicked()
 {
     // open dialog window to choose a photo
     QString avatar_address = QFileDialog::getOpenFileName(this, "Open File",
-        QString("Choose a photo for avatar. Avatar picture will be scaled to 100x00 pixel image."),
+        QString("Choose a photo for avatar. Avatar picture will be scaled to 100x100 pixel image."),
         tr("Images (*.png *.jpg *.jpeg *.pgm)"));
     QSize user_size = ui->user_avatar->size();
     if (!avatar_address.isEmpty()){
@@ -223,7 +223,15 @@ void MainWindow::on_actionToggle_fullscreen_triggered()
 
 void MainWindow::on_actionWith_friend_offline_triggered()
 {
-    QString game_regime = settings.value("game_regime").toString();
+    OfflineDialog dialog(this, default_pic);
+    connect(&dialog, &OfflineDialog::newOppName, [&](QString name) {
+        settings.setValue("opp_name", name);
+    });
+    connect(&dialog, &OfflineDialog::newOppPic, [&](QPixmap pic) {
+        opp_pic = pic;
+    });
+    dialog.exec();
+    //QString game_regime = settings.value("game_regime").toString();
     //settings.setValue("game_regime", "friend_offline");
     startGame("friend_offline");
 }

@@ -331,8 +331,8 @@ void MainWindow::startGame(QString game_regime) // side true for user - white
     }
     else if (game_regime == "friend_offline"){
         settings.setValue("match_side", true);
-        opp_pic = default_pic;
-        settings.setValue("opp_name", "Friend");
+        //opp_pic = default_pic;
+        //settings.setValue("opp_name", "Friend");
         ui->message_edit->setPlainText("Chat is off. But you can chat with yourself if you are a hikikomori.");
         ui->user_timer->setText("");
         ui->opponent_timer->setText("");

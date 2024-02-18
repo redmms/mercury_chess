@@ -25,6 +25,7 @@
 #include <QPointer>
 #include "../app/local_types.hpp"
 #include <vector>
+#include "../app/offline_dialog.h"
 //import bitchess;
 import simplechess;
 
@@ -72,6 +73,7 @@ public:
 	bool eventFilter(QObject* object, QEvent* event);
     void openStopGameDialog();
     void openInDevDialog();
+    void openFriendOfflineDialog();
     void writeStory(int order, halfmove move);
     QString coordToString(scoord coord);
     int changeLocalName(QString name);
