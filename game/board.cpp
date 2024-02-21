@@ -313,10 +313,13 @@ bitmove Board::toBitmove(halfmove hmove)
 
 bitremedy Board::toPieceIdx(Tile* from) {
 	unsigned char piece_idx = distance(valid->movable_pieces.begin(), valid->movable_pieces.find(from));
+	int bitsn = fsm::MinBits(valid->movable_pieces.size() - 1);
 	return { piece_idx, fsm::MinBits(valid->movable_pieces.size() - 1), false };
 }
 bitremedy Board::toMoveIdx(Tile* to) {
 	unsigned char move_idx = distance(valid->valid_moves.begin(), valid->valid_moves.find(to));
+	int sz = valid->valid_moves.size() - 1;
+	int bitsn = fsm::MinBits(sz);
 	return { move_idx, fsm::MinBits(valid->valid_moves.size() - 1), false };
 }
 
@@ -427,7 +430,7 @@ void Board::halfMove(Tile* from, Tile* to)
 			bmove.promo = promo_by_char[last_promotion];
         }
 		else if (game_type == "history") {
-			promotePawn(from, last_promotion);
+			promotePawn(to, last_promotion);
 		}
 		emit_status = tatus::promotion;
 	}

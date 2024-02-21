@@ -141,14 +141,10 @@ constexpr int CHB1 = CHAR_BIT - 1,
 	}
 	template<typename T>
 	int MinBits(T number) {
-		if (number == 1 || number == 0) {
-			cerr << "WARNING: minBits input was 0 or 1, output is 1 (1 bit)" << endl;
-			return 1;
+		if (!number) {
+			//cerr << "WARNING: minBits input was 0, output is 0 (0 bit), this case should be user defined" << endl;
 		}
-		else {
-			//int bits_num = ceil(log2(number));
-			return ceil(log2(number));
-		}
+		return ceil(log2(number + 1));
 	}
 
 	class finestream {
@@ -194,9 +190,7 @@ constexpr int CHB1 = CHAR_BIT - 1,
 		ofinestream(string FILE) : finestream(FILE) {}
 		ofinestream() {}
 		~ofinestream() {
-			if (LAST.BITSN) { // output buffer for last byte before closing filestream
-				FILE_STREAM.put(LAST.UCBYTE);
-			}
+			Flush();
 			FILE_STREAM.close();
 		}
 
@@ -208,9 +202,11 @@ constexpr int CHB1 = CHAR_BIT - 1,
 		}
 		void Flush() {
 			if (LAST.BITSN) { // output buffer for last byte before closing filestream
+				LAST.MoveToLeft();
 				FILE_STREAM.put(LAST.UCBYTE);
 				LAST.ClearToLeft();
 			}
+			FILE_STREAM.flush();
 		}
 		inline void PutByte(const uchar UCBYTE) {
 			PutByte({ UCBYTE, CHB, true });
@@ -473,6 +469,7 @@ constexpr int CHB1 = CHAR_BIT - 1,
 		}
 		void Flush() {
 			LAST.Clear();
+			FILE_STREAM.flush();
 		}
 		
 

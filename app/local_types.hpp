@@ -123,6 +123,9 @@ inline QString curTime()
 }
 
 #include <QMessageBox>
+#include <QDesktopServices>
+#include <QUrl>
+#include <QObject>
 inline void showBox(QString header,
                     QString text,
                     QMessageBox::Icon icon_type = QMessageBox::Information)
@@ -133,6 +136,9 @@ inline void showBox(QString header,
     msg_box.setIcon(icon_type);
     msg_box.addButton("Ok", QMessageBox::AcceptRole);
     msg_box.addButton("Hate you, but Ok", QMessageBox::RejectRole);
+    QObject::connect(&msg_box, &QMessageBox::rejected, [&]() {
+        QDesktopServices::openUrl(QUrl("https://www.buymeacoffee.com/mmd18", QUrl::TolerantMode));
+    });
     msg_box.exec();
 }
 

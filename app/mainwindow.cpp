@@ -27,6 +27,9 @@
 #include <cmath>
 #include <string>
 #include <stdexcept>
+#include "rules_dialog.h"
+#include <QDesktopServices>
+
 using namespace std;
 
 MainWindow::MainWindow(QWidget* parent, QString app_dir_, QApplication* app) :
@@ -75,6 +78,7 @@ MainWindow::MainWindow(QWidget* parent, QString app_dir_, QApplication* app) :
     ui->resign_button->disconnect();
     ui->menuOnline->setEnabled(false);
     //ui->actionProfile->setEnabled(false);
+    this->setWindowIcon(QIcon(":/images/app_icon"));
 
     std::srand(std::time(0));
 
@@ -214,8 +218,8 @@ void MainWindow::openTab(QWidget* page)
         return;
      }
     ui->tabWidget->setCurrentWidget(page);
-    auto scroller = rounded_area->horizontalScrollBar();
-    scroller->setValue(scroller->maximum());
+    //auto scroller = rounded_area->horizontalScrollBar();
+    //scroller->setValue(scroller->maximum());
 }
 
 void MainWindow::openStopGameDialog()
@@ -481,13 +485,14 @@ void MainWindow::endSlot(endnum end_type)  // FIX: white_wins and black_wins enu
         return;
     }
 
-    //if (settings.value("game_regime").toString() == "friend_online")
-    try {
-        net->sendToServer(package_ty::end_game); // FIX: will work incorrectly if we wa
-        // want to change online game to offline, because now regime is offline
-        // but board is still active/existing and server is running a game
+    if (settings.value("game_regime").toString() == "friend_online"){
+        try {
+            net->sendToServer(package_ty::end_game); // FIX: will work incorrectly if we wa
+            // want to change online game to offline, because now regime is offline
+            // but board is still active/existing and server is running a game
+        }
+        catch (const std::exception& e) {}
     }
-    catch (const std::exception& e) {}
     showStatus(info_message);
     QMessageBox msg_box;
     msg_box.setWindowTitle("The end");
@@ -614,9 +619,9 @@ void MainWindow::on_actionSave_game_triggered()
         };
         throw std::exception(error.c_str());
         });
+
     try {
         board->valid->theTile({0, 0});
-        
     } catch (const exception& e) {
         showBox("Nothing to save",
             "You need to have an open game to save to use this option.");

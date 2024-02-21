@@ -287,14 +287,10 @@ public:
 	}
 	template<typename T>
 	int MinBits(T number) {
-		if (number == 0 || number == 1) {
-			cerr << "WARNING: MinBits input was 0 or 1, logarithm of 0 returns infinity, so output is 1 (1 bit is enough to write 0)" << endl;
-			return 1;
+		if (!number) {
+			//cerr << "WARNING: minBits input was 0, output is 0 (0 bit), this case should be user defined" << endl;
 		}
-		else {
-			//int bits_num = ceil(log2(number));
-			return ceil(log2(number));
-		}
+		return ceil(log2(number + 1));
 	}
 	inline void RestoreLastAlign() {
 		if (LAST_ALIGN) {
@@ -304,21 +300,19 @@ public:
 			MoveToRight();
 		}
 	}
+	inline string toStr() {
+		uchar MASK{ 1 };
+		if (MOVED_LEFT) {
+			MASK <<= CHB1;
+		}
+		else {
+			MASK <<= BITSN - 1;
+		}
+		string RES{ "" };
+		for (int I = 0; I < BITSN; MASK >>= 1, I++) {
+			RES.push_back(UCBYTE & MASK ? '1' : '0');
+		}
+		return RES;
+	}
 };
 
-//export ostream& operator << (ostream& OUT, const bitremedy& BR) {
-//	bitremedy COPY = BR;
-//	COPY.MoveToLeft();
-//	uchar MASK{ true << CHB1 };
-//	for (int I = 0; I < COPY.BITSN; COPY.UCBYTE <<= 1, I++) {
-//		char C;
-//		if (COPY.UCBYTE & MASK) {
-//			C = '1';
-//		}
-//		else {
-//			C = '0';
-//		}	
-//		OUT << C;
-//	}
-//	return OUT;
-//}

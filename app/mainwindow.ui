@@ -299,14 +299,7 @@
    <bool>false</bool>
   </property>
   <property name="styleSheet">
-   <string notr="true">QPushButton{
-background-color: qlineargradient(x: 0,y: 0, x2: 1, y2: 1, stop: 0 #C78D50, stop: 1 #634b30 );
-border: 1 solid #54381E;
-border-radius: 14px;
-
-}:pressed{
-background-color: qlineargradient(x: 0, y: 0, x2: 1, y2: 1, stop: 0 #634b30, stop: 1 #C78D50 );
-}</string>
+   <string notr="true"/>
   </property>
   <widget class="QWidget" name="centralWidget">
    <property name="sizePolicy">
@@ -314,6 +307,16 @@ background-color: qlineargradient(x: 0, y: 0, x2: 1, y2: 1, stop: 0 #634b30, sto
      <horstretch>0</horstretch>
      <verstretch>0</verstretch>
     </sizepolicy>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">QPushButton{
+background-color: qlineargradient(x: 0,y: 0, x2: 1, y2: 1, stop: 0 #C78D50, stop: 1 #634b30 );
+border: 1 solid #54381E;
+border-radius: 14px;
+
+}:pressed{
+background-color: qlineargradient(x: 0, y: 0, x2: 1, y2: 1, stop: 0 #634b30, stop: 1 #C78D50 );
+}</string>
    </property>
    <layout class="QGridLayout" name="gridLayout">
     <property name="leftMargin">
@@ -385,7 +388,7 @@ background-color: qlineargradient(x: 0, y: 0, x2: 1, y2: 1, stop: 0 #634b30, sto
 }</string>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <property name="tabBarAutoHide">
        <bool>false</bool>
@@ -2205,6 +2208,7 @@ background-color: qlineargradient(x: 0, y: 0, x2: 1, y2: 1, stop: 0 #634b30, sto
               <property name="font">
                <font>
                 <pointsize>12</pointsize>
+                <weight>75</weight>
                 <bold>true</bold>
                </font>
               </property>
@@ -6236,6 +6240,7 @@ border-radius: 14px;
               <property name="font">
                <font>
                 <pointsize>12</pointsize>
+                <weight>75</weight>
                 <bold>true</bold>
                 <strikeout>false</strikeout>
                 <kerning>true</kerning>
@@ -6501,6 +6506,7 @@ border-radius: 14px;
               <property name="font">
                <font>
                 <pointsize>12</pointsize>
+                <weight>75</weight>
                 <bold>true</bold>
                 <strikeout>false</strikeout>
                 <kerning>true</kerning>
@@ -7236,6 +7242,7 @@ border-radius: 14;
     <font>
      <family>Century</family>
      <pointsize>14</pointsize>
+     <weight>50</weight>
      <bold>false</bold>
      <underline>true</underline>
      <strikeout>false</strikeout>

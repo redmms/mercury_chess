@@ -304,7 +304,7 @@ void MainWindow::on_actionAbout_triggered()
         "interest of programmers or chess community. "
         "<br><br>"
         "To contact me, use this email: mmd18cury@yandex.ru";
-    QMessageBox msg_box;
+    QMessageBox msg_box(this);
     msg_box.setWindowTitle(title);
     msg_box.setTextFormat(Qt::RichText);   //this is what makes the links clickable
     msg_box.setText(description);
@@ -316,7 +316,7 @@ void MainWindow::on_actionAbout_triggered()
 
 void MainWindow::on_actionAbout_Qt_triggered()
 {
-    QMessageBox::aboutQt(0, "About Qt");
+    QMessageBox::aboutQt(this, "About Qt");
 }
 
 void MainWindow::on_actionWith_friend_2_triggered()
@@ -339,17 +339,18 @@ void MainWindow::on_actionRandomly_triggered()
 
 void MainWindow::on_actionRules_triggered()
 {
-    openInDevDialog();
+    RulesDialog* dialog = new RulesDialog(this);
+    dialog->show();
 }
 
 
 void MainWindow::on_actionSend_suggestion_triggered()
 {
-    openInDevDialog();
+    QDesktopServices::openUrl(QUrl("mailto:mmd18cury@yandex.ru?subject=Suggestion&body=Please, make it impossible to lose.", QUrl::TolerantMode));
 }
 
 
 void MainWindow::on_actionReport_a_bug_triggered()
 {
-    openInDevDialog();
+    QDesktopServices::openUrl(QUrl("mailto:mmd18cury@yandex.ru?subject=Suggestion&body=Please, attach 'log.txt' file from the folder with 'qt.exe'.", QUrl::TolerantMode));
 }
