@@ -385,7 +385,7 @@ background-color: qlineargradient(x: 0, y: 0, x2: 1, y2: 1, stop: 0 #634b30, sto
 }</string>
       </property>
       <property name="currentIndex">
-       <number>2</number>
+       <number>4</number>
       </property>
       <property name="tabBarAutoHide">
        <bool>false</bool>
@@ -1213,7 +1213,7 @@ background-color: qlineargradient(x: 0, y: 0, x2: 1, y2: 1, stop: 0 #634b30, sto
              <string>Enter your nickname:</string>
             </property>
             <property name="alignment">
-             <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+             <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
             </property>
            </widget>
           </item>
@@ -1307,7 +1307,7 @@ background-color: qlineargradient(x: 0, y: 0, x2: 1, y2: 1, stop: 0 #634b30, sto
              <string>Enter your password:</string>
             </property>
             <property name="alignment">
-             <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+             <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
             </property>
            </widget>
           </item>
@@ -1833,7 +1833,7 @@ background-color: qlineargradient(x: 0, y: 0, x2: 1, y2: 1, stop: 0 #634b30, sto
        </attribute>
        <layout class="QGridLayout" name="gridLayout_2" rowstretch="3,1" columnstretch="0,0,0" columnminimumwidth="0,0,0">
         <property name="leftMargin">
-         <number>0</number>
+         <number>14</number>
         </property>
         <property name="topMargin">
          <number>0</number>
@@ -1917,11 +1917,14 @@ background-color: qlineargradient(x: 0, y: 0, x2: 1, y2: 1, stop: 0 #634b30, sto
                </font>
               </property>
               <property name="text">
-               <string>  Profile photo:</string>
+               <string>Profile photo:</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
               </property>
              </widget>
             </item>
-            <item alignment="Qt::AlignHCenter">
+            <item alignment="Qt::AlignLeft">
              <widget class="QLabel" name="profile_avatar">
               <property name="minimumSize">
                <size>
@@ -1964,7 +1967,7 @@ background-color: qlineargradient(x: 0, y: 0, x2: 1, y2: 1, stop: 0 #634b30, sto
               </property>
              </widget>
             </item>
-            <item alignment="Qt::AlignHCenter">
+            <item alignment="Qt::AlignLeft">
              <widget class="QPushButton" name="change_photo_button">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -2260,7 +2263,10 @@ background-color: qlineargradient(x: 0, y: 0, x2: 1, y2: 1, stop: 0 #634b30, sto
                </font>
               </property>
               <property name="text">
-               <string>  Nickname:</string>
+               <string>Nickname:</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
               </property>
              </widget>
             </item>
@@ -2676,7 +2682,10 @@ background-color: qlineargradient(x: 0, y: 0, x2: 1, y2: 1, stop: 0 #634b30, sto
                </font>
               </property>
               <property name="text">
-               <string>  Server:</string>
+               <string>Server:</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
               </property>
              </widget>
             </item>
@@ -5600,6 +5609,9 @@ background-color: qlineargradient(x: 0, y: 0, x2: 1, y2: 1, stop: 0 #634b30, sto
               <property name="text">
                <string>Choose initial match time in minutes:</string>
               </property>
+              <property name="alignment">
+               <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
+              </property>
              </widget>
             </item>
            </layout>
@@ -5679,6 +5691,9 @@ background-color: qlineargradient(x: 0, y: 0, x2: 1, y2: 1, stop: 0 #634b30, sto
               </property>
               <property name="text">
                <string>Find a partner by nickname:</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
               </property>
              </widget>
             </item>

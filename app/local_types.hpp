@@ -126,12 +126,14 @@ inline QString curTime()
 #include <QDesktopServices>
 #include <QUrl>
 #include <QObject>
+#include <QIcon>
 inline void showBox(QString header,
                     QString text,
                     QMessageBox::Icon icon_type = QMessageBox::Information)
 {
     QMessageBox msg_box;
     msg_box.setWindowTitle(header);
+    msg_box.setWindowIcon(QIcon(":/images/app_icon"));
     msg_box.setText(text);
     msg_box.setIcon(icon_type);
     msg_box.addButton("Ok", QMessageBox::AcceptRole);

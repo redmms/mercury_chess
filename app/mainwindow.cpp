@@ -392,7 +392,7 @@ void MainWindow::startGame(QString game_regime) // side true for user - white
     if (game_regime == "friend_online"){
         connect(board.data(), &Board::moveMade, [this](scoord from, scoord to, char promotion_type) {
             net->sendToServer(package_ty::move, {}, {}, from, to, promotion_type);
-            });
+        });
 
         int time = settings.value("time_setup").toInt();
         clock.reset(new ChessClock(0/*board.data()*/, ui->opponent_timer, ui->user_timer, match_side, time));
@@ -400,10 +400,10 @@ void MainWindow::startGame(QString game_regime) // side true for user - white
         connect(this, &MainWindow::timeToSwitchTime, clock.data(), &ChessClock::switchTimer);
         connect(clock.data(), &ChessClock::userOut, [this]() {
             endSlot(endnum::user_out_of_time);
-            });
+        });
         connect(clock.data(), &ChessClock::opponentOut, [this]() {
             endSlot(endnum::opponent_out_of_time);
-            });
+        });
        
         clock->startTimer();
     }
@@ -486,7 +486,7 @@ void MainWindow::endSlot(endnum end_type)  // FIX: white_wins and black_wins enu
         net->sendToServer(package_ty::end_game);
     }
     showStatus(info_message);
-    QMessageBox msg_box;
+    QMessageBox msg_box(this);
     msg_box.setWindowTitle("The end");
     msg_box.setText(info_message);
     msg_box.setIcon(icon_type);
@@ -588,121 +588,4 @@ void MainWindow::printMessage(QString name, bool own, QString text)
         auto scroller = rounded_area->verticalScrollBar();
 		scroller->setValue(scroller->maximum());
 		});
-}
-//void SignalHandler(int signal)
-//{
-//    printf("Signal %d", signal);
-//    throw "!Access Violation!";
-//}
-#include <eh.h>
-
-void MainWindow::on_actionSave_game_triggered()
-{
-    if (!board) {
-        showBox("Nothing to save",
-            "You need to have an open game to save to use this option.");
-        return;
-    }
-
-    // Create directory
-    QString archive_dir = app_dir + "/saved_games";
-    QDir dir;
-    if (!dir.exists(archive_dir)) {
-        if (dir.mkdir(archive_dir)) {
-            qDebug() << "saved_games folder created";
-        }
-        else {
-            qDebug() << "Couldn't create saved_games folder";
-        }
-    }
-
-    // Create archive file
-    QString  archive_fullname = 
-            archive_dir
-            + "/"
-            + settings.value("opp_name").toString()
-            + "_"
-            + curTime()
-            + ".mmd18";
-    //QString selected_fullname = QFileDialog::getSaveFileName(this, 
-    //                                "Save File",
-    //                                 archive_fullname,
-    //                                 tr("Chess Archive (*.mmd18)"));
-    auto save_dialog = QFileDialog(this,
-        "Save File",
-        archive_fullname,
-        tr("Chess Archive (*.mmd18)"));
-    save_dialog.setAcceptMode(QFileDialog::AcceptSave);
-    save_dialog.setFileMode(QFileDialog::AnyFile);
-    QString selected_fullname;
-    if (save_dialog.exec()) {
-        selected_fullname = save_dialog.selectedFiles().first();
-    } else {
-        return;
-    }
-    if (!selected_fullname.isEmpty()) {
-        archive_fullname = selected_fullname;
-    }
-    QFile archive(archive_fullname);
-    if (archive.open(QIODevice::WriteOnly | QIODevice::Text)) {
-        archive.close();
-        qDebug() << "Archive file" << archive_fullname << "successfuly created.";
-    }
-    else {
-        qDebug() << "Couldn't open archive file" << archive_fullname;
-    }
-
-    // Write game to the file
-    Archiver archiver(settings, app);
-    int error = archiver.writeGame(board.data(), archive_fullname.toStdString());
-    if (!error) {
-        showBox("Good news",
-                "Operation done successfuly.");
-    }
-    else {
-        showBox("Oops",
-                "Something went wrong. Error code: " + QString::number(error));
-    }
-}
-
-
-void MainWindow::on_actionLoad_game_triggered()
-{
-    QString archive_dir = app_dir + "/saved_games";
-
-    // Create archive file
-    QString  archive_fullname = QFileDialog::getOpenFileName(this,
-                                    "Open File",
-                                     archive_dir,
-                                     tr("Chess Archive (*.mmd18)"));
-    if (archive_fullname.isEmpty()) {
-        return;
-    }
-    QFile archive(archive_fullname);
-    if (archive.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        archive.close();
-        qDebug() << "Archive file" << archive_fullname << "is ready to be open.";
-    }
-    else {
-        qDebug() << "Couldn't open archive file" << archive_fullname;
-    }
-
-    // Read game from the file
-    Archiver archiver(settings, app);
-    int error = archiver.readHeader(archive_fullname.toStdString());
-    if (!error) {
-        startGame("history");
-        error = archiver.readMoves(board.data());
-        if (error) {
-            showBox("Incorrect file",
-                    "Archive file is incorrect",
-                    QMessageBox::Warning);
-        }
-        showBox("Good news",
-            "Operation done successfuly.");
-    }
-    else {
-        showBox("Oops",
-                "Something went wrong. Error code: " + QString::number(error));
-    }
 }

@@ -33,7 +33,7 @@ void WebClient::initSocket()
     // FIX: will note QScopedPointer deleter mess with socket->deleteLater()?
     connect(socket, &QTcpSocket::errorOccurred, [&](QAbstractSocket::SocketError socketError){
         if (socket->state() == QAbstractSocket::UnconnectedState){
-            qDebug() << "Couldn't connect to server:";
+            qDebug() << "Couldn't connect to the server:";
             qDebug() << socketError;
             showBox("No connection",
                     "You are offline. Contact me by mmd18cury@yandex.ru to start the server.",
@@ -277,7 +277,7 @@ void WebClient::readFromServer()
         QPixmap picture;
         readPack(picture);
 
-        QMessageBox msg_box;
+        QMessageBox msg_box(mainwindow);
         msg_box.setWindowTitle("Invite to a game");
         msg_box.setText(opp_name + " invited you to play " + QString::number(time) + " minutes chess game.");
         msg_box.setIcon(QMessageBox::Information);
@@ -358,7 +358,7 @@ void WebClient::readFromServer()
     case package_ty::draw_suggestion: //show message box with opponent's name and draw suggestion
     {
         qDebug() << "Draw suggestion received";
-        QMessageBox msg_box;
+        QMessageBox msg_box(mainwindow);
         msg_box.setWindowTitle("Draw suggestion");
         QString name = mainwindow->settings.value("opp_name").toString();
         msg_box.setText(name + " suggested you a draw.");
