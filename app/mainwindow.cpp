@@ -308,11 +308,8 @@ void MainWindow::switchGlow() // FIX: should be changed for different sides
 void MainWindow::startGame(QString game_regime) // side true for user - white
 {
     if (game_active) {
-        if (settings.value("game_regime").toString() == "friend_online") {
-            try {
-                net->sendToServer(package_ty::interrupt_signal);
-            }
-            catch (const std::exception& e) {}
+        if (settings.value("game_regime").toString() == "friend_online" && net) {
+            net->sendToServer(package_ty::interrupt_signal);
         }
         endSlot(endnum::interrupt);
     }
@@ -485,13 +482,8 @@ void MainWindow::endSlot(endnum end_type)  // FIX: white_wins and black_wins enu
         return;
     }
 
-    if (settings.value("game_regime").toString() == "friend_online"){
-        try {
-            net->sendToServer(package_ty::end_game); // FIX: will work incorrectly if we wa
-            // want to change online game to offline, because now regime is offline
-            // but board is still active/existing and server is running a game
-        }
-        catch (const std::exception& e) {}
+    if (settings.value("game_regime").toString() == "friend_online" && net) {
+        net->sendToServer(package_ty::end_game);
     }
     showStatus(info_message);
     QMessageBox msg_box;
@@ -606,26 +598,10 @@ void MainWindow::printMessage(QString name, bool own, QString text)
 
 void MainWindow::on_actionSave_game_triggered()
 {
-    _set_se_translator([](unsigned int u, _EXCEPTION_POINTERS* pExp) {
-        std::string error = "SE Exception: ";
-        switch (u) {
-        case 0xC0000005:
-            error += "Access Violation";
-            break;
-        default:
-            char result[11];
-            sprintf_s(result, 11, "0x%08X", u);
-            error += result;
-        };
-        throw std::exception(error.c_str());
-        });
-
-    try {
-        board->valid->theTile({0, 0});
-    } catch (const exception& e) {
+    if (!board) {
         showBox("Nothing to save",
             "You need to have an open game to save to use this option.");
-            return;
+        return;
     }
 
     // Create directory

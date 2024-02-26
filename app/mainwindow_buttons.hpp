@@ -35,15 +35,13 @@ void MainWindow::on_change_name_button_clicked()
     QString new_name = ui->name_edit->text();
     ui->name_edit->clear();
     if (net) {
-        try {
-            net->sendToServer(package_ty::new_name, 0, new_name);
-        }
-        catch (const exception& e) {
-            showBox("Can't change online nickname",
-                "You are offline, only local nickname has been changed. "
-                "To change online nickname you will need to reenter account. "
-                "Contact me by mmd18cury@yandex.ru to start the server");
-        }
+        net->sendToServer(package_ty::new_name, 0, new_name);
+    }
+    else {
+        showBox("Can't change online nickname",
+            "You are offline, only local nickname has been changed. "
+            "To change online nickname you will need to reenter account. "
+            "Contact me by mmd18cury@yandex.ru to start the server");
     }
     int err = changeLocalName(new_name);
     if (err == 1) {
