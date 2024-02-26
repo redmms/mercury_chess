@@ -1,11 +1,9 @@
+//#define QT_MESSAGELOGCONTEXT 
 #include <QApplication>
 #include "app/mainwindow.h"
 #include "app/debug_message_handler.hpp"
-//#include <yvals_core.h>
-//#include <ostream>
 
-import  <iostream>;
-import bitremedy;
+
 
 int main(int argc, char *argv[])
 {
@@ -17,7 +15,5 @@ int main(int argc, char *argv[])
     QString app_dir = app->applicationDirPath();
     MainWindow *mainwindow = new MainWindow(0, app_dir, app);
     mainwindow->showMaximized();
-    bitremedy bra{ 0b101, 3, false };
-    std::cout << bra;
     return app->exec();
 }

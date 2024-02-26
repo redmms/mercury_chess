@@ -11,8 +11,9 @@
 #include <streambuf>
 #include <stdexcept>
 #include "../app/local_types.hpp"
+#include <QMessageLogContext>
 
-static std::ofstream* text_stream;
+std::ofstream log_ofstream;
 
 class LogHandler {
 public:
@@ -22,62 +23,58 @@ public:
     LogHandler(QString log_file_name_) : 
             log_file_name(log_file_name_)
     {
-
-        text_stream = new std::ofstream(log_file_name.toStdString(), std::ios::app);
-        if (text_stream->is_open()) {
-            coutbuf = std::cout.rdbuf(text_stream->rdbuf());
-            cerrbuf = std::cerr.rdbuf(text_stream->rdbuf());
+        
+        log_ofstream = std::ofstream(log_file_name.toStdString(), std::ios::app);
+        if (log_ofstream.is_open()) {
+            coutbuf = std::cout.rdbuf(log_ofstream.rdbuf());
+            cerrbuf = std::cerr.rdbuf(log_ofstream.rdbuf());
         }
         else {
             qWarning() << "\n" << curTime() << ": Couldn't open log file\n";
         }
     }
     ~LogHandler() {
-        text_stream->close();
+        log_ofstream.close();
         std::cout.rdbuf(coutbuf);
         std::cerr.rdbuf(cerrbuf);
-        delete text_stream;
     }
     static void messageHandler(QtMsgType type, const QMessageLogContext& context, const QString& msg)
     {
-        //static QFile log_file(log_file_name);
-        //QByteArray localMsg = msg.toLocal8Bit();
-        if (text_stream->is_open()) {
-            *text_stream << "\n\n";
+        if (log_ofstream.is_open()) {
+            log_ofstream << "\n\n";
             switch (type) {
             case QtDebugMsg:
-                *text_stream << "Debug in:";
+                log_ofstream << std::string("Debug ");
                 break;
             case QtInfoMsg:
-                *text_stream << "Info in:";
+                log_ofstream << std::string("Info ");
                 break;
             case QtWarningMsg:
-                *text_stream << "Warning in:";
+                log_ofstream << std::string("Warning ");
                 break;
             case QtCriticalMsg:
-                *text_stream << "Critical in:";
+                log_ofstream << std::string("Critical ");
                 break;
             case QtFatalMsg:
-                *text_stream << "Fatal in:";
+                log_ofstream << std::string("Fatal ");
                 break;
             default:
-                *text_stream << "Custom message in:";
+                log_ofstream << std::string("Custom message ");
                 break;
             }
-            *text_stream 
+            log_ofstream 
                 << "\n"
-                << context.file
-                << ", "
-                << context.line
-                << ", "
-                << context.function
-                << "\n"
-                << (curTime() + ": ").toStdString()
+                //<< context.file
+                //<< ", "
+                //<< context.line
+                //<< ", "
+                //<< context.function
+                //<< "\n"
+                << (curTime() + QString(": ")).toStdString()
                 << msg.toStdString()
                 << "\n\n";
             if (type == QtFatalMsg) {
-                text_stream->close();
-                delete text_stream;
+                log_ofstream.close();
                 abort();
             }
         }

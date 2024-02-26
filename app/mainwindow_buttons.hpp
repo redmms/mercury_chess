@@ -352,5 +352,5 @@ void MainWindow::on_actionSend_suggestion_triggered()
 
 void MainWindow::on_actionReport_a_bug_triggered()
 {
-    QDesktopServices::openUrl(QUrl("mailto:mmd18cury@yandex.ru?subject=Suggestion&body=Please, attach 'log.txt' file from the folder with 'qt.exe'.", QUrl::TolerantMode));
+    QDesktopServices::openUrl(QUrl("mailto:mmd18cury@yandex.ru?subject=Bug report&body=Please, attach 'log.txt' file from the folder with 'qt.exe'.", QUrl::TolerantMode));
 }

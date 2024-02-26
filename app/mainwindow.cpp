@@ -692,35 +692,13 @@ void MainWindow::on_actionSave_game_triggered()
 
 void MainWindow::on_actionLoad_game_triggered()
 {
-    //if (game_active) {
-    //    openStopGameDialog();
-    //}
-    // Find out directory name
     QString archive_dir = app_dir + "/saved_games";
 
     // Create archive file
-//    QString  archive_fullname =
-//            archive_dir
-//            + "/"
-//            + settings.value("opp_name").toString()
-//            + curTime()
-//            + ".mmd18";
     QString  archive_fullname = QFileDialog::getOpenFileName(this,
                                     "Open File",
                                      archive_dir,
                                      tr("Chess Archive (*.mmd18)"));
-//    auto save_dialog = QFileDialog(this,
-//        "Save File",
-//        archive_fullname,
-//        tr("Chess Archive (*.mmd18)"));
-//    save_dialog.setAcceptMode(QFileDialog::AcceptSave);
-//    save_dialog.setFileMode(QFileDialog::AnyFile);
-//    QString selected_fullname;
-//    if (save_dialog.exec()) {
-//        selected_fullname = save_dialog.selectedFiles().first();
-//    } else {
-//        return;
-//    }
     if (archive_fullname.isEmpty()) {
         return;
     }

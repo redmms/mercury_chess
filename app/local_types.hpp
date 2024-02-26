@@ -135,7 +135,7 @@ inline void showBox(QString header,
     msg_box.setText(text);
     msg_box.setIcon(icon_type);
     msg_box.addButton("Ok", QMessageBox::AcceptRole);
-    msg_box.addButton("Hate you, but Ok", QMessageBox::RejectRole);
+    msg_box.addButton("Donate", QMessageBox::RejectRole);
     QObject::connect(&msg_box, &QMessageBox::rejected, [&]() {
         QDesktopServices::openUrl(QUrl("https://www.buymeacoffee.com/mmd18", QUrl::TolerantMode));
     });
