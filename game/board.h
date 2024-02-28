@@ -26,15 +26,15 @@ public:
 	MainWindow* mainwindow;
     std::vector<halfmove> history;
 	std::vector<bitmove> bistory;
-    QScopedPointer<Validator> valid;
-    QScopedPointer<Tile> tiles[8][8];
+    Validator* valid;
+    QPointer<Tile> tiles[8][8];
 	bool turn;
 	bool side;
     QPointer<Tile> from_tile;
     QPointer<Tile> white_king;
     QPointer<Tile> black_king;
 	pove virtual_move;
-    QScopedPointer<Tile> menu[4];
+    QPointer<Tile> menu[4];
 	QString board_css;
 	QString promo_css;
     char last_promotion;

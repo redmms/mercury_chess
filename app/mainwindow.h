@@ -12,7 +12,7 @@
 #include "qobject.h"
 #include <bitset>
 #include <map>
-#include <QScopedPointer>
+#include <QPointer>
 #include "../game/board.h"
 #include <QGraphicsDropShadowEffect>
 #include <QSoundEffect>
@@ -21,11 +21,13 @@
 #include <QMainWindow>
 #include <QWidget>
 #include "ui_mainwindow.h"
-#include <QSharedPointer>
+#include <QPointer>
 #include <QPointer>
 #include "../app/local_types.hpp"
 #include <vector>
 #include "../app/offline_dialog.h"
+#include <QFile>
+#include <QSettings>
 //import bitchess;
 import simplechess;
 
@@ -45,25 +47,25 @@ class MainWindow : public QMainWindow
 friend class WebClient;
 friend class Board;
 public:
-    QScopedPointer<ChessClock> clock;
-    QScopedPointer<WebClient> net;
-    std::map<std::string, QScopedPointer<QSoundEffect>> sounds;
-    QScopedPointer<QGraphicsDropShadowEffect> avatar_effect;
+    QPointer<ChessClock> clock;
+    QPointer<WebClient> net;
+    std::map<std::string, QPointer<QSoundEffect>> sounds;
+    QPointer<QGraphicsDropShadowEffect> avatar_effect;
 	QBitmap pic_mask;
     QPointer<QWidget> last_tab;
 	const int max_nick;
-    QScopedPointer<QVBoxLayout> message_layout;
-    QScopedPointer<QWidget> message_box;
+    QPointer<QVBoxLayout> message_layout;
+    QPointer<QWidget> message_box;
 	QFont message_font;
 	QFontMetrics message_metrics;
 	int max_message_width;
-    QScopedPointer<RoundedScrollArea> rounded_area;
+    QPointer<RoundedScrollArea> rounded_area;
     bool game_active;
     bool waiting_for_invite_respond;
     QString default_address;
     int default_port;
-    QScopedPointer<HorizontalScrollArea> history_area;
-    QScopedPointer<QLabel> history_label;
+    QPointer<HorizontalScrollArea> history_area;
+    QPointer<QLabel> history_label;
     QString app_dir;
     int current_move;
     QSettings settings;
@@ -73,21 +75,23 @@ public:
 	bool eventFilter(QObject* object, QEvent* event);
     void openStopGameDialog();
     void openInDevDialog();
-    void openFriendOfflineDialog();
     void writeStory(int order, halfmove move);
     QString coordToString(scoord coord);
     int changeLocalName(QString name);
     //int changeOnlineName(QString name);
 
-
-
 	MainWindow(QWidget* parent = 0, QString app_dir_ = "", QApplication* app = 0);
-    ~MainWindow(){
+    ~MainWindow() {
+        delete net;
+        QFile file(settings.fileName());
+        if (file.exists()) {
+            file.remove();
+        }
         delete ui;
     }
 
     QPointer<QApplication> app;
-    QScopedPointer<Board> board;
+    QPointer<Board> board;
     Ui::MainWindow* ui;
     QPixmap user_pic;
     QPixmap opp_pic;
@@ -142,10 +146,10 @@ private slots:
     void on_actionReport_a_bug_triggered();
 
     // user defined button slots
-    void on_offline_stop_button_clicked();
-    void on_offline_back_button_clicked();
-    void on_history_next_button_clicked();
-    void on_history_previous_button_clicked();
+    void my_offline_stop_button_clicked();
+    void my_offline_back_button_clicked();
+    void my_history_next_button_clicked();
+    void my_history_previous_button_clicked();
 
 protected slots:
 	void endSlot(endnum end_type);

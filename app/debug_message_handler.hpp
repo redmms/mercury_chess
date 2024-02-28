@@ -28,6 +28,7 @@ public:
         if (log_ofstream.is_open()) {
             coutbuf = std::cout.rdbuf(log_ofstream.rdbuf());
             cerrbuf = std::cerr.rdbuf(log_ofstream.rdbuf());
+            log_ofstream << "\n" << curTime().toStdString() << " LOGGING SESSION STARTED\n";
         }
         else {
             qWarning() << "\n" << curTime() << ": Couldn't open log file\n";
@@ -44,22 +45,22 @@ public:
             log_ofstream << "\n\n";
             switch (type) {
             case QtDebugMsg:
-                log_ofstream << std::string("Debug ");
+                log_ofstream << "Debug ";
                 break;
             case QtInfoMsg:
-                log_ofstream << std::string("Info ");
+                log_ofstream << "Info ";
                 break;
             case QtWarningMsg:
-                log_ofstream << std::string("Warning ");
+                log_ofstream << "Warning ";
                 break;
             case QtCriticalMsg:
-                log_ofstream << std::string("Critical ");
+                log_ofstream << "Critical ";
                 break;
             case QtFatalMsg:
-                log_ofstream << std::string("Fatal ");
+                log_ofstream << "Fatal ";
                 break;
             default:
-                log_ofstream << std::string("Custom message ");
+                log_ofstream << "Custom message ";
                 break;
             }
             log_ofstream 
@@ -70,7 +71,7 @@ public:
                 //<< ", "
                 //<< context.function
                 //<< "\n"
-                << (curTime() + QString(": ")).toStdString()
+                << (curTime() + ": ").toStdString()
                 << msg.toStdString()
                 << "\n\n";
             if (type == QtFatalMsg) {

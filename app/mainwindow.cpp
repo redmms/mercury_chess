@@ -57,7 +57,7 @@ MainWindow::MainWindow(QWidget* parent, QString app_dir_, QApplication* app) :
     login_regime(0),
     waiting_for_invite_respond(false),
     ui(new Ui::MainWindow),
-    default_address("40.113.33.140"),
+    default_address(/*"127.0.0.1"*/"40.113.33.140"),
     default_port(49001),
     history_area(new HorizontalScrollArea(this, QColor(111, 196, 81))),
     history_label(new QLabel(this)),
@@ -83,33 +83,33 @@ MainWindow::MainWindow(QWidget* parent, QString app_dir_, QApplication* app) :
     std::srand(std::time(0));
 
 	// sounds init
-    sounds["move"].reset(new QSoundEffect);
+    sounds["move"]=(new QSoundEffect);
 	sounds["move"]->setSource(QUrl::fromLocalFile(":/sounds/move"));
-    sounds["user's piece eaten"].reset(new QSoundEffect);
+    sounds["user's piece eaten"]=(new QSoundEffect);
 	sounds["user's piece eaten"]->setSource(QUrl::fromLocalFile(":/sounds/user_eaten"));
 	sounds["user's piece eaten"]->setVolume(0.6f);
-    sounds["opponent's piece eaten"].reset(new QSoundEffect);
+    sounds["opponent's piece eaten"]=(new QSoundEffect);
 	sounds["opponent's piece eaten"]->setSource(QUrl::fromLocalFile(":/sounds/opp_eaten"));
 	sounds["opponent's piece eaten"]->setVolume(0.7f);
-    sounds["castling"].reset(new QSoundEffect);
+    sounds["castling"]=(new QSoundEffect);
 	sounds["castling"]->setSource(QUrl::fromLocalFile(":/sounds/castling"));
-    sounds["promotion"].reset(new QSoundEffect);
+    sounds["promotion"]=(new QSoundEffect);
 	sounds["promotion"]->setSource(QUrl::fromLocalFile(":/sounds/promotion"));
-    sounds["check to user"].reset(new QSoundEffect);
+    sounds["check to user"]=(new QSoundEffect);
 	sounds["check to user"]->setSource(QUrl::fromLocalFile(":/sounds/check"));
 	sounds["check to user"]->setVolume(0.7f);
-    sounds["check to opponent"].reset(new QSoundEffect);
+    sounds["check to opponent"]=(new QSoundEffect);
 	sounds["check to opponent"]->setSource(QUrl::fromLocalFile(":/sounds/check_to_opp"));
     sounds["check to opponent"]->setVolume(0.3f);
-    sounds["invalid move"].reset(new QSoundEffect);
+    sounds["invalid move"]=(new QSoundEffect);
 	sounds["invalid move"]->setSource(QUrl::fromLocalFile(":/sounds/invalid"));
-    sounds["lose"].reset(new QSoundEffect);
+    sounds["lose"]=(new QSoundEffect);
 	sounds["lose"]->setSource(QUrl::fromLocalFile(":/sounds/lose"));
     sounds["lose"]->setVolume(0.5f);
-    sounds["win"].reset(new QSoundEffect);
+    sounds["win"]=(new QSoundEffect);
 	sounds["win"]->setSource(QUrl::fromLocalFile(":/sounds/win"));
 	sounds["win"]->setVolume(0.8f);
-    sounds["draw"].reset(new QSoundEffect);
+    sounds["draw"]=(new QSoundEffect);
 	sounds["draw"]->setSource(QUrl::fromLocalFile(":/sounds/draw"));
 
 	// settings init
@@ -153,7 +153,7 @@ MainWindow::MainWindow(QWidget* parent, QString app_dir_, QApplication* app) :
             connect(button, &QPushButton::clicked, [this, button]() {
                 int minutes_n = button->text().toInt(); //button->objectName().mid(3).toInt()
                 settings.setValue("time_setup", minutes_n);
-                });
+            });
 	}
 
     // prepare scroll_area before making a chat
@@ -164,7 +164,7 @@ MainWindow::MainWindow(QWidget* parent, QString app_dir_, QApplication* app) :
     rounded_area->setMaximumSize(ui->chat_area->maximumSize());
     rounded_area->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     rounded_area->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    ui->game_grid->replaceWidget(ui->chat_area, rounded_area.data());
+    ui->game_grid->replaceWidget(ui->chat_area, rounded_area);
     ui->chat_area->~QScrollArea();
 
 
@@ -172,11 +172,11 @@ MainWindow::MainWindow(QWidget* parent, QString app_dir_, QApplication* app) :
 	// chat
     max_message_width = rounded_area->minimumWidth() - 20;
     message_layout->setContentsMargins(10, 5, 10, 5);
-    message_box->setLayout(message_layout.data());
+    message_box->setLayout(message_layout);
     message_box->resize(rounded_area->width() - 28, 0);
 	message_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     message_box->setStyleSheet("background-color: transparent;"); //#1B1C1F
-    rounded_area->setWidget(message_box.data());
+    rounded_area->setWidget(message_box);
     rounded_area->setWidgetResizable(true);
 
     // match history
@@ -187,13 +187,13 @@ MainWindow::MainWindow(QWidget* parent, QString app_dir_, QApplication* app) :
     history_area->setMaximumSize(ui->match_history->maximumSize());
     history_area->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     history_area->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    ui->game_grid->replaceWidget(ui->match_history, history_area.data());
+    ui->game_grid->replaceWidget(ui->match_history, history_area);
     ui->match_history->~QLabel();
 
     history_label->setStyleSheet("background-color: transparent;");
     history_label->setFont({ "Segoe UI", 12 });
     history_label->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
-    history_area->setWidget(history_label.data());
+    history_area->setWidget(history_label);
     history_area->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
 
     history_area->setWidgetResizable(true);
@@ -205,7 +205,7 @@ MainWindow::MainWindow(QWidget* parent, QString app_dir_, QApplication* app) :
 
 void MainWindow::openTab(QWidget* page)
 {
-    //QScopedPointer<QWidget> tab_ptr(ui->tabWidget->currentWidget());
+    //QPointer<QWidget> tab_ptr(ui->tabWidget->currentWidget());
     if (!ui || !ui->tabWidget || !page)
      {
         qWarning() << "ERROR: in open tab with pointers";
@@ -299,9 +299,9 @@ void MainWindow::switchGlow() // FIX: should be changed for different sides
 {
     bool match_side = settings.value("match_side").toBool();
     if (board->turn == match_side)
-        ui->user_avatar->setGraphicsEffect(avatar_effect.data());
+        ui->user_avatar->setGraphicsEffect(avatar_effect);
     else
-        ui->opponent_avatar->setGraphicsEffect(avatar_effect.data());
+        ui->opponent_avatar->setGraphicsEffect(avatar_effect);
     this->update();
 }
 
@@ -341,8 +341,8 @@ void MainWindow::startGame(QString game_regime) // side true for user - white
         ui->draw_button->setText("Stop game");
         disconnect(ui->resign_button);
         disconnect(ui->draw_button);
-        connect(ui->resign_button, &QPushButton::clicked, this, &MainWindow::on_offline_back_button_clicked);
-        connect(ui->draw_button, &QPushButton::clicked, this, &MainWindow::on_offline_stop_button_clicked);
+        connect(ui->resign_button, &QPushButton::clicked, this, &MainWindow::my_offline_back_button_clicked);
+        connect(ui->draw_button, &QPushButton::clicked, this, &MainWindow::my_offline_stop_button_clicked);
     }
     else if (game_regime == "history") {
     // FIX: for debug
@@ -357,8 +357,8 @@ void MainWindow::startGame(QString game_regime) // side true for user - white
         ui->draw_button->setText("Previous move");
         disconnect(ui->resign_button);
         disconnect(ui->draw_button);
-        connect(ui->resign_button, &QPushButton::clicked, this, &MainWindow::on_history_next_button_clicked);
-        connect(ui->draw_button, &QPushButton::clicked, this, &MainWindow::on_history_previous_button_clicked);
+        connect(ui->resign_button, &QPushButton::clicked, this, &MainWindow::my_history_next_button_clicked);
+        connect(ui->draw_button, &QPushButton::clicked, this, &MainWindow::my_history_previous_button_clicked);
     }
 	openTab(ui->game_tab);
     activateWindow();
@@ -367,7 +367,7 @@ void MainWindow::startGame(QString game_regime) // side true for user - white
 	ui->opponent_avatar->setPixmap(opp_pic);
 	ui->opponent_name->setText(settings.value("opp_name").toString());
 	bool match_side = settings.value("match_side").toBool();
-    (match_side ? ui->user_avatar : ui->opponent_avatar)->setGraphicsEffect(avatar_effect.data());
+    (match_side ? ui->user_avatar : ui->opponent_avatar)->setGraphicsEffect(avatar_effect);
 	for (QLayoutItem* child; (child = message_layout->takeAt(0)) != nullptr; child->widget()->~QWidget()) {}
     message_box->resize(rounded_area->width(), 0);
     ui->statusBar->show();
@@ -375,10 +375,12 @@ void MainWindow::startGame(QString game_regime) // side true for user - white
     history_label->adjustSize();
 
     if (board){
-        board.reset(new Board(board.data(), settings, this));
+        Board* old_board = board;
+        board = (new Board(old_board, settings, this));
+        delete old_board;
     }
     else if (ui->board_background){
-        board.reset(new Board(ui->board_background, settings, this));
+        board = (new Board(ui->board_background, settings, this));
         ui->board_background->~QLabel();
     }
     else{
@@ -386,22 +388,22 @@ void MainWindow::startGame(QString game_regime) // side true for user - white
     }
 
     // old board will be destroyed inside Board constructor
-    connect(board.data(), &Board::newStatus, this, &MainWindow::statusSlot);
-    connect(board.data(), &Board::theEnd, this, &MainWindow::endSlot);
+    connect(board, &Board::newStatus, this, &MainWindow::statusSlot);
+    connect(board, &Board::theEnd, this, &MainWindow::endSlot);
 
     if (game_regime == "friend_online"){
-        connect(board.data(), &Board::moveMade, [this](scoord from, scoord to, char promotion_type) {
+        connect(board, &Board::moveMade, [this](scoord from, scoord to, char promotion_type) {
             net->sendToServer(package_ty::move, {}, {}, from, to, promotion_type);
         });
 
         int time = settings.value("time_setup").toInt();
-        clock.reset(new ChessClock(0/*board.data()*/, ui->opponent_timer, ui->user_timer, match_side, time));
+        clock=(new ChessClock(board, ui->opponent_timer, ui->user_timer, match_side, time));
         // old clock will be destroyed inside Board constructor as a child // FIX: at least it should be
-        connect(this, &MainWindow::timeToSwitchTime, clock.data(), &ChessClock::switchTimer);
-        connect(clock.data(), &ChessClock::userOut, [this]() {
+        connect(this, &MainWindow::timeToSwitchTime, clock, &ChessClock::switchTimer);
+        connect(clock, &ChessClock::userOut, [this]() {
             endSlot(endnum::user_out_of_time);
         });
-        connect(clock.data(), &ChessClock::opponentOut, [this]() {
+        connect(clock, &ChessClock::opponentOut, [this]() {
             endSlot(endnum::opponent_out_of_time);
         });
        
@@ -578,9 +580,9 @@ void MainWindow::printMessage(QString name, bool own, QString text)
 	message->setMinimumSize(message->size());
 	message->setMaximumSize(message->size());
     if (own)
-        message_layout->addWidget(message.data(), 0, Qt::AlignTop | Qt::AlignRight);
+        message_layout->addWidget(message, 0, Qt::AlignTop | Qt::AlignRight);
     else
-        message_layout->addWidget(message.data(), 0, Qt::AlignTop | Qt::AlignLeft);
+        message_layout->addWidget(message, 0, Qt::AlignTop | Qt::AlignLeft);
     message_box->resize(message_box->width(), message_box->height() + message->height() + 10);
 	// 10 is layout margin here, for shortness
 

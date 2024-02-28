@@ -143,7 +143,7 @@ public:
 	int writeGame(Board* board_, std::string filename) 
 	{	
 		board = board_;
-		valid = board->valid.data();
+		valid = board->valid;
 		endnum end_type = board->end_type;
 		const auto& history = board->bistory;
 		try {
@@ -225,7 +225,7 @@ public:
 	}
 	int readMoves(Board* board_) {
 		board = board_;
-		valid = board->valid.data();
+		valid = board->valid;
 		bitremedy end_type{ 0, 4, false };
 		ifs >> end_type;
 		//cout << "DEBUG: end type number is " << int(end_type) << endl;

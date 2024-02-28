@@ -65,7 +65,7 @@ void MainWindow::on_change_name_button_clicked()
 
 void MainWindow::on_back_from_settings_clicked()
 {
-    openTab(last_tab.data());
+    openTab(last_tab);
 }
 
 void MainWindow::on_actionWith_friend_triggered()
@@ -261,17 +261,17 @@ void MainWindow::on_restore_default_button_clicked()
     ui->port_edit->clear();
 }
 
-void MainWindow::on_offline_stop_button_clicked()
+void MainWindow::my_offline_stop_button_clicked()
 {
     endSlot(endnum::interrupt);
 }
 
-void MainWindow::on_offline_back_button_clicked()
+void MainWindow::my_offline_back_button_clicked()
 {
     openTab(last_tab);
 }
 
-void MainWindow::on_history_next_button_clicked()
+void MainWindow::my_history_next_button_clicked()
 {
     openInDevDialog();
     //auto& history = board->history;
@@ -282,7 +282,7 @@ void MainWindow::on_history_next_button_clicked()
     //current_move++;
 }
 
-void MainWindow::on_history_previous_button_clicked()
+void MainWindow::my_history_previous_button_clicked()
 {
     openInDevDialog();
     //auto& history = *board->history;
@@ -347,10 +347,13 @@ void MainWindow::on_actionSend_suggestion_triggered()
     QDesktopServices::openUrl(QUrl("mailto:mmd18cury@yandex.ru?subject=Suggestion&body=Please, make it impossible to lose.", QUrl::TolerantMode));
 }
 
-
+#include <fstream>
 void MainWindow::on_actionReport_a_bug_triggered()
 {
-    QDesktopServices::openUrl(QUrl("mailto:mmd18cury@yandex.ru?subject=Bug report&body=Please, attach 'log.txt' file from the folder with 'qt.exe'.", QUrl::TolerantMode));
+    //extern std::ofstream log_ofstream;
+    extern std::ofstream log_ofstream;
+    log_ofstream.flush();
+    QDesktopServices::openUrl(QUrl("mailto:mmd18cury@yandex.ru?subject=Bug report&body=Please attach the log file. Choose to attach a file and enter next path, then choose log.txt file: " + app_dir, QUrl::TolerantMode));
 }
 
 
@@ -413,7 +416,7 @@ void MainWindow::on_actionSave_game_triggered()
 
     // Write game to the file
     Archiver archiver(settings, app);
-    int error = archiver.writeGame(board.data(), archive_fullname.toStdString());
+    int error = archiver.writeGame(board, archive_fullname.toStdString());
     if (!error) {
         showBox("Good news",
             "Operation done successfuly.");
@@ -451,7 +454,7 @@ void MainWindow::on_actionLoad_game_triggered()
     int error = archiver.readHeader(archive_fullname.toStdString());
     if (!error) {
         startGame("history");
-        error = archiver.readMoves(board.data());
+        error = archiver.readMoves(board);
         if (error) {
             showBox("Incorrect file",
                 "Archive file is incorrect",

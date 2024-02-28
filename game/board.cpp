@@ -70,7 +70,7 @@ void Board::reactOnClick(Tile* tile) {
 			valid->showValid(tile);
 		}
 	}
-    else if (tile != from_tile.data() && turn == tile->piece_color && tile->piece_name != 'e') {
+    else if (tile != from_tile && turn == tile->piece_color && tile->piece_name != 'e') {
 		// if the second click
 		// is on the piece of same color then pick it instead
 		valid->hideValid();
@@ -80,7 +80,7 @@ void Board::reactOnClick(Tile* tile) {
 	else if (valid->isValid(tile)) {
 		// if it's the second click and move is valid
 		// then move pieces
-        halfMove(from_tile.data(), tile);
+        halfMove(from_tile, tile);
 		//valid->hideValid(); // FIX: should go after halfMove
         valid->reactOnMove(from_tile->coord, tile->coord);
         from_tile = nullptr;
@@ -148,9 +148,9 @@ void Board::drawTiles(bool side)
 {
 	for (int y = 0; y < 8; y++) {
 		for (int x = 0; x < 8; x++) {
-            tiles[x][y].reset( new Tile(this, {x, y}, side) );
+            tiles[x][y] = ( new Tile(this, {x, y}, side) );
 			// uses Board::tile_side bool side to coordinate itself on board, i.e. setGeometry()
-            QObject::connect(tiles[x][y].data(), &Tile::tileClicked, this, &Board::reactOnClick);
+            QObject::connect(tiles[x][y], &Tile::tileClicked, this, &Board::reactOnClick);
 		}
 	}
 
@@ -224,12 +224,12 @@ void Board::openPromotion(Tile* from)
 	std::string pieces = "QNRB";
 	scoord coord = from->coord;
 	for (int i = 0; i < 4; i++, coord.y += turn ? -1 : 1) {
-        menu[i].reset (new Tile(this, coord, side));
+        menu[i] = (new Tile(this, coord, side));
         menu[i]->setStyleSheet(promo_css);
         menu[i]->setPiece(pieces[i], turn);
         menu[i]->raise();
         menu[i]->show();
-        connect(menu[i].data(), &Tile::tileClicked, [&](Tile* into){
+        connect(menu[i], &Tile::tileClicked, [&](Tile* into){
             promotePawn(from, into);
         });
         connect(this, &Board::promotionEnd, &loop, &QEventLoop::quit);
@@ -289,7 +289,7 @@ void Board::castleKing(Tile* king, Tile* destination, Tile* rook)
 	// the rook is always on the left or right side of king after castling
 	int x = destination->coord.x + k;
 	int y = destination->coord.y;
-    moveNormally(rook, tiles[x][y].data());
+    moveNormally(rook, tiles[x][y]);
 }
 
 void Board::passPawn(Tile* from, Tile* to)
@@ -351,7 +351,7 @@ void Board::promotePawn(Tile* from, Tile* into)
     from->setPiece(into->piece_name, into->piece_color);
     last_promotion = into->piece_name;
 	for (int i = 0; i < 4; i++) {
-		menu[i].reset();
+		delete menu[i];
 	}
 	for (int x = 0; x < 8; x++)
 		for (int y = 0; y < 8; y++)
@@ -363,7 +363,7 @@ void Board::promotePawn(Tile* from, char into)
 	from->setPiece(into, from->piece_color);
 	last_promotion = into;
 	for (int i = 0; i < 4; i++) {
-		menu[i].reset();
+		delete menu[i];
 	}
 	for (int x = 0; x < 8; x++)
 		for (int y = 0; y < 8; y++)

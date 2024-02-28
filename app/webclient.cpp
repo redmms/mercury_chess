@@ -30,7 +30,7 @@ WebClient::WebClient(MainWindow* parent) :
 void WebClient::initSocket()
 {
     socket = (new QTcpSocket(this)); //FIX: how to destruct previous socket?
-    // FIX: will note QScopedPointer deleter mess with socket->deleteLater()?
+    // FIX: will note QPointer deleter mess with socket->deleteLater()?
     connect(socket, &QTcpSocket::errorOccurred, [&](QAbstractSocket::SocketError socketError){
         if (socket->state() == QAbstractSocket::UnconnectedState){
             qDebug() << "Couldn't connect to the server:";
@@ -256,7 +256,7 @@ void WebClient::sendToServer(package_ty type, bool respond, QString message, sco
 
 void WebClient::readFromServer()
 {
-    packFromSock(socket.data(), read_package);
+    packFromSock(socket, read_package);
     quint16 skip;
     read_stream >> skip;
 

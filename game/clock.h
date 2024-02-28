@@ -2,7 +2,7 @@
 #define CLOCK_H
 #include <QObject>
 #include <QPointer>
-#include <QScopedPointer>
+#include <QPointer>
 #include <QDateTime>
 #include <QTimer>
 
@@ -18,9 +18,9 @@ class ChessClock : public QObject
 	int max_time;
 	int black_remains;
 	int white_remains;
-    QScopedPointer<QTimer> black_timer;
-    QScopedPointer<QTimer> white_timer;
-    QScopedPointer<QTimer> sec_counter;
+    QPointer<QTimer> black_timer;
+    QPointer<QTimer> white_timer;
+    QPointer<QTimer> sec_counter;
     QTime zero_time;
 
 public:

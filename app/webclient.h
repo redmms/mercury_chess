@@ -41,6 +41,11 @@ class WebClient : public QObject
 public:
 	// FIX: probaly should be explicit
 	WebClient(MainWindow* parent = nullptr);
+	~WebClient() {
+		//QObject::disconnect(socket, &QTcpSocket::disconnected);
+		socket->disconnect();
+		delete socket;
+	}
 
     void initSocket();
     void checkConnection(package_ty type);

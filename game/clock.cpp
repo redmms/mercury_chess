@@ -19,14 +19,14 @@ ChessClock::ChessClock(QObject* parent = 0, QLabel* opponent_label = 0, QLabel* 
     sec_counter(new QTimer(this)),
     zero_time(QTime(0, 0))
 {
-    for (auto timer : { black_timer.data(), white_timer.data() }) {
+    for (auto timer : { black_timer, white_timer }) {
 		//timer->setTimerType(Qt::PreciseTimer); // this line will really slow down the game
 		timer->setInterval(max_time);
 		connect(timer, &QTimer::timeout, this, &ChessClock::gameTimeout);
 	}
 	sec_counter->setTimerType(Qt::PreciseTimer);
 	sec_counter->setInterval(1000);
-    connect(sec_counter.data(), &QTimer::timeout, this, &ChessClock::updateTimer);
+    connect(sec_counter, &QTimer::timeout, this, &ChessClock::updateTimer);
 
 	black_label->setText(zero_time.addMSecs(max_time).toString("mm:ss"));
 	white_label->setText(zero_time.addMSecs(max_time).toString("mm:ss"));
@@ -61,9 +61,9 @@ void ChessClock::gameTimeout()
 {
 	stopTimer();
 	QTimer* timer = (QTimer*)sender();
-    if (side && timer == black_timer.data() || !side && timer == white_timer.data())
+    if (side && timer == black_timer || !side && timer == white_timer)
 		emit opponentOut();
-    else if (side && timer == white_timer.data() || !side && timer == black_timer.data())
+    else if (side && timer == white_timer || !side && timer == black_timer)
 		emit userOut();
 }
 
