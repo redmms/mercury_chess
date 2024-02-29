@@ -415,7 +415,7 @@ void MainWindow::on_actionSave_game_triggered()
     }
 
     // Write game to the file
-    Archiver archiver(settings, app);
+    Archiver archiver(this);
     int error = archiver.writeGame(board, archive_fullname.toStdString());
     if (!error) {
         showBox("Good news",
@@ -450,7 +450,8 @@ void MainWindow::on_actionLoad_game_triggered()
     }
 
     // Read game from the file
-    Archiver archiver(settings, app);
+    Archiver archiver(this);
+    connect(&archiver, &Archiver::needUpdate, this, &MainWindow::updateApp);
     int error = archiver.readHeader(archive_fullname.toStdString());
     if (!error) {
         startGame("history");

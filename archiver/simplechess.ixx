@@ -3,11 +3,8 @@ module;
 #include "../game/validator.h"
 #include "../game/board.h"
 #include "../game/tile.h"
-#include <QPointer>
 #include <QString>
 #include <QSettings>
-#include <QThread>
-#include <QApplication>
 #include <QDebug>
 #include <ostream>
 #include <windows.h>
@@ -18,12 +15,10 @@ import finestream;
 import <iostream>;
 import <bitset>;
 import <vector>;
-import <string>;
 import <cmath>;
 import <map>;
 import <stdexcept>;
 import <set>;
-import <iterator>;
 using namespace std;
 constexpr auto CHB = CHAR_BIT;
 
@@ -130,14 +125,12 @@ export class Archiver {
 	QPointer<Tile> from;
 	QPointer<Tile> to;
 	QSettings& settings;
-	QApplication& app;
 	fsm::ofinestream ofs;
 	fsm::ifinestream ifs;
 	uint8_t moves_num;
 public:
-	Archiver(QSettings& settings_, QApplication* app_) : 
-		settings(settings_),
-		app(*app_)
+	Archiver(QSettings& settings_) : 
+		settings(settings_)
 	{}
 
 	int writeGame(Board* board_, std::string filename) 
@@ -301,8 +294,7 @@ public:
 			cout << " promo: " << promo;
 		}
 		board->halfMove(from, to);
-		app.processEvents();
-		QThread::sleep(1);
+		
 		return 0;
 	}
 
@@ -336,6 +328,8 @@ public:
 		hmove.turn = board->turn;
 		return hmove;
 	}
+
+
 };
 
 

@@ -22,7 +22,7 @@ public:
             log_ofstream << "\n" << curTime().toStdString() << " LOGGING SESSION STARTED\n";
         }
         else {
-            qWarning() << "\n" << curTime() << ": Couldn't open log file\n";
+            std::cerr << "\n" << curTime().toStdString() << ": Couldn't open log file\n";
         }
     }
     ~LogHandler() {

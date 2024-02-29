@@ -5,7 +5,6 @@
 class Validator;
 class WebClient;
 class MainWindow;
-class QSettings;
 class Board : public QLabel {
 	Q_OBJECT
 public:
@@ -15,7 +14,7 @@ public:
 	void drawTiles(bool side);
 	void openPromotion(Tile* from);
 
-    Board(QLabel* background, QSettings& settings_, MainWindow* mainwindow_);
+    Board(QLabel* background, MainWindow* mainwindow_);
 
 	QPointer<MainWindow> mainwindow;
     std::vector<halfmove> history;
@@ -35,7 +34,6 @@ public:
     virtu last_virtually_passed;
 	endnum end_type;
 	int tile_size;
-	QPointer<QSettings> settings;
 
 	void halfMove(scoord from, scoord to);
 	void halfMove(Tile* from, Tile* to);

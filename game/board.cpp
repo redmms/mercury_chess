@@ -4,14 +4,14 @@
 #include "../app/mainwindow.h"
 #include <QEventLoop>
 #include <QLayout>
+#include <QDebug>
 import finestream;
 using namespace std;
 
-Board::Board(QLabel* background, QSettings& settings_, MainWindow* mainwindow_) :
+Board::Board(QLabel* background, MainWindow* mainwindow_) :
 	mainwindow(mainwindow_),
 	tile_size(background->width() / 9),
-    settings(&settings_),
-    side(settings_.value("match_side").toBool()),  // true for user on white side
+    side(settings.value("match_side").toBool()),  // true for user on white side
 	valid(new Validator(this)),
     //tiles{ { } },
     turn(true),  // true for white turn;
@@ -54,7 +54,7 @@ Board::Board(QLabel* background, QSettings& settings_, MainWindow* mainwindow_) 
 }
 
 void Board::reactOnClick(Tile* tile) {
-	if (settings->value("game_regime").toString() == "history") {
+	if (settings.value("game_regime").toString() == "history") {
 		return;
 	}
     else if (!from_tile) {
@@ -62,7 +62,7 @@ void Board::reactOnClick(Tile* tile) {
 		// show valid moves
         if (turn == tile->piece_color &&
                 (side == tile->piece_color ||
-                 settings->value("game_regime").toString() != "friend_online") &&
+                 settings.value("game_regime").toString() != "friend_online") &&
                 tile->piece_name != 'e') {
             from_tile = tile; // FIX: are you sure?
 			valid->showValid(tile);
@@ -381,7 +381,7 @@ void Board::halfMove(scoord from, scoord to)
 
 void Board::halfMove(Tile* from, Tile* to)
 {
-	QString game_type = settings->value("game_regime").toString();
+	QString game_type = settings.value("game_regime").toString();
 
 	// we do it before new move, but after the last one, which we convert
 	// because at the moment of stalemate search we don't know what move we'll do -

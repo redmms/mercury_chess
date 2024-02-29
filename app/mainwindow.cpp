@@ -7,7 +7,9 @@
 #include "rounded_scrollarea.hpp"
 #include "rounded_scrollarea_horizontal.hpp"
 #include "../game/board.h"
+#include "../game/tile.h"
 #include "../game/clock.h"
+#include "../archiver/archiver.h"
 #include <QGraphicsDropShadowEffect>
 #include <QSoundEffect>
 #include <QTabBar>
@@ -15,6 +17,8 @@
 #include <QCryptographicHash>
 #include <QFile>
 #include <QTimer>
+#include <QDebug>
+#include <QThread>
 using namespace std;
 
 MainWindow::MainWindow(QWidget* parent, QString app_dir_, QApplication* app) :
@@ -46,8 +50,7 @@ MainWindow::MainWindow(QWidget* parent, QString app_dir_, QApplication* app) :
     default_port(49001),
     history_area(new HorizontalScrollArea(this, QColor(111, 196, 81))),
     history_label(new QLabel(this)),
-    current_move(0),
-    settings{"settings_" + curTime() + ".ini", QSettings::IniFormat}
+    current_move(0)
 {
 	// .ui file finish strokes
 	ui->setupUi(this);
@@ -98,8 +101,7 @@ MainWindow::MainWindow(QWidget* parent, QString app_dir_, QApplication* app) :
 	sounds["draw"]->setSource(QUrl::fromLocalFile(":/sounds/draw"));
 
 	// settings init
-	QSettings::setDefaultFormat(QSettings::IniFormat); // personal preference
-	settings.setValue("user_name", "Lazy" +
+    settings.setValue("user_name", "Lazy" +
 		QString::number(rand() % (int)pow(10, max_nick - 4)));
 	settings.setValue("opp_name", "Player2");
 	settings.setValue("time_setup", 0);
@@ -213,6 +215,12 @@ void MainWindow::openTab(QWidget* page)
     ui->tabWidget->setCurrentWidget(page);
     //auto scroller = rounded_area->horizontalScrollBar();
     //scroller->setValue(scroller->maximum());
+}
+
+void MainWindow::updateApp()
+{
+    app->processEvents();
+    QThread::sleep(1);
 }
 
 void MainWindow::openStopGameDialog()
@@ -369,11 +377,11 @@ void MainWindow::startGame(QString game_regime) // side true for user - white
 
     if (board){
         Board* old_board = board;
-        board = (new Board(old_board, settings, this));
+        board = (new Board(old_board, this));
         delete old_board;
     }
     else if (ui->board_background){
-        board = (new Board(ui->board_background, settings, this));
+        board = (new Board(ui->board_background, this));
         ui->board_background->~QLabel();
     }
     else{

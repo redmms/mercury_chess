@@ -173,3 +173,6 @@ struct bitmove {
     bitremedy move = {};
     promo_ty promo = promo_ty::no_promotion;
 };
+
+#include <QSettings>
+static QSettings settings( "settings_" + curTime() + ".ini", QSettings::IniFormat );

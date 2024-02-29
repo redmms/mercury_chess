@@ -4,7 +4,6 @@ import <bitset>;
 import <stdexcept>;
 import <algorithm>;
 import <string>;
-import <ostream>;
 using uchar = unsigned char;
 constexpr int CHB = CHAR_BIT;
 constexpr int CHB1 = CHAR_BIT - 1;

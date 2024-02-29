@@ -2,8 +2,6 @@
 #include "../app/local_types.hpp"
 #include <QMainWindow>
 #include <QBitmap>
-#include <QSettings>
-import simplechess;
 
 namespace Ui
 {
@@ -50,7 +48,6 @@ public:
     QPointer<QLabel> history_label;
     QString app_dir;
     int current_move;
-    QSettings settings;
 
 	void showStatus(const QString& status);  // FIX: will const& cause problems or not?
 	void switchGlow();
@@ -76,6 +73,7 @@ public:
     void startGame(QString game_regime);
     void printMessage(QString name, bool own, QString text);
     void openTab(QWidget* page);
+    void updateApp();
 
 signals:
 	void timeToSwitchTime();
