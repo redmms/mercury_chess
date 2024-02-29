@@ -1,4 +1,5 @@
 //#define QT_MESSAGELOGCONTEXT 
+#pragma once
 #include <QApplication>
 #include "app/mainwindow.h"
 #include "app/debug_message_handler.hpp"

@@ -1,17 +1,11 @@
 #pragma once
-#include "validator.h"
-#include "tile.h"
 #include "../app/local_types.hpp"
 #include <QLabel>
-#include <QSettings>
-#include <QPointer>
-#include <QDebug>
-#include <vector>
-import bitremedy;
-import finestream;
 
+class Validator;
 class WebClient;
 class MainWindow;
+class QSettings;
 class Board : public QLabel {
 	Q_OBJECT
 public:
@@ -53,6 +47,7 @@ public:
 	void passPawn(Tile* from, Tile* to);
     void restoreTile(virtu saved);
 	void promotePawn(Tile* from, char into);
+	void promotePawn(scoord from, char into);
 	bitmove toBitmove(halfmove hmove);
 	bitremedy toPieceIdx(Tile* from);
 	bitremedy toMoveIdx(Tile* to);

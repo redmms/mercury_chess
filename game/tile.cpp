@@ -2,12 +2,6 @@
 #include "tile.h"
 #include "board.h"
 #include <QDebug>
-#include <QImage>
-#include <QPainter>
-#include <QPixmap>
-#include <QSize>
-#include <map>
-#include <string>
 using namespace std;
 
 Tile::Tile(Board* mother_board, scoord tile_coord, bool side) :

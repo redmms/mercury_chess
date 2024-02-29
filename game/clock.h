@@ -1,14 +1,10 @@
-#ifndef CLOCK_H
-#define CLOCK_H
-#include <QObject>
+#pragma once
 #include <QPointer>
-#include <QPointer>
-#include <QDateTime>
-#include <QTimer>
 #include <QLabel>
+#include <QTime>
 
-class ChessClock : public QObject
-{
+class QTimer;
+class ChessClock : public QObject{
     Q_OBJECT
 
     bool side;
@@ -39,5 +35,3 @@ public slots:
 	void startTimer();
 	void switchTimer();
 };
-
-#endif // CLOCK_H

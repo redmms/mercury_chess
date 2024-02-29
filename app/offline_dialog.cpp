@@ -1,7 +1,10 @@
+#pragma once
 #include "offline_dialog.h"
+#include "ui_offline_dialog.h"
+#include "../app/local_types.hpp"
 #include <QPainter>
-#include <QPixmap>
 #include <QBitmap>
+#include <QFileDialog>
 using namespace std;
 
 OfflineDialog::OfflineDialog(QWidget *parent, QPixmap default_pic_) :
@@ -24,6 +27,10 @@ OfflineDialog::OfflineDialog(QWidget *parent, QPixmap default_pic_) :
 
     ui->friend_avatar->setMask(pic_mask);
     setWindowTitle("Choose your opponent's name");
+}
+
+OfflineDialog::~OfflineDialog() {
+    delete ui;
 }
 
 bool OfflineDialog::readName()

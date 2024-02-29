@@ -1,15 +1,15 @@
+#pragma once
 #include "clock.h"
-#include "../app/local_types.hpp"
-#include <QLabel>
+#include <QTimer>
 #include <QDebug>
 using namespace std;
 
-ChessClock::ChessClock(QObject* parent = 0, QLabel* opponent_label = 0, QLabel* user_label = 0,
-    bool side_ = false, int max_minutes = 0)
+ChessClock::ChessClock(QObject* parent, QLabel* opponent_label, QLabel* user_label,
+    bool side_, int max_minutes)
     : QObject(parent),
     side(side_),
-	black_label(side_ ? opponent_label : user_label),
-	white_label(side_ ? user_label : opponent_label),
+	black_label(side ? opponent_label : user_label),
+	white_label(side ? user_label : opponent_label),
 	max_time(max_minutes * 60000),
 	black_remains(max_time),
     white_remains(max_time),

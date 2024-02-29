@@ -1,9 +1,7 @@
 #pragma once
 #include "validator.h"
 #include "board.h"
-#include "tile.h"
 #include <QDebug>
-#include <iostream>
 using namespace std;
 using lambda = function<bool(scoord)>;
 using checker = function<bool(scoord, bool&)>;

@@ -1,31 +1,8 @@
-#ifndef MAINWINDOW_H
-#define MAINWINDOW_H
-#include "ui_mainwindow.h"
-#include "webclient.h"
-#include "rounded_scrollarea.hpp"
-#include "rounded_scrollarea_horizontal.hpp"
-#include "../game/board.h"
-#include "../game/clock.h"
+#pragma once
 #include "../app/local_types.hpp"
-#include "../app/offline_dialog.h"
-#include <QBitmap>
-#include <QFont>
-#include <QFontMetrics>
-#include <QPixmap>
-#include <QSettings>
-#include <QString>
-#include <QObject>
-#include <QPointer>
-#include <QGraphicsDropShadowEffect>
-#include <QSoundEffect>
-#include <QVBoxLayout>
 #include <QMainWindow>
-#include <QWidget>
-#include <QFile>
-#include <QEvent>
-#include <bitset>
-#include <map>
-#include <vector>
+#include <QBitmap>
+#include <QSettings>
 import simplechess;
 
 namespace Ui
@@ -33,6 +10,19 @@ namespace Ui
 	class MainWindow;
 }
 
+class WebClient;
+class RoundedScrollArea;
+class HorizontalScrollArea;
+class Board;
+class ChessClock;
+class OfflineDialog;
+class QPixmap;
+class QFont;
+class QFontMetrics;
+class QGraphicsDropShadowEffect;
+class QSoundEffect;
+class QEvent;
+class QVBoxLayout;
 class MainWindow : public QMainWindow
 {
 	Q_OBJECT
@@ -72,14 +62,8 @@ public:
     int changeLocalName(QString name);
     //int changeOnlineName(QString name);
 
-	MainWindow(QWidget* parent = 0, QString app_dir_ = "", QApplication* app = 0);
-    ~MainWindow() {
-        QFile file(settings.fileName());
-        if (file.exists()) {
-            file.remove();
-        }
-        delete ui;
-    }
+	MainWindow(QWidget* parent, QString app_dir_, QApplication* app);
+    ~MainWindow();
 
     QPointer<QApplication> app;
     QPointer<Board> board;
@@ -145,5 +129,3 @@ private slots:
 protected slots:
 	void endSlot(endnum end_type);
 };
-
-#endif // MAINWINDOW_H

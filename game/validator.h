@@ -1,15 +1,11 @@
-#ifndef VALIDATOR_H
-#define VALIDATOR_H
+#pragma once
 #include "../game/tile.h"
-#include <QPointer>
 #include <functional>
 #include <set>
-#include <list>
 using lambda = std::function<bool(scoord)>;
 using checker = std::function<bool(scoord, bool&)>;
 
 class Board;
-class Tile;
 class Validator {
 friend class Archiver;
 friend class Board;
@@ -59,5 +55,3 @@ public:
     void reactOnMove(scoord from, scoord to);
     qint64 countMovesTest(int depth = 5, int i = 0);
 };
-
-#endif // VALIDATOR_H

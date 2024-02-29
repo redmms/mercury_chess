@@ -1,34 +1,20 @@
+#pragma once
 #include "mainwindow.h"
+#include "ui_mainwindow.h"
 #include "webclient.h"
+#include "offline_dialog.h"
 #include "rules_dialog.h"
-#include "..\game\board.h"
-#include "..\game\validator.h"
-#include <QPainter>
-#include <QBitmap>
-#include <QEventLoop>
-#include <QFileDialog>
+#include "rounded_scrollarea.hpp"
+#include "rounded_scrollarea_horizontal.hpp"
+#include "../game/board.h"
+#include "../game/clock.h"
 #include <QGraphicsDropShadowEffect>
-#include <QMessageBox>
-#include <QScrollBar>
 #include <QSoundEffect>
 #include <QTabBar>
-#include <QTabWidget>
-#include <QTimer>
-#include <QVBoxLayout>
-#include <QWidget>
-#include <QMetaObject>
-#include <QMetaProperty>
-#include <QApplication>
-#include <QDebug>
-#include <QKeyEvent>
+#include <QFileDialog>
 #include <QCryptographicHash>
-#include <QDesktopServices>
-#include <cstdlib>
-#include <ctime>
-#include <math.h>
-#include <cmath>
-#include <string>
-#include <stdexcept>
+#include <QFile>
+#include <QTimer>
 using namespace std;
 
 MainWindow::MainWindow(QWidget* parent, QString app_dir_, QApplication* app) :
@@ -61,7 +47,7 @@ MainWindow::MainWindow(QWidget* parent, QString app_dir_, QApplication* app) :
     history_area(new HorizontalScrollArea(this, QColor(111, 196, 81))),
     history_label(new QLabel(this)),
     current_move(0),
-    settings("settings_" + curTime() + ".ini", QSettings::IniFormat)
+    settings{"settings_" + curTime() + ".ini", QSettings::IniFormat}
 {
 	// .ui file finish strokes
 	ui->setupUi(this);
@@ -198,6 +184,14 @@ MainWindow::MainWindow(QWidget* parent, QString app_dir_, QApplication* app) :
     history_area->setWidgetResizable(true);
 
    // openTab(ui->training_tab);
+}
+
+MainWindow::~MainWindow() {
+    QFile file(settings.fileName());
+    if (file.exists()) {
+        file.remove();
+    }
+    delete ui;
 }
 
 #include "mainwindow_buttons.hpp"

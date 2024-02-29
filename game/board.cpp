@@ -1,13 +1,10 @@
 #pragma once
 #include "board.h"
-#include "tile.h"
 #include "validator.h"
 #include "../app/mainwindow.h"
 #include <QEventLoop>
-#include <QGridLayout>
-#include <QTimer>
-#include <QThread>
-#include <string>
+#include <QLayout>
+import finestream;
 using namespace std;
 
 Board::Board(QLabel* background, QSettings& settings_, MainWindow* mainwindow_) :
@@ -370,6 +367,11 @@ void Board::promotePawn(Tile* from, char into)
 		for (int y = 0; y < 8; y++)
 			tiles[x][y]->setEnabled(true);
 	emit promotionEnd();
+}
+
+void Board::promotePawn(scoord from, char into)
+{
+	promotePawn(valid->theTile(from), into);
 }
 
 void Board::halfMove(scoord from, scoord to)

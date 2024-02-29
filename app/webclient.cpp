@@ -1,14 +1,10 @@
+#pragma once
 #include "webclient.h"
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "../game/board.h"
-#include "../game/tile.h"
-#include <QWidget>
-#include <QBuffer>
-#include <QMessageBox>
 #include <QTcpSocket>
-#include <QEventLoop>
-#include <iostream>
+#include <QBuffer>
 using namespace std;
 
 WebClient::WebClient(MainWindow* parent) :
@@ -27,6 +23,13 @@ WebClient::WebClient(MainWindow* parent) :
     if (send_stream.status() != QDataStream::Ok)
         qDebug() << "send_stream error!";
 }
+
+WebClient::~WebClient() {
+    socket->disconnect();
+    delete socket;
+}
+
+#include "webclient_pack_tools.hpp"
 
 void WebClient::initSocket()
 {
@@ -163,7 +166,6 @@ void WebClient::connectNewHost()
     checkConnection(package_ty::login);
 }
 
-#include "webclient_pack_tools.hpp"
 
 void WebClient::sendToServer(package_ty type, bool respond, QString message, scoord from, scoord to, char promotion_type)
 {
@@ -343,7 +345,7 @@ void WebClient::readFromServer()
         if (promotion_type != 'e'){
             bool color = !mainwindow->board->side;
             Board& board = *mainwindow->board;
-            board[to.x][to.y]->setPiece(promotion_type, color);
+            board.promotePawn(to, promotion_type);
         }
         break;
     }

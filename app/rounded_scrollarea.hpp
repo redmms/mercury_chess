@@ -1,9 +1,7 @@
-#ifndef ROUNDED_SCROLLAREA_H
-#define ROUNDED_SCROLLAREA_H
+#pragma once
 #include <QScrollArea>
 #include <QPainter>
 #include <QPaintEvent>
-#include <QColor>
 
 class RoundedScrollArea : public QScrollArea {
     QColor background_color;
@@ -25,5 +23,3 @@ protected:
         painter.drawRoundedRect(viewport()->rect(), radius, radius);
     }
 };
-
-#endif // ROUNDED_SCROLLAREA_H

@@ -1,22 +1,16 @@
-#ifndef RULES_DIALOG_H
-#define RULES_DIALOG_H
+#pragma once
 #include <QDialog>
 
 namespace Ui {
     class RulesDialog;
 }
 
-class RulesDialog : public QDialog
-{
+class RulesDialog : public QDialog{
     Q_OBJECT
     
     Ui::RulesDialog* ui;
 
 public:
     explicit RulesDialog(QWidget *parent = nullptr);
-    ~RulesDialog() {
-        delete ui;
-    }
+    ~RulesDialog();
 };
-
-#endif // RULES_DIALOG_H

@@ -1,17 +1,11 @@
-#ifndef OFFLINE_DIALOG_H
-#define OFFLINE_DIALOG_H
-#include "../app/local_types.hpp"
-#include "ui_offline_dialog.h"
+#pragma once
 #include <QDialog>
-#include <QMessageBox>
-#include <QFileDialog>
 
 namespace Ui {
-class OfflineDialog;
+    class OfflineDialog;
 }
 
-class OfflineDialog : public QDialog
-{
+class OfflineDialog : public QDialog{
     Q_OBJECT
 
     QPixmap default_pic;
@@ -21,10 +15,8 @@ class OfflineDialog : public QDialog
 
     bool readName();
 public:
-    explicit OfflineDialog(QWidget *parent = nullptr, QPixmap default_pic_ = {});
-    ~OfflineDialog(){
-        delete ui;
-    }
+    explicit OfflineDialog(QWidget *parent, QPixmap default_pic_);
+    ~OfflineDialog();
 
 signals:
     void newOppName(QString name);
@@ -35,5 +27,3 @@ private slots:
     void on_save_button_clicked();
     void on_dismiss_button_clicked();
 };
-
-#endif // OFFLINE_DIALOG_H

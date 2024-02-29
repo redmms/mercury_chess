@@ -1,14 +1,9 @@
-#ifndef TILE_H
-#define TILE_H
+#pragma once
 #include "../app/local_types.hpp"
-#include <QColor>
 #include <QLabel>
-#include <QString>
-#include <QMouseEvent>
-#include <map>
-#include <string>
 
 class Board;
+class QMouseEvent;
 class Tile : public QLabel
 {
 	Q_OBJECT
@@ -48,5 +43,3 @@ struct TileCmp
 		return l->coord < r->coord;
 	}
 };
-
-#endif // TILE_H

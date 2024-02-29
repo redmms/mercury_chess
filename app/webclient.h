@@ -1,14 +1,8 @@
-#ifndef WEBCLIENT_H
-#define WEBCLIENT_H
+#pragma once
 #include "../app/local_types.hpp"
-#include <QByteArray>
-#include <QDataStream>
-#include <QString>
-#include <QTcpSocket>
-#include <QPointer>
-#include <QPixmap>
 
 class MainWindow;
+class QTcpSocket;
 class WebClient : public QObject
 {
 	Q_OBJECT
@@ -37,10 +31,7 @@ class WebClient : public QObject
 public:
 	// FIX: probaly should be explicit
 	WebClient(MainWindow* parent = nullptr);
-	~WebClient() {
-		socket->disconnect();
-		delete socket;
-	}
+	~WebClient();
 
     void initSocket();
     void checkConnection(package_ty type);
@@ -65,5 +56,3 @@ public slots:
 	void readFromServer();
 
 };
-
-#endif // WEBCLIENT_H

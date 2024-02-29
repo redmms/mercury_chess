@@ -1,7 +1,4 @@
 #pragma once
-import bitremedy;
-#include <utility>
-#include <QDataStream>
 #ifndef pove
 #define pove std::pair<virtu, virtu>
 #define povec const pove& 
@@ -14,7 +11,8 @@ import bitremedy;
 #define coorder const scoord& 
 #endif // !coorder
 
-enum package_ty : quint8 {
+#include <utility>
+enum package_ty : uint8_t {
     registration,
     login,
     new_name,
@@ -36,7 +34,7 @@ enum package_ty : quint8 {
     already_registered
 };
 
-enum endnum : quint8 {
+enum endnum : uint8_t {
     draw_by_agreement,
     draw_by_stalemate,
     user_wins,
@@ -53,7 +51,7 @@ enum endnum : quint8 {
     ENDNUM_MAX
 };
 
-enum tatus : quint8 {
+enum tatus : uint8_t {
     check_to_user,
     check_to_opponent,
     user_piece_eaten,
@@ -64,6 +62,7 @@ enum tatus : quint8 {
     invalid_move
 };
 
+#include <stdexcept>
 struct scoord{
     int x = 0;
     int y = 0;
@@ -168,6 +167,7 @@ static std::map<promo_ty, char> char_by_promo{
     {no_promotion, 'e'}
 };
 
+import bitremedy;
 struct bitmove {
     bitremedy piece = {};
     bitremedy move = {};
