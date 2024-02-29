@@ -26,10 +26,10 @@ protected:
     }
     void wheelEvent(QWheelEvent* event) override {
         if (event->angleDelta().y() > 0) {
-            horizontalScrollBar()->setValue(horizontalScrollBar()->value() - horizontalScrollBar()->singleStep());
+            horizontalScrollBar()->setValue(horizontalScrollBar()->value() + horizontalScrollBar()->singleStep());
         }
         else {
-            horizontalScrollBar()->setValue(horizontalScrollBar()->value() + horizontalScrollBar()->singleStep());
+            horizontalScrollBar()->setValue(horizontalScrollBar()->value() - horizontalScrollBar()->singleStep());
         }
         QScrollArea::wheelEvent(event);
     }

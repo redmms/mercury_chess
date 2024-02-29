@@ -5,8 +5,7 @@
 #include <QPointer>
 #include <QDateTime>
 #include <QTimer>
-
-class QLabel;
+#include <QLabel>
 
 class ChessClock : public QObject
 {

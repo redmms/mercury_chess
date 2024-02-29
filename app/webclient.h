@@ -1,18 +1,14 @@
 #ifndef WEBCLIENT_H
 #define WEBCLIENT_H
+#include "../app/local_types.hpp"
 #include <QByteArray>
 #include <QDataStream>
-#include "../app/local_types.hpp"
-#include "qbytearray.h"
-#include "qdatastream.h"
-#include "qobject.h"
-#include "qstring.h"
+#include <QString>
 #include <QTcpSocket>
 #include <QPointer>
+#include <QPixmap>
 
 class MainWindow;
-class QPixmap;
-
 class WebClient : public QObject
 {
 	Q_OBJECT
@@ -42,7 +38,6 @@ public:
 	// FIX: probaly should be explicit
 	WebClient(MainWindow* parent = nullptr);
 	~WebClient() {
-		//QObject::disconnect(socket, &QTcpSocket::disconnected);
 		socket->disconnect();
 		delete socket;
 	}

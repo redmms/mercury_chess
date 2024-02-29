@@ -2,17 +2,18 @@
 #include "board.h"
 #include "tile.h"
 #include "validator.h"
+#include "../app/mainwindow.h"
 #include <QEventLoop>
 #include <QGridLayout>
 #include <QTimer>
-#include <string>
-#include "../app/mainwindow.h"
 #include <QThread>
+#include <string>
+using namespace std;
 
 Board::Board(QLabel* background, QSettings& settings_, MainWindow* mainwindow_) :
 	mainwindow(mainwindow_),
 	tile_size(background->width() / 9),
-    settings(settings_),
+    settings(&settings_),
     side(settings_.value("match_side").toBool()),  // true for user on white side
 	valid(new Validator(this)),
     //tiles{ { } },
@@ -56,7 +57,7 @@ Board::Board(QLabel* background, QSettings& settings_, MainWindow* mainwindow_) 
 }
 
 void Board::reactOnClick(Tile* tile) {
-	if (settings.value("game_regime").toString() == "history") {
+	if (settings->value("game_regime").toString() == "history") {
 		return;
 	}
     else if (!from_tile) {
@@ -64,7 +65,7 @@ void Board::reactOnClick(Tile* tile) {
 		// show valid moves
         if (turn == tile->piece_color &&
                 (side == tile->piece_color ||
-                 settings.value("game_regime").toString() != "friend_online") &&
+                 settings->value("game_regime").toString() != "friend_online") &&
                 tile->piece_name != 'e') {
             from_tile = tile; // FIX: are you sure?
 			valid->showValid(tile);
@@ -91,7 +92,7 @@ void Board::reactOnClick(Tile* tile) {
 
 
 void Board::drawLetters(bool side) {
-	std::string letters = side ? "abcdefgh" : "hgfedcba";
+	string letters = side ? "abcdefgh" : "hgfedcba";
 	int width = tile_size, height = tile_size / 2,
 		x = tile_size / 2, y = this->height() - height;
 	for (char ch : letters) {
@@ -118,7 +119,7 @@ void Board::drawLetters(bool side) {
 }
 
 void Board::drawNumbers(bool side) {
-	std::string digits = side ? "87654321" : "12345678";
+	string digits = side ? "87654321" : "12345678";
 	int width = tile_size / 2, height = tile_size,
 		x = 0, y = tile_size / 2;
 	for (char ch : digits) {
@@ -205,7 +206,7 @@ void Board::drawTiles(bool side)
     }
 
     // black pieces
-    std::string pieces = "RNBQKBNR";
+    string pieces = "RNBQKBNR";
     for (int x = 0; x < 8; x++){
         tiles[x][7]->setPiece(pieces[x], 0);
        //black_piece_coords[x] = {x, 7};
@@ -221,7 +222,7 @@ void Board::drawTiles(bool side)
 void Board::openPromotion(Tile* from)
 {
 	QEventLoop loop;
-	std::string pieces = "QNRB";
+	string pieces = "QNRB";
 	scoord coord = from->coord;
 	for (int i = 0; i < 4; i++, coord.y += turn ? -1 : 1) {
         menu[i] = (new Tile(this, coord, side));
@@ -378,7 +379,7 @@ void Board::halfMove(scoord from, scoord to)
 
 void Board::halfMove(Tile* from, Tile* to)
 {
-	QString game_type = settings.value("game_regime").toString();
+	QString game_type = settings->value("game_regime").toString();
 
 	// we do it before new move, but after the last one, which we convert
 	// because at the moment of stalemate search we don't know what move we'll do -

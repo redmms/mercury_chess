@@ -1,14 +1,15 @@
 #include "webclient.h"
-#include "C:\Qt_projects\multicolor_chess\src\game\board.h"
-#include "C:\Qt_projects\multicolor_chess\src\game\tile.h"
 #include "mainwindow.h"
+#include "ui_mainwindow.h"
+#include "../game/board.h"
+#include "../game/tile.h"
 #include <QWidget>
-#include <iostream>
 #include <QBuffer>
 #include <QMessageBox>
 #include <QTcpSocket>
-#include "ui_mainwindow.h"
 #include <QEventLoop>
+#include <iostream>
+using namespace std;
 
 WebClient::WebClient(MainWindow* parent) :
     QObject(parent),

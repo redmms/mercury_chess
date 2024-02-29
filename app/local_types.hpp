@@ -5,15 +5,14 @@ import bitremedy;
 #ifndef pove
 #define pove std::pair<virtu, virtu>
 #define povec const pove& 
-#endif // !pove && !povec // WARNING: when you include this file,
+#endif // !pove && !povec 
+// WARNING: if you include this file,
 // place #endif to the end of your file
 // or use #undef after #include or include this file after other files
 // using defines for pove, povec and coorder
 #ifndef coorder
 #define coorder const scoord& 
 #endif // !coorder
-
-
 
 enum package_ty : quint8 {
     registration,

@@ -1,17 +1,16 @@
 #ifndef DEBUG_MESSAGE_HANDLER_H
 #define DEBUG_MESSAGE_HANDLER_H
-
+#include "../app/local_types.hpp"
 #include <QtGlobal>
-#include <stdio.h>
-#include <stdlib.h>
+#include <QMessageLogContext>
 #include <QFile>
 #include <QTextStream>
 #include <fstream>
 #include <iostream>
 #include <streambuf>
 #include <stdexcept>
-#include "../app/local_types.hpp"
-#include <QMessageLogContext>
+#include <stdio.h>
+#include <stdlib.h>
 
 std::ofstream log_ofstream;
 
@@ -81,6 +80,5 @@ public:
         }
     }
 };
-
 
 #endif // DEBUG_MESSAGE_HANDLER_H

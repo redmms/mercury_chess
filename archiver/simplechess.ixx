@@ -6,11 +6,11 @@ module;
 #include <QPointer>
 #include <QString>
 #include <QSettings>
-#include <windows.h>
 #include <QThread>
 #include <QApplication>
-#include <ostream>
 #include <QDebug>
+#include <ostream>
+#include <windows.h>
 
 export module simplechess;
 import bitremedy;

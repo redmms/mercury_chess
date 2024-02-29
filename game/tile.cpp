@@ -1,16 +1,14 @@
 #pragma once
 #include "tile.h"
 #include "board.h"
-#include "qdebug.h"
-#include "qimage.h"
-#include "qnamespace.h"
-#include "qpainter.h"
-#include "qpixmap.h"
-#include "qsize.h"
-//#include "qsvgrenderer.h"
+#include <QDebug>
+#include <QImage>
+#include <QPainter>
+#include <QPixmap>
+#include <QSize>
 #include <map>
-#include <qglobal.h>
 #include <string>
+using namespace std;
 
 Tile::Tile(Board* mother_board, scoord tile_coord, bool side) :
 	QLabel(mother_board, Qt::WindowFlags()),

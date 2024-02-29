@@ -4,11 +4,9 @@
 #include "tile.h"
 #include <QDebug>
 #include <iostream>
-
 using namespace std;
 using lambda = function<bool(scoord)>;
 using checker = function<bool(scoord, bool&)>;
-using func = bool (*)(scoord);
 
 Validator::Validator(Board* mother_board) :
 	board(*mother_board),
@@ -270,37 +268,6 @@ void Validator::findValid(Tile* from_tile)
 
 	// Lambdas about king:
     auto exposureKing = [&](scoord coord) -> bool {
-
-//        X = from.x - king.x,
-//        Y = from.y - king.y;
-//        bool from_aligns_king = abs(X) == abs(Y) || !X || !Y;
-//       // bool to_aligns_king = !notAlignsKing(coord, king, from);
-//        if (from_aligns_king){
-//            pove virtual_move;
-//            board.moveVirtually(from_tile, theTile(coord), virtual_move);
-//            auto threatensToKing = [&](scoord coord) -> bool {
-//                char name = pieceName(coord);
-//                return (abs(X) == abs(Y)
-//                    ? differentColor(coord) && (name == 'B' || name == 'Q')
-//                    : differentColor(coord) && (name == 'R' || name == 'Q'));
-//                };
-//            auto bordersAfter = [&](scoord coord) {
-//                return inBoard(coord) && (!occupied(coord) || differentColor(coord));
-//                };
-//            auto checkerAfter = [&](scoord coord, bool& result) -> bool {
-//                return enemyFinder(coord, threatensToKing, bordersAfter, result);
-//                };
-//            // FIX: it checks differentColor() 3 times or more
-//            bool occurs_threat;
-//            add = findDirection(king, from);
-//            fastThrough(king, add, checkerAfter, occurs_threat);
-//            board.revertVirtualMove(virtual_move);
-//            return occurs_threat;
-//        }
-//        else
-//            return false;
-
-		// FIX: how will it work if the king is already under check?
         if (first_evaluation) {
             X = from.x - king.x,
             Y = from.y - king.y;
@@ -350,7 +317,7 @@ void Validator::findValid(Tile* from_tile)
 		}
 		return false;
 		};
-	auto castlingPotential = [&](std::list<scoord>& coords) {
+	auto castlingPotential = [&](list<scoord>& coords) {
 		// adds coords of potential castling destination for king to the list
 		if (turn)
 			coords = { {2, 0}, {6, 0} };
@@ -457,7 +424,7 @@ void Validator::findValid(Tile* from_tile)
 
 bool Validator::canCastle(Tile* from, Tile* to, Tile*& rook)
 {
-	std::list<int> castling_side;
+	list<int> castling_side;
 	if (board.turn && from->piece_name == 'K' && !has_moved[1])
 		castling_side = { 0, 2 };
 	else if (!board.turn && from->piece_name == 'K' && !has_moved[4])
@@ -590,20 +557,44 @@ qint64 Validator::countMovesTest(int depth, int i)
     return particular_move_count;
 }
 
-// lines down here is for debugging:
-//                    std::list<scoord> valid_coords_copy;
-//                    for (auto move : valid_moves){
-//                        valid_coords_copy.push_back(move->coord);
-//                    }
-//
-
     // for every possible move you need to make a virtual move and than repeat the counting cycle
     // with new board situation
     // but board saves only 1 last move, so you need to save initial position at first,
     // otherwise you will not be able to restore it
     // and maybe I need to create some function that will restore copy all tile from a saved
     // board to original one
-
     // but a simple solution would be to just copy a board
 
+//auto exposureKing = [&](scoord coord) -> bool {
 
+	//        X = from.x - king.x,
+	//        Y = from.y - king.y;
+	//        bool from_aligns_king = abs(X) == abs(Y) || !X || !Y;
+	//       // bool to_aligns_king = !notAlignsKing(coord, king, from);
+	//        if (from_aligns_king){
+	//            pove virtual_move;
+	//            board.moveVirtually(from_tile, theTile(coord), virtual_move);
+	//            auto threatensToKing = [&](scoord coord) -> bool {
+	//                char name = pieceName(coord);
+	//                return (abs(X) == abs(Y)
+	//                    ? differentColor(coord) && (name == 'B' || name == 'Q')
+	//                    : differentColor(coord) && (name == 'R' || name == 'Q'));
+	//                };
+	//            auto bordersAfter = [&](scoord coord) {
+	//                return inBoard(coord) && (!occupied(coord) || differentColor(coord));
+	//                };
+	//            auto checkerAfter = [&](scoord coord, bool& result) -> bool {
+	//                return enemyFinder(coord, threatensToKing, bordersAfter, result);
+	//                };
+	//            // FIX: it checks differentColor() 3 times or more
+	//            bool occurs_threat;
+	//            add = findDirection(king, from);
+	//            fastThrough(king, add, checkerAfter, occurs_threat);
+	//            board.revertVirtualMove(virtual_move);
+	//            return occurs_threat;
+	//        }
+	//        else
+	//            return false;
+
+			// FIX: how will it work if the king is already under check?
+	// }

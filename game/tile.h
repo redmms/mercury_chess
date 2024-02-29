@@ -1,14 +1,14 @@
 #ifndef TILE_H
 #define TILE_H
 #include "../app/local_types.hpp"
-#include "qcolor.h"
-#include "qlabel.h"
-#include "qstring.h"
+#include <QColor>
+#include <QLabel>
+#include <QString>
+#include <QMouseEvent>
 #include <map>
 #include <string>
-class Board;
-class QMouseEvent;
 
+class Board;
 class Tile : public QLabel
 {
 	Q_OBJECT

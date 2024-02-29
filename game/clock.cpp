@@ -1,9 +1,8 @@
 #include "clock.h"
-#include <QtCore/qobjectdefs.h>
-#include <QLabel>
-#include "qnamespace.h"
-#include <QDebug>
 #include "../app/local_types.hpp"
+#include <QLabel>
+#include <QDebug>
+using namespace std;
 
 ChessClock::ChessClock(QObject* parent = 0, QLabel* opponent_label = 0, QLabel* user_label = 0,
     bool side_ = false, int max_minutes = 0)

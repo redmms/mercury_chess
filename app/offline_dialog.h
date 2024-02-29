@@ -1,9 +1,9 @@
 #ifndef OFFLINE_DIALOG_H
 #define OFFLINE_DIALOG_H
-
+#include "../app/local_types.hpp"
+#include "ui_offline_dialog.h"
 #include <QDialog>
 #include <QMessageBox>
-#include "../app/local_types.hpp"
 #include <QFileDialog>
 
 namespace Ui {
@@ -22,7 +22,9 @@ class OfflineDialog : public QDialog
     bool readName();
 public:
     explicit OfflineDialog(QWidget *parent = nullptr, QPixmap default_pic_ = {});
-    ~OfflineDialog();
+    ~OfflineDialog(){
+        delete ui;
+    }
 
 signals:
     void newOppName(QString name);

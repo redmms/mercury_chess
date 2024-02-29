@@ -1,12 +1,12 @@
 #pragma once
+#include "validator.h"
+#include "tile.h"
 #include "../app/local_types.hpp"
 #include <QLabel>
 #include <QSettings>
-#include "validator.h"
-#include "tile.h"
 #include <QPointer>
-#include <vector>
 #include <QDebug>
+#include <vector>
 import bitremedy;
 import finestream;
 
@@ -23,7 +23,7 @@ public:
 
     Board(QLabel* background, QSettings& settings_, MainWindow* mainwindow_);
 
-	MainWindow* mainwindow;
+	QPointer<MainWindow> mainwindow;
     std::vector<halfmove> history;
 	std::vector<bitmove> bistory;
     Validator* valid;
@@ -41,7 +41,7 @@ public:
     virtu last_virtually_passed;
 	endnum end_type;
 	int tile_size;
-	QSettings& settings;
+	QPointer<QSettings> settings;
 
 	void halfMove(scoord from, scoord to);
 	void halfMove(Tile* from, Tile* to);

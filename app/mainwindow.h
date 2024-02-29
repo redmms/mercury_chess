@@ -1,40 +1,32 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
-#include "qbitmap.h"
-#include "qfont.h"
-#include "qfontmetrics.h"
-#include "qpixmap.h"
-#include "qsettings.h"
-#include "qstring.h"
+#include "ui_mainwindow.h"
+#include "webclient.h"
 #include "rounded_scrollarea.hpp"
 #include "rounded_scrollarea_horizontal.hpp"
-#include "webclient.h"
-#include "qobject.h"
-#include <bitset>
-#include <map>
-#include <QPointer>
 #include "../game/board.h"
+#include "../game/clock.h"
+#include "../app/local_types.hpp"
+#include "../app/offline_dialog.h"
+#include <QBitmap>
+#include <QFont>
+#include <QFontMetrics>
+#include <QPixmap>
+#include <QSettings>
+#include <QString>
+#include <QObject>
+#include <QPointer>
 #include <QGraphicsDropShadowEffect>
 #include <QSoundEffect>
-#include "../game/clock.h"
 #include <QVBoxLayout>
 #include <QMainWindow>
 #include <QWidget>
-#include "ui_mainwindow.h"
-#include <QPointer>
-#include <QPointer>
-#include "../app/local_types.hpp"
-#include <vector>
-#include "../app/offline_dialog.h"
 #include <QFile>
-#include <QSettings>
-//import bitchess;
+#include <QEvent>
+#include <bitset>
+#include <map>
+#include <vector>
 import simplechess;
-
-class QEvent;
-class QObject;
-class QVBoxLayout;
-class WebClient;
 
 namespace Ui
 {
@@ -82,7 +74,6 @@ public:
 
 	MainWindow(QWidget* parent = 0, QString app_dir_ = "", QApplication* app = 0);
     ~MainWindow() {
-        delete net;
         QFile file(settings.fileName());
         if (file.exists()) {
             file.remove();

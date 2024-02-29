@@ -1,19 +1,16 @@
 #ifndef VALIDATOR_H
 #define VALIDATOR_H
-#include "../app/local_types.hpp"
 #include "../game/tile.h"
+#include <QPointer>
 #include <functional>
 #include <set>
 #include <list>
-#include <QPointer>
-
-class Board;
-class Tile;
 using lambda = std::function<bool(scoord)>;
 using checker = std::function<bool(scoord, bool&)>;
 
-class Validator
-{
+class Board;
+class Tile;
+class Validator {
 friend class Archiver;
 friend class Board;
 protected:

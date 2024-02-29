@@ -1,11 +1,9 @@
 #include "mainwindow.h"
+#include "webclient.h"
+#include "rules_dialog.h"
 #include "..\game\board.h"
 #include "..\game\validator.h"
-#include "webclient.h"
 #include <QPainter>
-#include <cstdlib>
-#include <ctime>
-#include <math.h>
 #include <QBitmap>
 #include <QEventLoop>
 #include <QFileDialog>
@@ -24,12 +22,13 @@
 #include <QDebug>
 #include <QKeyEvent>
 #include <QCryptographicHash>
+#include <QDesktopServices>
+#include <cstdlib>
+#include <ctime>
+#include <math.h>
 #include <cmath>
 #include <string>
 #include <stdexcept>
-#include "rules_dialog.h"
-#include <QDesktopServices>
-
 using namespace std;
 
 MainWindow::MainWindow(QWidget* parent, QString app_dir_, QApplication* app) :
@@ -80,7 +79,7 @@ MainWindow::MainWindow(QWidget* parent, QString app_dir_, QApplication* app) :
     //ui->actionProfile->setEnabled(false);
     this->setWindowIcon(QIcon(":/images/app_icon"));
 
-    std::srand(std::time(0));
+    srand(time(0));
 
 	// sounds init
     sounds["move"]=(new QSoundEffect);
@@ -115,7 +114,7 @@ MainWindow::MainWindow(QWidget* parent, QString app_dir_, QApplication* app) :
 	// settings init
 	QSettings::setDefaultFormat(QSettings::IniFormat); // personal preference
 	settings.setValue("user_name", "Lazy" +
-		QString::number(std::rand() % (int)std::pow(10, max_nick - 4)));
+		QString::number(rand() % (int)pow(10, max_nick - 4)));
 	settings.setValue("opp_name", "Player2");
 	settings.setValue("time_setup", 0);
 	settings.setValue("match_side", true);
@@ -321,12 +320,12 @@ void MainWindow::startGame(QString game_regime) // side true for user - white
         bool messages_connected = connect(this, &MainWindow::editReturnPressed, this, &MainWindow::editReturnSlot);
         ui->resign_button->setText("Resign");
         ui->draw_button->setText("Suggest a draw");
-        disconnect(ui->resign_button);
-        disconnect(ui->draw_button);
+        ui->resign_button->disconnect();
+        ui->draw_button->disconnect();
         connect(ui->resign_button, &QPushButton::clicked, this, &MainWindow::on_resign_button_clicked);
         connect(ui->draw_button, &QPushButton::clicked, this, &MainWindow::on_draw_button_clicked);
         if (!messages_connected) {
-            qDebug() << "Messages wasn't connected";
+            qDebug() << "Messages were not connected";
         }
         qDebug() << "editReturnPressed receivers number is" << receivers(SIGNAL(editReturnPressed));
     }
@@ -339,8 +338,8 @@ void MainWindow::startGame(QString game_regime) // side true for user - white
         ui->opponent_timer->setText("");
         ui->resign_button->setText("Back");
         ui->draw_button->setText("Stop game");
-        disconnect(ui->resign_button);
-        disconnect(ui->draw_button);
+        ui->resign_button->disconnect();
+        ui->draw_button->disconnect();
         connect(ui->resign_button, &QPushButton::clicked, this, &MainWindow::my_offline_back_button_clicked);
         connect(ui->draw_button, &QPushButton::clicked, this, &MainWindow::my_offline_stop_button_clicked);
     }
@@ -355,8 +354,8 @@ void MainWindow::startGame(QString game_regime) // side true for user - white
         ui->opponent_timer->setText("");
         ui->resign_button->setText("Next move");
         ui->draw_button->setText("Previous move");
-        disconnect(ui->resign_button);
-        disconnect(ui->draw_button);
+        ui->resign_button->disconnect();
+        ui->draw_button->disconnect();
         connect(ui->resign_button, &QPushButton::clicked, this, &MainWindow::my_history_next_button_clicked);
         connect(ui->draw_button, &QPushButton::clicked, this, &MainWindow::my_history_previous_button_clicked);
     }
