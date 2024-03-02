@@ -21,7 +21,7 @@ public:
 	VirtualTile* black_king;
 	char last_promotion;
 	endnum end_type;
-
+	int current_move;
 
 	//void saveMove(const VirtualTile& from, const VirtualTile& to, vove& move);
 	void moveNormally(VirtualTile& from, VirtualTile& to);
@@ -31,12 +31,15 @@ public:
 	void promotePawn(scoord from, char into);
 	void halfMove(scoord from, scoord to, char promo = 'e');
 	void halfMove(VirtualTile& from, VirtualTile& to, char promo = 'e');
+	void doCurrentMove();
 	void restoreTile(VirtualTile& restored, VirtualTile saved);
 	void revertMoveNormally(vove move);
 	void revertCastling(vove move);
 	void revertPass(vove move);
 	void revertPromotion(vove move);
 	void revertHalfmove(halfvove move);
+	void revertCurrentMove();
+	void revertLastMove();
 	VirtualTile& theTile(scoord coord);
 	VirtualTile& theTile(VirtualTile tile);
 

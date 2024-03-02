@@ -11,8 +11,8 @@ friend class Archiver;
 friend class Board;
 protected:
     Board& board;
-    std::set<Tile*, TileCmp> movable_pieces;
-    std::set<Tile*, TileCmp> valid_moves;
+    std::set<scoord, TileCmp> movable_pieces;
+    std::set<scoord, TileCmp> valid_moves;
     bool check;
     bool has_moved[6];
     scoord rooks_kings[6];
@@ -41,17 +41,17 @@ public:
     std::function<bool(scoord)> differentColor;
     std::function<char(scoord)> pieceName;
 
-    void showValid(Tile* from);
+    void showValid(scoord from);
     void hideValid();
-    bool isValid(Tile* move);
+    bool isValid(scoord move);
     bool empty();
     bool inCheck(bool color);
     bool inCheckmate(bool color);
     bool inStalemate(bool color);
-    bool canCastle(Tile* from, Tile* to, Tile*& rook);
-    bool canPass(Tile* from, Tile* to);
-    bool canPassVirtually(Tile* from, Tile* to, pove virtual_move);
-    bool canPromote(Tile* pawn, Tile* destination);
+    bool canCastle(scoord from, scoord to, scoord& rook);
+    bool canPass(scoord from, scoord to);
+    bool canPassVirtually(scoord from, scoord to, pove virtual_move);
+    bool canPromote(scoord pawn, scoord destination);
     void reactOnMove(scoord from, scoord to);
     void bringBack(scoord from, scoord to);
     qint64 countMovesTest(int depth = 5, int i = 0);

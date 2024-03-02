@@ -57,18 +57,6 @@ void VirtualBoard::setTiles(bool side)
 //	move = {from, to};
 //}
 
-void VirtualBoard::revertVirtualMove(pove& move)
-{
-	virtu from = move.first;
-	virtu to = move.second;
-	restoreTile(from);
-	restoreTile(to);
-	if (last_virtually_passed.tile != nullptr) {
-		restoreTile(last_virtually_passed);
-	}
-	move = {};
-}
-
 void VirtualBoard::moveNormally(VirtualTile& from, VirtualTile& to)
 {
 	to.setPiece(from.piece_name, from.piece_color);
@@ -167,6 +155,26 @@ void VirtualBoard::revertHalfmove(halfvove move)
 	else {
 		revertMoveNormally(move.move);
 	}
+}
+
+void VirtualBoard::revertCurrentMove()
+{
+	revertHalfmove(history[current_move]);
+	current_move--;
+}
+
+void VirtualBoard::revertLastMove()
+{
+	if (!history.empty()) {
+		revertHalfmove(history.back());
+		history.pop_back();		
+	}
+}
+
+void VirtualBoard::doCurrentMove()
+{
+	halfMove(history[current_move]);
+	current_move++;
 }
 
 VirtualTile& VirtualBoard::theTile(scoord coord)
