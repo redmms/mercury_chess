@@ -10,7 +10,7 @@ int main(int argc, char *argv[])
     qInstallMessageHandler(&LogHandler::messageHandler);
     QApplication app(argc, argv);
     app.setOrganizationName("MMD18 soft");
-    app.setApplicationName("Mercury Chess");
+    app.setApplicationName("MercuryChess" + curTime());
     QString app_dir = app.applicationDirPath();
     MainWindow mainwindow(0, app_dir, &app);
     mainwindow.showMaximized();

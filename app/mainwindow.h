@@ -1,5 +1,5 @@
 #pragma once
-#include "../app/local_types.hpp"
+#include "../app/local_types.h"
 #include <QMainWindow>
 #include <QBitmap>
 
@@ -78,6 +78,7 @@ public:
 signals:
 	void timeToSwitchTime();
     void editReturnPressed();
+    void timeToSleep();
 
 private slots:
     // user defined slots
@@ -111,7 +112,7 @@ private slots:
     void on_actionLoad_game_triggered();
 
     // menu's actions in development
-    void on_actionWith_friend_2_triggered();
+    void on_actionWith_AI_triggered();
     void on_actionTraining_triggered();
     void on_actionRandomly_triggered();
     void on_actionRules_triggered();

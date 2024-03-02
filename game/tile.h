@@ -1,11 +1,10 @@
 #pragma once
-#include "../app/local_types.hpp"
+#include "../app/local_types.h"
 #include <QLabel>
 
 class Board;
 class QMouseEvent;
-class Tile : public QLabel
-{
+class Tile : public QLabel{
 	Q_OBJECT
 
 	QColor black;

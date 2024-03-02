@@ -19,11 +19,13 @@
 #include <QTimer>
 #include <QDebug>
 #include <QThread>
+#include <QString>
+#include <QApplication>
 using namespace std;
 
 MainWindow::MainWindow(QWidget* parent, QString app_dir_, QApplication* app) :
     app(app),
-	QMainWindow(parent),
+	QMainWindow(0),
     app_dir(app_dir_),
     board{},
     clock{},
@@ -65,6 +67,9 @@ MainWindow::MainWindow(QWidget* parent, QString app_dir_, QApplication* app) :
     ui->draw_button->disconnect();
     ui->resign_button->disconnect();
     ui->menuOnline->setEnabled(false);
+    ui->actionWith_AI->setEnabled(false);
+    ui->actionTraining->setEnabled(false);
+    ui->actionRandomly->setEnabled(false);
     //ui->actionProfile->setEnabled(false);
     this->setWindowIcon(QIcon(":/images/app_icon"));
 
@@ -101,14 +106,15 @@ MainWindow::MainWindow(QWidget* parent, QString app_dir_, QApplication* app) :
 	sounds["draw"]->setSource(QUrl::fromLocalFile(":/sounds/draw"));
 
 	// settings init
-    settings.setValue("user_name", "Lazy" +
+    //settings = QSettings("settings_" + curTime() + ".ini", QSettings::IniFormat);
+    settings["user_name"].setValue(QString("Lazy") + 
 		QString::number(rand() % (int)pow(10, max_nick - 4)));
-	settings.setValue("opp_name", "Player2");
-	settings.setValue("time_setup", 0);
-	settings.setValue("match_side", true);
-    settings.setValue("game_regime", "friend_offline");
-    settings.setValue("ip_address", default_address);
-    settings.setValue("port_address", default_port);
+	settings["opp_name"].setValue(QString("Player2"));
+	settings["time_setup"].setValue(0);
+	settings["match_side"].setValue(true);
+    settings["game_regime"].setValue(QString("friend_offline"));
+    settings["ip_address"].setValue(default_address);
+    settings["port_address"].setValue(default_port);
 
 	// glow effect for avatars
     avatar_effect->setBlurRadius(40);
@@ -128,7 +134,7 @@ MainWindow::MainWindow(QWidget* parent, QString app_dir_, QApplication* app) :
     ui->user_avatar->setMask(pic_mask);
     ui->opponent_avatar->setMask(pic_mask);
 	ui->profile_avatar->setMask(pic_mask); // picture in the settings
-	ui->profile_name->setText(settings.value("user_name").toString());
+	ui->profile_name->setText(settings["user_name"].toString());
 	ui->profile_avatar->setPixmap(user_pic);
 
 	// friend_connect_tab > time limit buttons
@@ -139,7 +145,7 @@ MainWindow::MainWindow(QWidget* parent, QString app_dir_, QApplication* app) :
         if (button)
             connect(button, &QPushButton::clicked, [this, button]() {
                 int minutes_n = button->text().toInt(); //button->objectName().mid(3).toInt()
-                settings.setValue("time_setup", minutes_n);
+                settings["time_setup"].setValue(minutes_n);
             });
 	}
 
@@ -176,24 +182,23 @@ MainWindow::MainWindow(QWidget* parent, QString app_dir_, QApplication* app) :
     history_area->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     ui->game_grid->replaceWidget(ui->match_history, history_area);
     ui->match_history->~QLabel();
-
     history_label->setStyleSheet("background-color: transparent;");
     history_label->setFont({ "Segoe UI", 12 });
     history_label->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
     history_area->setWidget(history_label);
     history_area->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
-
     history_area->setWidgetResizable(true);
-
-   // openTab(ui->training_tab);
 }
 
 MainWindow::~MainWindow() {
-    QFile file(settings.fileName());
-    if (file.exists()) {
-        file.remove();
-    }
+    //QFile file(settings.fileName());
+    //if (file.exists()) {
+    //    file.remove();
+    //}
+    //emit timeToSleep();
+    //disconnect();
     delete ui;
+    //app->quit();
 }
 
 #include "mainwindow_buttons.hpp"
@@ -285,7 +290,7 @@ int MainWindow::changeLocalName(QString name)
         return 2;
     }
     else {
-        settings.setValue("user_name", name);
+        settings["user_name"].setValue(name);
         ui->user_name->setText(name);
         ui->profile_name->setText(name);
     }
@@ -298,7 +303,7 @@ void MainWindow::showStatus(const QString& status) {
 
 void MainWindow::switchGlow() // FIX: should be changed for different sides
 {
-    bool match_side = settings.value("match_side").toBool();
+    bool match_side = settings["match_side"].toBool();
     if (board->turn == match_side)
         ui->user_avatar->setGraphicsEffect(avatar_effect);
     else
@@ -309,12 +314,12 @@ void MainWindow::switchGlow() // FIX: should be changed for different sides
 void MainWindow::startGame(QString game_regime) // side true for user - white
 {
     if (game_active) {
-        if (settings.value("game_regime").toString() == "friend_online" && net) {
+        if (settings["game_regime"].toString() == "friend_online" && net) {
             net->sendToServer(package_ty::interrupt_signal);
         }
         endSlot(endnum::interrupt);
     }
-    settings.setValue("game_regime", game_regime);
+    settings["game_regime"].setValue(game_regime);
     if (game_regime == "friend_online"){
         ui->actionProfile->setEnabled(false);
         ui->message_edit->setPlainText("Great move! Have you studied in a clown school?");
@@ -332,9 +337,7 @@ void MainWindow::startGame(QString game_regime) // side true for user - white
         qDebug() << "editReturnPressed receivers number is" << receivers(SIGNAL(editReturnPressed));
     }
     else if (game_regime == "friend_offline"){
-        settings.setValue("match_side", true);
-        //opp_pic = default_pic;
-        //settings.setValue("opp_name", "Friend");
+        settings["match_side"].setValue(true);
         ui->message_edit->setPlainText("Chat is off. But you can chat with yourself if you are a hikikomori.");
         ui->user_timer->setText("");
         ui->opponent_timer->setText("");
@@ -346,10 +349,6 @@ void MainWindow::startGame(QString game_regime) // side true for user - white
         connect(ui->draw_button, &QPushButton::clicked, this, &MainWindow::my_offline_stop_button_clicked);
     }
     else if (game_regime == "history") {
-    // FIX: for debug
-        //bool side = 
-
-    //
         opp_pic = default_pic;
         ui->message_edit->setPlainText("Chat is off. But you can chat with yourself if you are a hikikomori."); 
         ui->user_timer->setText("");
@@ -364,10 +363,10 @@ void MainWindow::startGame(QString game_regime) // side true for user - white
 	openTab(ui->game_tab);
     activateWindow();
 	ui->user_avatar->setPixmap(user_pic);
-	ui->user_name->setText(settings.value("user_name").toString());
+	ui->user_name->setText(settings["user_name"].toString());
 	ui->opponent_avatar->setPixmap(opp_pic);
-	ui->opponent_name->setText(settings.value("opp_name").toString());
-	bool match_side = settings.value("match_side").toBool();
+	ui->opponent_name->setText(settings["opp_name"].toString());
+	bool match_side = settings["match_side"].toBool();
     (match_side ? ui->user_avatar : ui->opponent_avatar)->setGraphicsEffect(avatar_effect);
 	for (QLayoutItem* child; (child = message_layout->takeAt(0)) != nullptr; child->widget()->~QWidget()) {}
     message_box->resize(rounded_area->width(), 0);
@@ -397,7 +396,7 @@ void MainWindow::startGame(QString game_regime) // side true for user - white
             net->sendToServer(package_ty::move, {}, {}, from, to, promotion_type);
         });
 
-        int time = settings.value("time_setup").toInt();
+        int time = settings["time_setup"].toInt();
         clock=(new ChessClock(board, ui->opponent_timer, ui->user_timer, match_side, time));
         // old clock will be destroyed inside Board constructor as a child // FIX: at least it should be
         connect(this, &MainWindow::timeToSwitchTime, clock, &ChessClock::switchTimer);
@@ -416,8 +415,7 @@ void MainWindow::startGame(QString game_regime) // side true for user - white
 
 }
 
-void MainWindow::endSlot(endnum end_type)  // FIX: white_wins and black_wins enum values should
-// be changed to user_wins and opp_wins, and what color user plays should be checked in Board::reactOnClick();
+void MainWindow::endSlot(endnum end_type)
 {
     if (!game_active){
         qDebug() << "Application tried to close inactive game";
@@ -436,7 +434,7 @@ void MainWindow::endSlot(endnum end_type)  // FIX: white_wins and black_wins enu
     board->end_type = end_type;
 
 
-    QString opp_name = settings.value("opp_name").toString();
+    QString opp_name = settings["opp_name"].toString();
     QString info_message;
     auto icon_type = QMessageBox::Information;
     switch (end_type) {
@@ -485,7 +483,7 @@ void MainWindow::endSlot(endnum end_type)  // FIX: white_wins and black_wins enu
         return;
     }
 
-    if (settings.value("game_regime").toString() == "friend_online" && net) {
+    if (settings["game_regime"].toString() == "friend_online" && net) {
         net->sendToServer(package_ty::end_game);
     }
     showStatus(info_message);

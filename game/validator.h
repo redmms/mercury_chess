@@ -11,8 +11,8 @@ friend class Archiver;
 friend class Board;
 protected:
     Board& board;
-    std::set<QPointer<Tile>, TileCmp> movable_pieces;
-    std::set<QPointer<Tile>, TileCmp> valid_moves;
+    std::set<Tile*, TileCmp> movable_pieces;
+    std::set<Tile*, TileCmp> valid_moves;
     bool check;
     bool has_moved[6];
     scoord rooks_kings[6];
@@ -53,5 +53,6 @@ public:
     bool canPassVirtually(Tile* from, Tile* to, pove virtual_move);
     bool canPromote(Tile* pawn, Tile* destination);
     void reactOnMove(scoord from, scoord to);
+    void bringBack(scoord from, scoord to);
     qint64 countMovesTest(int depth = 5, int i = 0);
 };

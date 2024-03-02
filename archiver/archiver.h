@@ -1,5 +1,5 @@
 #pragma once
-#include "../app/local_types.hpp"
+#include "../app/local_types.h"
 #include <QObject>
 import finestream;
 
@@ -9,16 +9,14 @@ constexpr int CHB = CHAR_BIT;
 constexpr int CHB1 = CHAR_BIT - 1;
 
 class Board;
-class Validator;
 class Tile;
 class Archiver : public QObject {
 	Q_OBJECT
 
 	const uint8_t archiver_version = 0;
 	Board* board;
-	Validator* valid;
-	QPointer<Tile> from;
-	QPointer<Tile> to;
+	Tile* from;
+	Tile* to;
 	fsm::ofinestream ofs;
 	fsm::ifinestream ifs;
 	uint8_t moves_num;

@@ -1,6 +1,7 @@
 #pragma once
 #include <QDialog>
 
+//FIX: could be simplified, using settings variable
 namespace Ui {
     class OfflineDialog;
 }

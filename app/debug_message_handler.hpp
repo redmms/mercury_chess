@@ -1,5 +1,5 @@
 #pragma once
-#include "../app/local_types.hpp"
+#include "../app/local_types.h"
 #include <QMessageLogContext>
 #include <fstream>
 #include <iostream>
@@ -56,12 +56,12 @@ public:
             }
             log_ofstream 
                 << "\n"
-                //<< context.file
-                //<< ", "
-                //<< context.line
-                //<< ", "
-                //<< context.function
-                //<< "\n"
+                << context.file
+                << ", "
+                << context.line
+                << ", "
+                << context.function
+                << "\n"
                 << (curTime() + ": ").toStdString()
                 << msg.toStdString()
                 << "\n\n";

@@ -89,12 +89,15 @@ void Validator::showValid(Tile* from)
 
 void Validator::hideValid()
 {
-    if (board.from_tile != nullptr)
-        board.from_tile->dyeNormal();
-    else
-        qDebug() << "You try to dyeNormal() from_tile that is nullptr";
-	for (auto tile : valid_moves)
-		tile->dyeNormal();
+	QString game_regime = settings["game_regime"].toString();
+	if (game_regime != "history") {
+		if (board.from_tile != nullptr)
+			board.from_tile->dyeNormal();
+		else
+			qDebug() << "You try to dyeNormal() from_tile that is nullptr";
+		for (auto tile : valid_moves)
+			tile->dyeNormal();
+	}
 	valid_moves.clear();
 }
 
@@ -208,6 +211,7 @@ void Validator::findValid(Tile* from_tile)
 	// instead of [i][j] that is equal to [y][x];
 	// and we also consider that white pieces are on the 0 line and black on the 
 	// 7 line
+	//valid_moves.clear();
 	const bool turn = board.turn;
 	const char piece = from_tile->piece_name;
 	const scoord king = turn ? board.white_king->coord : board.black_king->coord;
@@ -427,7 +431,7 @@ bool Validator::canCastle(Tile* from, Tile* to, Tile*& rook)
 		castling_side = { 0, 2 };
 	else if (!board.turn && from->piece_name == 'K' && !has_moved[4])
 		castling_side = { 3, 5 };
-	for (int i : castling_side)
+	for (int i : castling_side){
 		if (to->coord == castling_destination[i] && !has_moved[i]) {
 			for (auto coord : should_be_free[i])
 				if (theTile(coord)->piece_name != 'e')
@@ -438,6 +442,7 @@ bool Validator::canCastle(Tile* from, Tile* to, Tile*& rook)
 			rook = theTile(rooks_kings[i]);
 			return true;
 		}
+	}
 	return false;
 }
 
@@ -479,6 +484,13 @@ void Validator::reactOnMove(scoord from, scoord to)
 	for (int i = 0; i < 6; i++)
 		if (from == rooks_kings[i] || to == rooks_kings[i])
             has_moved[i] = true;
+}
+
+void Validator::bringBack(scoord from, scoord to)
+{
+	for (int i = 0; i < 6; i++)
+		if (from == rooks_kings[i] || to == rooks_kings[i])
+			has_moved[i] = false;
 }
 
 qint64 Validator::countMovesTest(int depth, int i)

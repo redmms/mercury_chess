@@ -1,8 +1,8 @@
 #pragma once
-#include "../app/local_types.hpp"
+#include "../app/local_types.h"
+#include "validator.h"
 #include <QLabel>
 
-class Validator;
 class WebClient;
 class MainWindow;
 class Board : public QLabel {
@@ -15,19 +15,20 @@ public:
 	void openPromotion(Tile* from);
 
     Board(QLabel* background, MainWindow* mainwindow_);
+	~Board();
 
 	QPointer<MainWindow> mainwindow;
     std::vector<halfmove> history;
 	std::vector<bitmove> bistory;
-    Validator* valid;
-    QPointer<Tile> tiles[8][8];
+    Validator valid;
+    Tile* tiles[8][8];
 	bool turn;
 	bool side;
-    QPointer<Tile> from_tile;
-    QPointer<Tile> white_king;
-    QPointer<Tile> black_king;
+    Tile* from_tile;
+    Tile* white_king;
+    Tile* black_king;
 	pove virtual_move;
-    QPointer<Tile> menu[4];
+    Tile* menu[4];
 	QString board_css;
 	QString promo_css;
     char last_promotion;
@@ -38,14 +39,14 @@ public:
 	void halfMove(scoord from, scoord to);
 	void halfMove(Tile* from, Tile* to);
 	void saveMove(Tile* from, Tile* to, pove& move);
-    void revertVirtualMove(pove& move);
-    void moveVirtually(Tile* from, Tile* to, pove& move);
 	void moveNormally(Tile* from, Tile* to);
 	void castleKing(Tile* king, Tile* destination, Tile* rook);
 	void passPawn(Tile* from, Tile* to);
     void restoreTile(virtu saved);
 	void promotePawn(Tile* from, char into);
 	void promotePawn(scoord from, char into);
+	void moveVirtually(Tile* from, Tile* to, pove& move);
+	void revertVirtualMove(pove& move);
 	bitmove toBitmove(halfmove hmove);
 	bitremedy toPieceIdx(Tile* from);
 	bitremedy toMoveIdx(Tile* to);
@@ -60,7 +61,6 @@ signals:
 	void theEnd(endnum end_type);
 	void promotionEnd();
     void moveMade(scoord from, scoord to, char promotion_type);
-	void needBoardUpdate();
 	//void moveMade(Tile* from, Tile* to);
 
 private slots:

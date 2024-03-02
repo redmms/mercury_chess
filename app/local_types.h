@@ -10,6 +10,9 @@
 #ifndef coorder
 #define coorder const scoord& 
 #endif // !coorder
+#ifndef vove
+#define vove std::pair<VirtualTile, VirtualTile>
+#endif
 
 #include <utility>
 enum package_ty : uint8_t {
@@ -101,13 +104,21 @@ class Tile;
 #include <QPointer>
 struct virtu{
 //    virtu(){tile = nullptr; color = false; name = 'e';}
-    QPointer<Tile> tile;
+    Tile* tile;
     bool color = true;
     char name = 'K'; // this way you will soon know if something went wrong
 };
 
 struct halfmove{
     pove move;
+    char promo = 'e';
+    bool castling = false;
+    bool pass = false;
+    bool turn = false;
+};
+
+struct halfvove {
+    vove move;
     char promo = 'e';
     bool castling = false;
     bool pass = false;
@@ -150,23 +161,6 @@ enum promo_ty {
     no_promotion
 };
 
-#include <map>
-static std::map<char, promo_ty> promo_by_char{
-    {'N', to_knight},
-    {'B', to_bishop},
-    {'R', to_castle},
-    {'Q', to_queen},
-    {'e', no_promotion}
-};
-
-static std::map<promo_ty, char> char_by_promo{
-    {to_knight, 'N'},
-    {to_bishop, 'B'},
-    {to_castle, 'R'},
-    {to_queen, 'Q'},
-    {no_promotion, 'e'}
-};
-
 import bitremedy;
 struct bitmove {
     bitremedy piece = {};
@@ -174,5 +168,11 @@ struct bitmove {
     promo_ty promo = promo_ty::no_promotion;
 };
 
-#include <QSettings>
-static QSettings settings( "settings_" + curTime() + ".ini", QSettings::IniFormat );
+#include <map>
+extern std::map<char, promo_ty> promo_by_char;
+
+extern std::map<promo_ty, char> char_by_promo;
+
+#include <QVariant>
+extern std::map<QString, QVariant> settings;
+/*( "settings_" + curTime() + ".ini", QSettings::IniFormat )*/

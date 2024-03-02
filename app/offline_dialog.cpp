@@ -1,7 +1,7 @@
 #pragma once
 #include "offline_dialog.h"
 #include "ui_offline_dialog.h"
-#include "../app/local_types.hpp"
+#include "../app/local_types.h"
 #include <QPainter>
 #include <QBitmap>
 #include <QFileDialog>

@@ -70,7 +70,7 @@ void MainWindow::on_back_from_settings_clicked()
 
 void MainWindow::on_actionWith_friend_triggered()
 {
-    QString game_regime = settings.value("game_regime").toString();
+    QString game_regime = settings["game_regime"].toString();
     openTab(ui->friend_connect_tab);
 }
 
@@ -114,7 +114,7 @@ void MainWindow::on_end_login_button_clicked()
          QCryptographicHash hasher(QCryptographicHash::Sha512);
          hasher.addData(ui->login_password->text().toLocal8Bit());
          QByteArray hashed_password = hasher.result();
-         settings.setValue("user_pass", hashed_password);
+         settings["user_pass"].setValue(hashed_password);
          if (login_regime == 2)
             net->sendToServer(package_ty::registration);
          else if (login_regime == 1)
@@ -142,9 +142,9 @@ void MainWindow::on_send_invite_button_clicked() // FIX: here - package_ty::invi
 //        qDebug() << "Tried to send match invite several times";
 //        return;
 //    }
-    int chosen_time = settings.value("time_setup").toInt();
+    int chosen_time = settings["time_setup"].toInt();
     QString opp_name = ui->friend_name_edit->text();
-    QString user_name = settings.value("user_name").toString();
+    QString user_name = settings["user_name"].toString();
     if (!chosen_time) {
         showBox("Set up match timer",
                 "You need to choose initial time for chess clock.",
@@ -168,8 +168,8 @@ void MainWindow::on_send_invite_button_clicked() // FIX: here - package_ty::invi
 //            loop.quit();
 //        });
         bool match_side = std::rand() % 2;
-        settings.setValue("match_side", match_side);
-        settings.setValue("opp_name", opp_name);
+        settings["match_side"].setValue(match_side);
+        settings["opp_name"].setValue(opp_name);
         net->sendToServer(package_ty::invite);
        // QApplication::setOverrideCursor(Qt::WaitCursor);
         waiting_for_invite_respond = true;
@@ -180,9 +180,9 @@ void MainWindow::on_send_invite_button_clicked() // FIX: here - package_ty::invi
 void MainWindow::editReturnSlot()
 {
     QString message_text = ui->message_edit->toPlainText();
-    printMessage(settings.value("user_name").toString(), true, message_text);
+    printMessage(settings["user_name"].toString(), true, message_text);
     ui->message_edit->clear();
-    if (settings.value("game_regime").toString() == "friend_online")
+    if (settings["game_regime"].toString() == "friend_online")
         net->sendToServer(package_ty::chat_message, false, message_text); // FIX: works even after the end of the game
 }
 
@@ -223,7 +223,7 @@ void MainWindow::on_actionWith_friend_offline_triggered()
 {
     OfflineDialog dialog(this, default_pic);
     connect(&dialog, &OfflineDialog::newOppName, [&](QString name) {
-        settings.setValue("opp_name", name);
+        settings["opp_name"].setValue(name);
     });
     connect(&dialog, &OfflineDialog::newOppPic, [&](QPixmap pic) {
         opp_pic = pic;
@@ -231,10 +231,10 @@ void MainWindow::on_actionWith_friend_offline_triggered()
     auto res = dialog.exec();
     if (res == QDialog::Rejected){
         opp_pic = default_pic;
-        settings.setValue("opp_name", "Friend");
+        settings["opp_name"].setValue(QString("Friend"));
     }
-    //QString game_regime = settings.value("game_regime").toString();
-    //settings.setValue("game_regime", "friend_offline");
+    //QString game_regime = settings["game_regime").toString();
+    //settings[ ] = ("game_regime", "friend_offline");
     startGame("friend_offline");
 }
 
@@ -247,15 +247,15 @@ void MainWindow::on_change_ip_button_clicked()
 {
     QString new_address = ui->ip_edit->text();
     int new_port = ui->port_edit->text().toInt();
-    settings.setValue("ip_address", new_address);
-    settings.setValue("port_address", new_port);
+    settings["ip_address"].setValue(new_address);
+    settings["port_address"].setValue(new_port);
     net->connectNewHost();
 }
 
 void MainWindow::on_restore_default_button_clicked()
 {
-    settings.setValue("ip_address", default_address);
-    settings.setValue("port_address", default_port);
+    settings["ip_address"].setValue(default_address);
+    settings["port_address"].setValue(default_port);
     net->connectNewHost();
     ui->ip_edit->clear();
     ui->port_edit->clear();
@@ -317,7 +317,7 @@ void MainWindow::on_actionAbout_Qt_triggered()
     QMessageBox::aboutQt(this, "About Qt");
 }
 
-void MainWindow::on_actionWith_friend_2_triggered()
+void MainWindow::on_actionWith_AI_triggered()
 {
     openInDevDialog();
 }
@@ -381,7 +381,7 @@ void MainWindow::on_actionSave_game_triggered()
     QString  archive_fullname =
         archive_dir
         + "/"
-        + settings.value("opp_name").toString()
+        + settings["opp_name"].toString()
         + "_"
         + curTime()
         + ".mmd18";
@@ -427,7 +427,6 @@ void MainWindow::on_actionSave_game_triggered()
     }
 }
 
-
 void MainWindow::on_actionLoad_game_triggered()
 {
     QString archive_dir = app_dir + "/saved_games";
@@ -452,13 +451,22 @@ void MainWindow::on_actionLoad_game_triggered()
     // Read game from the file
     Archiver archiver(this);
     connect(&archiver, &Archiver::needUpdate, this, &MainWindow::updateApp);
+    connect(app, &QApplication::aboutToQuit, [&]() {
+        this->disconnect();
+        archiver.disconnect();
+        delete ui;
+        app->exit();
+    });
+    //connect(this, &MainWindow::timeToSleep, [&]() {
+    //        archiver.disconnect();
+    //});
     int error = archiver.readHeader(archive_fullname.toStdString());
     if (!error) {
         startGame("history");
         error = archiver.readMoves(board);
         if (error) {
             showBox("Incorrect file",
-                "Archive file is incorrect",
+                "Archive file is incorrect. Error code:" + QString::number(error),
                 QMessageBox::Warning);
         }
         showBox("Good news",

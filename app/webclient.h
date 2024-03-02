@@ -1,5 +1,5 @@
 #pragma once
-#include "../app/local_types.hpp"
+#include "../app/local_types.h"
 
 class MainWindow;
 class QTcpSocket;

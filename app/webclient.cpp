@@ -42,7 +42,7 @@ void WebClient::initSocket()
             showBox("No connection",
                     "You are offline. Contact me by mmd18cury@yandex.ru to start the server.",
                     QMessageBox::Warning);
-//            settings.setValue("game_regime", "friend_offline");
+//            settings[ ] = ("game_regime", "friend_offline");
 //            mainwindow->startGame();
         }
         else if (socket->state() != QAbstractSocket::ConnectedState){
@@ -108,8 +108,8 @@ void WebClient::connectToServer()
 // socket parameter should be a valid QTcpSocket*
 {
 //    if (socket->state() == QAbstractSocket::UnconnectedState)
-    QString address = settings.value("ip_address").toString();
-    int port = settings.value("port_address").toInt();
+    QString address = settings["ip_address"].toString();
+    int port = settings["port_address"].toInt();
     socket->connectToHost(address, port);  // /*"192.168.0.10"*/ "127.0.0.1"
     //socket->connectToHost("127.0.0.1", 49001);  // /*"192.168.0.10"*/ "127.0.0.1"
 
@@ -175,14 +175,14 @@ void WebClient::sendToServer(package_ty type, bool respond, QString message, sco
     switch(type){
     case package_ty::registration:
         writePack(package_ty::registration);
-        writePack(settings.value("user_name").toString());
-        writePack(settings.value("user_pass").toByteArray());
+        writePack(settings["user_name"].toString());
+        writePack(settings["user_pass"].toByteArray());
         // FIX: add check of "user_name" setting exist. P.S. no need
         break;
     case package_ty::login:
         writePack(package_ty::login);
-        writePack(settings.value("user_name").toString());
-        writePack(settings.value("user_pass").toByteArray());
+        writePack(settings["user_name"].toString());
+        writePack(settings["user_pass"].toByteArray());
         break;
     case package_ty::new_name:
         writePack(package_ty::new_name);
@@ -190,10 +190,10 @@ void WebClient::sendToServer(package_ty type, bool respond, QString message, sco
         break;
     case package_ty::invite:
         writePack(package_ty::invite);
-        writePack(settings.value("opp_name").toString());
-        writePack(settings.value("user_name").toString());
-        writePack((quint8) (settings.value("time_setup").toInt()));
-        writePack(!settings.value("match_side").toBool());
+        writePack(settings["opp_name"].toString());
+        writePack(settings["user_name"].toString());
+        writePack((quint8) (settings["time_setup"].toInt()));
+        writePack(!settings["match_side"].toBool());
         writePack(mainwindow->user_pic);
         break;     
     case package_ty::invite_respond:
@@ -287,13 +287,13 @@ void WebClient::readFromServer()
         msg_box.addButton("Open the board", QMessageBox::AcceptRole);
         msg_box.addButton("Reject invite", QMessageBox::RejectRole);
         connect(&msg_box, &QMessageBox::accepted, [&](){
-            settings.setValue("opp_name", opp_name);
+            settings["opp_name"].setValue(opp_name);
             if (!picture.isNull() && picture.size() == QSize{100, 100})
                 mainwindow->opp_pic = picture;
             else
                 mainwindow->opp_pic = mainwindow->default_pic;
-            settings.setValue("match_side", side);
-            settings.setValue("time_setup", int(time));
+            settings["match_side"].setValue(side);
+            settings["time_setup"].setValue(int(time));
             mainwindow->startGame("friend_online");
             sendToServer(package_ty::invite_respond, true);
         });
@@ -352,7 +352,7 @@ void WebClient::readFromServer()
         qDebug() << "Message received";
         QString message;
         readPack(message);
-        QString name = settings.value("opp_name").toString();
+        QString name = settings["opp_name"].toString();
         mainwindow->printMessage(name, false, message);
         break;
     }
@@ -361,7 +361,7 @@ void WebClient::readFromServer()
         qDebug() << "Draw suggestion received";
         QMessageBox msg_box(mainwindow);
         msg_box.setWindowTitle("Draw suggestion");
-        QString name = settings.value("opp_name").toString();
+        QString name = settings["opp_name"].toString();
         msg_box.setText(name + " suggested you a draw.");
         //msg_box.setIcon(QMessageBox::Information);
         msg_box.addButton("Accept", QMessageBox::AcceptRole);
