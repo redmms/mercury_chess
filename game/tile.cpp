@@ -5,16 +5,14 @@
 using namespace std;
 
 Tile::Tile(Board* mother_board, scoord tile_coord, bool side) :
-	QLabel(mother_board, Qt::WindowFlags()),
-	coord(tile_coord),
-	tile_color((coord.x + coord.y) % 2),
+	QLabel(mother_board),
+	VirtualTile(tile_coord, 'e', false),
 	black{ 120, 120, 90 },
 	white{ 211, 211, 158 },
 	selected(Qt::green),
 	valid(Qt::yellow),
 	hover{ 185, 108, 146 }, // previous: {170, 85, 127}
-	piece_name('e'), // 'e' for "empty"
-	piece_color(false)
+	css("QLabel{background-color: %0;}:hover{background-color: %1;}")
 {
 	css_colors["normal"][0] = black.name(QColor::HexRgb);
 	css_colors["normal"][1] = white.name(QColor::HexRgb);
@@ -49,38 +47,38 @@ QColor Tile::mixColors(QColor color_a, QColor color_b, float b_coef)
 		255);
 }
 
-void Tile::setPiece(char elem, bool color)
+void Tile::setPiece(char name, bool color)
 {
+	piece_name = name;
 	piece_color = color;
-	piece_name = elem;
-	if (elem == 'e') {
+	if (name == 'e') {
 		clear();
 		dyeNormal();
 		return;
 	}
 	QString add = color ? "white" : "black";
 	QString piece;
-	switch (elem)
+	switch (name)
 	{
 	case 'P':
-		piece = QString(":images/pawn_" + add);
+		piece = ":images/pawn_" + add;
 		break;
 	case 'R':
-		piece = QString(":images/rook_" + add);
+		piece = ":images/rook_" + add;
 		break;
 	case 'N':
-		piece = QString(":images/knight_" + add);
+		piece = ":images/knight_" + add;
 		break;
 	case 'K':
-		piece = QString(":images/king_" + add);
-        if (color) ((Board*)parent())->white_king = this;
-        else ((Board*)parent())->black_king = this;
+		piece = ":images/king_" + add;
+        if (color) ((Board*)QLabel::parent())->white_king = this;
+        else ((Board*)QLabel::parent())->black_king = this;
 		break;
 	case 'Q':
-		piece = QString(":images/queen_" + add);
+		piece = ":images/queen_" + add;
 		break;
 	case 'B':
-		piece = QString(":images/bishop_" + add);
+		piece = ":images/bishop_" + add;
 	}
 	if (piece.isNull()) {
 		qDebug() << "Can't get acces to pieces images. Use pseudonames "
@@ -88,8 +86,7 @@ void Tile::setPiece(char elem, bool color)
 			"structure.";
 	}
 
-//	QSvgRenderer svgRenderer(piece);  // FIX: should be done once in the constructor
-//	// but at the moment speed is OK
+//	QSvgRenderer svgRenderer(piece);
 //    QSize imageSize(100, 100);
 //	QImage image(imageSize, QImage::Format_ARGB32);
 //	image.fill(Qt::transparent);
@@ -101,35 +98,20 @@ void Tile::setPiece(char elem, bool color)
 
 void Tile::dyeNormal()
 {
-	if (tile_color)
-		setStyleSheet(QString("QLabel{background-color: %0;}:hover{background-color: %1;}").
-			arg(css_colors["normal"][1]).arg(css_colors["hover"][1]));
-	else
-		setStyleSheet(QString("QLabel{background-color: %0;}:hover{background-color: %1;}").
-			arg(css_colors["normal"][0]).arg(css_colors["hover"][0]));
+	setStyleSheet(css.arg(css_colors["normal"][tile_color]).arg(css_colors["hover"][tile_color]));
 }
 
 void Tile::dyeSelected()
 {
-	if (tile_color)
-		setStyleSheet(QString("QLabel{background-color: %0;}:hover{background-color: %1;}")
-			.arg(css_colors["selected"][1]).arg(css_colors["hover"][1]));
-	else
-		setStyleSheet(QString("QLabel{background-color: %0;}:hover{background-color: %1;}")
-			.arg(css_colors["selected"][0]).arg(css_colors["hover"][0]));
+	setStyleSheet(css.arg(css_colors["selected"][tile_color]).arg(css_colors["hover"][tile_color]));
 }
 
 void Tile::dyeValid()
 {
-	if (tile_color)
-		setStyleSheet(QString("QLabel{background-color: %0;}:hover{background-color: %1;}")
-			.arg(css_colors["valid"][1]).arg(css_colors["hover"][1]));
-	else
-		setStyleSheet(QString("QLabel{background-color: %0;}:hover{background-color: %1;}")
-                      .arg(css_colors["valid"][0]).arg(css_colors["hover"][0]));
+	setStyleSheet(css.arg(css_colors["valid"][tile_color]).arg(css_colors["hover"][tile_color]));
 }
 
-virtu Tile::toVirtu()
+VirtualTile Tile::toVirtu()
 {
-    return {this, this->piece_color, this->piece_name};
+    return {coord, piece_name, piece_color};
 }

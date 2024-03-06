@@ -1,18 +1,18 @@
 #pragma once
 #include "../app/local_types.h"
-#include "validator.h"
+#include "virtual_validator.h"
+#include "virtual_tile.h"
 
 class VirtualBoard : public QObject {
 	Q_OBJECT
 
 public:
-	void setVirtualTiles();
+	void setTiles();
 
 	VirtualBoard(QObject* parent/*, bool save_story*/);
-	~VirtualBoard();
 
-	std::vector<halfvove> history;
-	Validator valid;
+	std::vector<halfmove> history;
+	VirtualValidator valid;
 	VirtualTile tiles[8][8];
 	bool turn;
 	bool side;
@@ -23,7 +23,8 @@ public:
 	endnum end_type;
 	int current_move;
 
-	//void saveMove(const VirtualTile& from, const VirtualTile& to, vove& move);
+
+	// move forward
 	void moveNormally(VirtualTile& from, VirtualTile& to);
 	void castleKing(VirtualTile& king, VirtualTile& destination, VirtualTile& rook);
 	void passPawn(VirtualTile& from, VirtualTile& to);
@@ -32,12 +33,14 @@ public:
 	void halfMove(scoord from, scoord to, char promo = 'e');
 	void halfMove(VirtualTile& from, VirtualTile& to, char promo = 'e');
 	void doCurrentMove();
+
+	// move backward (undo)
 	void restoreTile(VirtualTile& restored, VirtualTile saved);
-	void revertMoveNormally(vove move);
+	void revertMoveNormally(vove& move);
 	void revertCastling(vove move);
 	void revertPass(vove move);
 	void revertPromotion(vove move);
-	void revertHalfmove(halfvove move);
+	void revertHalfmove(halfmove move);
 	void revertCurrentMove();
 	void revertLastMove();
 	VirtualTile& theTile(scoord coord);
@@ -48,6 +51,8 @@ public:
 	}
 
 signals:
-	void moveMade(scoord from, scoord to, char promotion_type);
+	//void moveMade(scoord from, scoord to, char promotion_type);
 	void theEnd(endnum end_type);
 };
+
+//void saveMoveNormally(const VirtualTile& from, const VirtualTile& to, vove& move);

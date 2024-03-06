@@ -1,12 +1,12 @@
 
 void MainWindow::on_draw_button_clicked()
 {
-    net->sendToServer(package_ty::draw_suggestion);
+    net->sendToServer(packnum::draw_suggestion);
 }
 
 void MainWindow::on_resign_button_clicked()
 {
-    net->sendToServer(package_ty::resignation);
+    net->sendToServer(packnum::resignation);
     endSlot(endnum::user_resignation);
 }
 
@@ -35,7 +35,7 @@ void MainWindow::on_change_name_button_clicked()
     QString new_name = ui->name_edit->text();
     ui->name_edit->clear();
     if (net) {
-        net->sendToServer(package_ty::new_name, 0, new_name);
+        net->sendToServer(packnum::new_name, 0, new_name);
     }
     else {
         showBox("Can't change online nickname",
@@ -116,9 +116,9 @@ void MainWindow::on_end_login_button_clicked()
          QByteArray hashed_password = hasher.result();
          settings["user_pass"].setValue(hashed_password);
          if (login_regime == 2)
-            net->sendToServer(package_ty::registration);
+            net->sendToServer(packnum::registration);
          else if (login_regime == 1)
-            net->sendToServer(package_ty::login);
+            net->sendToServer(packnum::login);
     }
 }
 
@@ -132,11 +132,11 @@ void MainWindow::on_guest_button_clicked()
     login_regime = 3;
     QString random_username = "Lazy" + QString::number(std::rand() % (int)std::pow(10, max_nick - 4));
     changeLocalName(random_username);
-    net->sendToServer(package_ty::registration);
-    net->sendToServer(package_ty::login);
+    net->sendToServer(packnum::registration);
+    net->sendToServer(packnum::login);
 }
 
-void MainWindow::on_send_invite_button_clicked() // FIX: here - package_ty::invite, user's name, user's image,
+void MainWindow::on_send_invite_button_clicked() // FIX: here - packnum::invite, user's name, user's image,
 {
 //    if (waiting_for_invite_respond){
 //        qDebug() << "Tried to send match invite several times";
@@ -170,7 +170,7 @@ void MainWindow::on_send_invite_button_clicked() // FIX: here - package_ty::invi
         bool match_side = std::rand() % 2;
         settings["match_side"].setValue(match_side);
         settings["opp_name"].setValue(opp_name);
-        net->sendToServer(package_ty::invite);
+        net->sendToServer(packnum::invite);
        // QApplication::setOverrideCursor(Qt::WaitCursor);
         waiting_for_invite_respond = true;
         //loop.exec();
@@ -183,7 +183,7 @@ void MainWindow::editReturnSlot()
     printMessage(settings["user_name"].toString(), true, message_text);
     ui->message_edit->clear();
     if (settings["game_regime"].toString() == "friend_online")
-        net->sendToServer(package_ty::chat_message, false, message_text); // FIX: works even after the end of the game
+        net->sendToServer(packnum::chat_message, false, message_text); // FIX: works even after the end of the game
 }
 
 bool MainWindow::eventFilter(QObject* object, QEvent* event)
@@ -275,6 +275,10 @@ void MainWindow::my_history_next_button_clicked()
 {
     openInDevDialog();
     //auto& history = board->history;
+
+    //// FIX: should be like this:
+    //board->nextMove();
+
     //halfmove move = history[current_move];
     //Tile* from = move.move.first.tile;
     //Tile* to = move.move.second.tile;
@@ -285,6 +289,10 @@ void MainWindow::my_history_next_button_clicked()
 void MainWindow::my_history_previous_button_clicked()
 {
     openInDevDialog();
+
+    //// FIX: should be like this:
+    //board->revertCurrentMove();
+
     //auto& history = *board->history;
     //halfmove move = history[current_move];
     //board.revertMove(move);
@@ -416,7 +424,7 @@ void MainWindow::on_actionSave_game_triggered()
 
     // Write game to the file
     Archiver archiver(this);
-    int error = archiver.writeGame(board, archive_fullname.toStdString());
+    int error = archiver.writeGame(board->end_type, board->bistory, archive_fullname.toStdString());
     if (!error) {
         showBox("Good news",
             "Operation done successfuly.");
@@ -450,30 +458,17 @@ void MainWindow::on_actionLoad_game_triggered()
 
     // Read game from the file
     Archiver archiver(this);
-    connect(&archiver, &Archiver::needUpdate, this, &MainWindow::updateApp);
-    connect(app, &QApplication::aboutToQuit, [&]() {
-        this->disconnect();
-        archiver.disconnect();
-        delete ui;
-        app->exit();
-    });
-    //connect(this, &MainWindow::timeToSleep, [&]() {
-    //        archiver.disconnect();
-    //});
-    int error = archiver.readHeader(archive_fullname.toStdString());
+    endnum end_type;
+    vector<halfmove> history;
+    int error = archiver.readGame(end_type, history, archive_fullname.toStdString());
     if (!error) {
         startGame("history");
-        error = archiver.readMoves(board);
-        if (error) {
-            showBox("Incorrect file",
-                "Archive file is incorrect. Error code:" + QString::number(error),
-                QMessageBox::Warning);
-        }
-        showBox("Good news",
-            "Operation done successfuly.");
+        board->end_type = end_type;
+        board->history = history;
     }
     else {
         showBox("Oops",
-            "Something went wrong. Error code: " + QString::number(error));
+            "Something went wrong. Error code: " + QString::number(error),
+            QMessageBox::Warning);
     }
 }

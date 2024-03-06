@@ -82,10 +82,10 @@ void WebClient::initSocket()
         });  
 }
 
-void WebClient::checkConnection(package_ty type)
+void WebClient::checkConnection(packnum type)
 {
     if (!socket){
-        if (type != package_ty::registration && type != package_ty::login)
+        if (type != packnum::registration && type != packnum::login)
             qDebug() << "Warning: you need to register or log in before sending any data to the server";
         initSocket();
         connectToServer();
@@ -163,70 +163,70 @@ void WebClient::packFromSock(QTcpSocket *socket, QByteArray &read_package)
 void WebClient::connectNewHost()
 {
     initSocket();
-    checkConnection(package_ty::login);
+    checkConnection(packnum::login);
 }
 
 
-void WebClient::sendToServer(package_ty type, bool respond, QString message, scoord from, scoord to, char promotion_type)
+void WebClient::sendToServer(packnum type, bool respond, QString message, scoord from, scoord to, char promotion_type)
 {
     quint16 pack_size = 0;
     send_stream << pack_size;
     checkConnection(type);
     switch(type){
-    case package_ty::registration:
-        writePack(package_ty::registration);
+    case packnum::registration:
+        writePack(packnum::registration);
         writePack(settings["user_name"].toString());
         writePack(settings["user_pass"].toByteArray());
         // FIX: add check of "user_name" setting exist. P.S. no need
         break;
-    case package_ty::login:
-        writePack(package_ty::login);
+    case packnum::login:
+        writePack(packnum::login);
         writePack(settings["user_name"].toString());
         writePack(settings["user_pass"].toByteArray());
         break;
-    case package_ty::new_name:
-        writePack(package_ty::new_name);
+    case packnum::new_name:
+        writePack(packnum::new_name);
         writePack(message);
         break;
-    case package_ty::invite:
-        writePack(package_ty::invite);
+    case packnum::invite:
+        writePack(packnum::invite);
         writePack(settings["opp_name"].toString());
         writePack(settings["user_name"].toString());
         writePack((quint8) (settings["time_setup"].toInt()));
         writePack(!settings["match_side"].toBool());
         writePack(mainwindow->user_pic);
         break;     
-    case package_ty::invite_respond:
-        writePack(package_ty::invite_respond);
+    case packnum::invite_respond:
+        writePack(packnum::invite_respond);
         writePack(respond);
         if (respond)
             writePack(mainwindow->user_pic);
         break;
-    case package_ty::move:
-        writePack(package_ty::move);
+    case packnum::move:
+        writePack(packnum::move);
         writePack(quint8(from.y * 8 + from.x));
         writePack(quint8(to.y * 8 + to.x));
         writePack(quint8(promotion_type));
         break;
-    case package_ty::chat_message:
-        writePack(package_ty::chat_message);
+    case packnum::chat_message:
+        writePack(packnum::chat_message);
         writePack(message);
         break;
-    case package_ty::draw_suggestion:
-        writePack(package_ty::draw_suggestion);
+    case packnum::draw_suggestion:
+        writePack(packnum::draw_suggestion);
         break;
-    case package_ty::draw_respond:
-        writePack(package_ty::draw_respond);
+    case packnum::draw_respond:
+        writePack(packnum::draw_respond);
         writePack(respond);
         break;
-    case package_ty::resignation:
-        writePack(package_ty::resignation);
+    case packnum::resignation:
+        writePack(packnum::resignation);
         break;
-    case package_ty::end_game:
-        writePack(package_ty::end_game);
+    case packnum::end_game:
+        writePack(packnum::end_game);
         break;
-    case package_ty::interrupt_signal:
-        writePack(package_ty::interrupt_signal);
+    case packnum::interrupt_signal:
+        writePack(packnum::interrupt_signal);
         break;
     }
     send_stream.device()->seek(0);
@@ -263,10 +263,10 @@ void WebClient::readFromServer()
     quint16 skip;
     read_stream >> skip;
 
-    package_ty type;
+    packnum type;
     readPack(type);   
     switch(type){
-    case package_ty::invite:  //show message box and send invite respond
+    case packnum::invite:  //show message box and send invite respond
     {
         qDebug() << "Invite received";
         QString user_name;
@@ -295,15 +295,15 @@ void WebClient::readFromServer()
             settings["match_side"].setValue(side);
             settings["time_setup"].setValue(int(time));
             mainwindow->startGame("friend_online");
-            sendToServer(package_ty::invite_respond, true);
+            sendToServer(packnum::invite_respond, true);
         });
         connect(&msg_box, &QMessageBox::rejected, [&](){
-            sendToServer(package_ty::invite_respond, false);
+            sendToServer(packnum::invite_respond, false);
         });
         msg_box.exec();
         break;
     }
-    case package_ty::invite_respond:
+    case packnum::invite_respond:
         // if true, load picture and start game else nothing (though in
         // future there should be a message box showing was it rejected or just waiting too long for an
         // answer)
@@ -323,7 +323,7 @@ void WebClient::readFromServer()
         emit endedReadingInvite();
         break;
     }
-    case package_ty::move:
+    case packnum::move:
     {
         qDebug() << "Move received";
         quint8 from_k;
@@ -347,7 +347,7 @@ void WebClient::readFromServer()
         }
         break;
     }
-    case package_ty::chat_message:
+    case packnum::chat_message:
     {
         qDebug() << "Message received";
         QString message;
@@ -356,7 +356,7 @@ void WebClient::readFromServer()
         mainwindow->printMessage(name, false, message);
         break;
     }
-    case package_ty::draw_suggestion: //show message box with opponent's name and draw suggestion
+    case packnum::draw_suggestion: //show message box with opponent's name and draw suggestion
     {
         qDebug() << "Draw suggestion received";
         QMessageBox msg_box(mainwindow);
@@ -367,16 +367,16 @@ void WebClient::readFromServer()
         msg_box.addButton("Accept", QMessageBox::AcceptRole);
         msg_box.addButton("Decline", QMessageBox::RejectRole);
         connect(&msg_box, &QMessageBox::accepted, [this](){
-            sendToServer(package_ty::draw_respond, true);
+            sendToServer(packnum::draw_respond, true);
             mainwindow->endSlot(endnum::draw_by_agreement);
         });
         connect(&msg_box, &QMessageBox::rejected, [this](){
-            sendToServer(package_ty::draw_respond, false);
+            sendToServer(packnum::draw_respond, false);
         });
         msg_box.exec();
         break;
     }
-    case package_ty::draw_respond: //if true stop the game as draw, else nothing
+    case packnum::draw_respond: //if true stop the game as draw, else nothing
     {
         qDebug() << "Draw respond received";
         bool respond;
@@ -385,13 +385,13 @@ void WebClient::readFromServer()
             mainwindow->endSlot(endnum::draw_by_agreement);
         break;
     }
-    case package_ty::resignation:
+    case packnum::resignation:
     {
         qDebug() << "Resignation from opponent received";
         mainwindow->endSlot(endnum::opponent_resignation);
         break;
     }
-    case package_ty::no_such_user:
+    case packnum::no_such_user:
     {
         qDebug() << "No such user signal received";
         showBox("No such user",
@@ -400,13 +400,13 @@ void WebClient::readFromServer()
         emit endedReadingInvite();
         break;
     }
-    case package_ty::opponent_disconnected:
+    case packnum::opponent_disconnected:
     {
         qDebug() << "Opponent disconnected signal received";
         mainwindow->endSlot(endnum::opponent_disconnected_end);
         break;
     }
-    case package_ty::already_registered:
+    case packnum::already_registered:
     {
         qDebug() << "Already registered signal received";
         showBox("Already registered",
@@ -415,7 +415,7 @@ void WebClient::readFromServer()
         mainwindow->openTab(mainwindow->ui->login_tab);
         break;
     }
-    case package_ty::success:
+    case packnum::success:
     {
         qDebug() << "Success signal received";
         showBox("Good news",
@@ -437,14 +437,14 @@ void WebClient::readFromServer()
         }
         break;
     }
-    case package_ty::wrong_password:
+    case packnum::wrong_password:
     {
         showBox("Wrong password",
                 "I understand you perfectly, I also have a bad memory. Should I advise you some memory pills?",
                 QMessageBox::Warning);
         break;
     }
-    case package_ty::user_offline:
+    case packnum::user_offline:
     {
         showBox("User offline",
                 "Suggested user is offline.");

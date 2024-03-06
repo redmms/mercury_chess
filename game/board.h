@@ -1,10 +1,12 @@
 #pragma once
 #include "../app/local_types.h"
 #include "validator.h"
+#include "virtual_tile.h"
 #include <QLabel>
 
 class WebClient;
 class MainWindow;
+class Tile;
 class Board : public QLabel {
 	Q_OBJECT
 public:
@@ -27,29 +29,31 @@ public:
     Tile* from_tile;
     Tile* white_king;
     Tile* black_king;
-	pove virtual_move;
+	vove virtual_move;
     Tile* menu[4];
 	QString board_css;
 	QString promo_css;
     char last_promotion;
-    virtu last_virtually_passed;
+    VirtualTile last_virtually_passed;
 	endnum end_type;
 	int tile_size;
 
 	void halfMove(scoord from, scoord to);
 	void halfMove(Tile* from, Tile* to);
-	void saveMove(Tile* from, Tile* to, pove& move);
+	void saveMoveNormally(Tile* from, Tile* to, vove& move);
 	void moveNormally(Tile* from, Tile* to);
 	void castleKing(Tile* king, Tile* destination, Tile* rook);
 	void passPawn(Tile* from, Tile* to);
-    void restoreTile(virtu saved);
+    void restoreTile(VirtualTile saved);
 	void promotePawn(Tile* from, char into);
 	void promotePawn(scoord from, char into);
-	void moveVirtually(Tile* from, Tile* to, pove& move);
-	void revertVirtualMove(pove& move);
+	void moveVirtually(Tile* from, Tile* to, vove& move);
+	void revertVirtualMove(vove& move);
 	bitmove toBitmove(halfmove hmove);
 	bitremedy toPieceIdx(Tile* from);
 	bitremedy toMoveIdx(Tile* to);
+	Tile* theTile(scoord);
+	Tile* theTile(VirtualTile);
     //int idx(scoord coord);
 
 	auto operator [](int i) {

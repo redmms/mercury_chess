@@ -18,7 +18,6 @@
 #include <QFile>
 #include <QTimer>
 #include <QDebug>
-#include <QThread>
 #include <QString>
 #include <QApplication>
 using namespace std;
@@ -137,7 +136,7 @@ MainWindow::MainWindow(QWidget* parent, QString app_dir_, QApplication* app) :
 	ui->profile_name->setText(settings["user_name"].toString());
 	ui->profile_avatar->setPixmap(user_pic);
 
-	// friend_connect_tab > time limit buttons
+	// time limit buttons from friend_connect_tab 
 	auto layout = ui->time_limits_layout;
 	QPushButton* button;
 	for (int i = 1; i < 10; i++) {
@@ -159,8 +158,6 @@ MainWindow::MainWindow(QWidget* parent, QString app_dir_, QApplication* app) :
     rounded_area->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     ui->game_grid->replaceWidget(ui->chat_area, rounded_area);
     ui->chat_area->~QScrollArea();
-
-
 
 	// chat
     max_message_width = rounded_area->minimumWidth() - 20;
@@ -195,17 +192,13 @@ MainWindow::~MainWindow() {
     //if (file.exists()) {
     //    file.remove();
     //}
-    //emit timeToSleep();
-    //disconnect();
     delete ui;
-    //app->quit();
 }
 
 #include "mainwindow_buttons.hpp"
 
 void MainWindow::openTab(QWidget* page)
 {
-    //QPointer<QWidget> tab_ptr(ui->tabWidget->currentWidget());
     if (!ui || !ui->tabWidget || !page)
      {
         qWarning() << "ERROR: in open tab with pointers";
@@ -218,14 +211,6 @@ void MainWindow::openTab(QWidget* page)
         return;
      }
     ui->tabWidget->setCurrentWidget(page);
-    //auto scroller = rounded_area->horizontalScrollBar();
-    //scroller->setValue(scroller->maximum());
-}
-
-void MainWindow::updateApp()
-{
-    app->processEvents();
-    QThread::sleep(1);
 }
 
 void MainWindow::openStopGameDialog()
@@ -241,39 +226,19 @@ void MainWindow::openInDevDialog()
             "This function hasn't been developed yet, but you can donate money to speed up the process.");
 }
 
-void MainWindow::writeStory(int order, halfmove move)
+void MainWindow::showStatus(const QString& status) 
 {
-    virtu vf = move.move.first;
-    virtu vt = move.move.second;
-    char piece = vf.name;
-    Tile *from = vf.tile;
-    Tile *to = vt.tile;
-    char promo = move.promo;
-    scoord f = from->coord;
-    scoord t = to->coord;
+    ui->statusBar->showMessage(status, 0);
+}
 
-    QString out;
-    if (move.castling){
-        out = "O-O";
-    }
-    else{
-        if (piece != 'P')
-            out += piece;
-        out += coordToString(f) + coordToString(t);
-        if (promo != 'e')
-            out += "=" + QString(promo);
-    }
-
-    if (order % 2)
-        history_label->setText(history_label->text() + QString::number((order-1) / 2 + 1) + ". " + out + " ");
+void MainWindow::switchGlow()
+{
+    bool match_side = settings["match_side"].toBool();
+    if (board->turn == match_side)
+        ui->user_avatar->setGraphicsEffect(avatar_effect);
     else
-        history_label->setText(history_label->text() + out + " ");
-
-    history_label->adjustSize();
-//    QTimer::singleShot(100, [&]() {
-        auto scroller = history_area->horizontalScrollBar();
-        scroller->setValue(scroller->maximum());
-//        });
+        ui->opponent_avatar->setGraphicsEffect(avatar_effect);
+    this->update();
 }
 
 QString MainWindow::coordToString(scoord coord)
@@ -297,25 +262,44 @@ int MainWindow::changeLocalName(QString name)
     return 0;
 }
 
-void MainWindow::showStatus(const QString& status) {
-    ui->statusBar->showMessage(status, 0);
-}
-
-void MainWindow::switchGlow() // FIX: should be changed for different sides
+void MainWindow::writeStory(int order, halfmove hmove)
 {
-    bool match_side = settings["match_side"].toBool();
-    if (board->turn == match_side)
-        ui->user_avatar->setGraphicsEffect(avatar_effect);
+    VirtualTile vf = hmove.move.first;
+    VirtualTile vt = hmove.move.second;
+    scoord f = vf.coord;
+    scoord t = vt.coord;
+    char piece = vf.piece_name;
+    char promo = hmove.promo;
+
+    QString out;
+    if (hmove.castling){
+        out = "O-O";
+    }
+    else{
+        if (piece != 'P')
+            out += piece;
+        out += coordToString(f) + coordToString(t);
+        if (promo != 'e')
+            out += "=" + QString(promo);
+    }
+
+    if (order % 2)
+        history_label->setText(history_label->text() + QString::number((order-1) / 2 + 1) + ". " + out + " ");
     else
-        ui->opponent_avatar->setGraphicsEffect(avatar_effect);
-    this->update();
+        history_label->setText(history_label->text() + out + " ");
+
+    history_label->adjustSize();
+//    QTimer::singleShot(100, [&]() {
+        auto scroller = history_area->horizontalScrollBar();
+        scroller->setValue(scroller->maximum());
+//        });
 }
 
 void MainWindow::startGame(QString game_regime) // side true for user - white
 {
     if (game_active) {
         if (settings["game_regime"].toString() == "friend_online" && net) {
-            net->sendToServer(package_ty::interrupt_signal);
+            net->sendToServer(packnum::interrupt_signal);
         }
         endSlot(endnum::interrupt);
     }
@@ -386,14 +370,14 @@ void MainWindow::startGame(QString game_regime) // side true for user - white
     else{
         qDebug() << "ERROR: in MainWindow::startGame() with board/ui->background pointer";
     }
-
     // old board will be destroyed inside Board constructor
+
     connect(board, &Board::newStatus, this, &MainWindow::statusSlot);
     connect(board, &Board::theEnd, this, &MainWindow::endSlot);
 
     if (game_regime == "friend_online"){
         connect(board, &Board::moveMade, [this](scoord from, scoord to, char promotion_type) {
-            net->sendToServer(package_ty::move, {}, {}, from, to, promotion_type);
+            net->sendToServer(packnum::move, {}, {}, from, to, promotion_type);
         });
 
         int time = settings["time_setup"].toInt();
@@ -484,7 +468,7 @@ void MainWindow::endSlot(endnum end_type)
     }
 
     if (settings["game_regime"].toString() == "friend_online" && net) {
-        net->sendToServer(package_ty::end_game);
+        net->sendToServer(packnum::end_game);
     }
     showStatus(info_message);
     QMessageBox msg_box(this);

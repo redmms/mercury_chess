@@ -13,17 +13,14 @@ VirtualBoard::VirtualBoard(QObject* parent) :
 	last_promotion('e'),
 	end_type(endnum::interrupt)
 {
-	setTiles(side);
+	setTiles();
 }
 
-VirtualBoard::~VirtualBoard()
-{}
-
-void VirtualBoard::setTiles(bool side)
+void VirtualBoard::setTiles()
 {
 	for (int y = 0; y < 8; y++) {
 		for (int x = 0; x < 8; x++) {
-			tiles[x][y] = Tile(this, { x, y });
+			tiles[x][y] = VirtualTile({ x, y }, 'e', false, this);
 		}
 	}
 
@@ -52,7 +49,7 @@ void VirtualBoard::setTiles(bool side)
 	}
 }
 
-//void VirtualBoard::saveMove(VirtualTile from, VirtualTile to, vove& move)
+//void VirtualBoard::saveMoveNormally(VirtualTile from, VirtualTile to, vove& move)
 //{
 //	move = {from, to};
 //}
@@ -64,7 +61,7 @@ void VirtualBoard::moveNormally(VirtualTile& from, VirtualTile& to)
 	valid.reactOnMove(from.coord, to.coord);
 }
 
-void VirtualBoard::revertMoveNormally(vove move)
+void VirtualBoard::revertMoveNormally(vove& move)
 {
 	VirtualTile from_tile = move.first;
 	scoord from_coord = from_tile.coord;
@@ -72,6 +69,7 @@ void VirtualBoard::revertMoveNormally(vove move)
 	scoord to_coord = to_tile.coord;
 	restoreTile(theTile(from_coord), from_tile);
 	restoreTile(theTile(to_coord), to_tile);
+	move = {};
 }
 
 void VirtualBoard::castleKing(VirtualTile& king, VirtualTile& destination, VirtualTile& rook)
@@ -112,12 +110,13 @@ void VirtualBoard::revertCastling(vove move)
 	VirtualTile& to = theTile(move.second);
 	valid.bringBack(from.coord, to.coord);
 	revertMoveNormally(move);
-	VirtualTile rook;
-	if (valid.canCastle(rook)) {
+	scoord rook;
+	if (valid.canCastle(from.coord, to.coord, rook)) { // FIX: will not work, because has_moved[] in VirtualValidator valid wasn't updated back for the rook
 		int k = to.coord.x - from.coord.x > 0 ? -1 : 1;
 		int x = to.coord.x + k;
 		int y = to.coord.y;
-		revertMoveNormally({rook, tiles[x][y]});
+		vove rook_move = { theTile(rook), tiles[x][y] };
+		revertMoveNormally(rook_move);
 	}
 	else {
 		qWarning() << "valid.canCastle(rook) returned false though it definetely should has returned true";
@@ -141,19 +140,19 @@ void VirtualBoard::revertPromotion(vove move)
 	//theTile(move.first).setPiece(piece_name, piece_color);
 }
 
-void VirtualBoard::revertHalfmove(halfvove move)
+void VirtualBoard::revertHalfmove(halfmove hmove)
 {
-	if (move.castling) {
-		revertCastling(move.move);
+	if (hmove.castling) {
+		revertCastling(hmove.move);
 	}
-	else if (move.pass) {
-		revertPass(move.move);
+	else if (hmove.pass) {
+		revertPass(hmove.move);
 	}
-	else if (move.promo != 'e') {
-		revertPromotion(move.move);
+	else if (hmove.promo != 'e') {
+		revertPromotion(hmove.move);
 	}
 	else {
-		revertMoveNormally(move.move);
+		revertMoveNormally(hmove.move);
 	}
 }
 
@@ -172,14 +171,18 @@ void VirtualBoard::revertLastMove()
 }
 
 void VirtualBoard::doCurrentMove()
-{
-	halfMove(history[current_move]);
+{	
+	halfmove hmove = history[current_move];
+	VirtualTile from = hmove.move.first;
+	VirtualTile to = hmove.move.second;
+	char promo = hmove.promo;
+	halfMove(from, to, promo);
 	current_move++;
 }
 
 VirtualTile& VirtualBoard::theTile(scoord coord)
 {
-	return &tiles[coord.x][coord.y];
+	return tiles[coord.x][coord.y];
 }
 
 VirtualTile& VirtualBoard::theTile(VirtualTile tile)
@@ -194,22 +197,22 @@ void VirtualBoard::halfMove(scoord from, scoord to, char promo)
 
 void VirtualBoard::halfMove(VirtualTile& from, VirtualTile& to, char promo)
 {
-	valid.valid_moves.clear();
-	halfvove last_move;
+	//valid.valid_moves.clear();
+	halfmove last_move;
 	last_move.move = {from, to};
-	VirtualTile rook;
-	if (valid.canCastle(from, to, rook)) {
-		castleKing(from, to, rook);
+	scoord rook;
+	if (valid.canCastle(from.coord, to.coord, rook)) {
+		castleKing(from, to, theTile(rook));
 		last_move.castling = true;
 	}
-	else if (valid.canPass(from, to)) {
+	else if (valid.canPass(from.coord, to.coord)) {
 		passPawn(from, to);
 		last_move.pass = true;
 	}
 	else {
 		moveNormally(from, to);
 	}
-	if (valid.canPromote(to, to)) {
+	if (valid.canPromote(to.coord, to.coord)) {
 		promotePawn(to, promo);
 		last_move.promo = promo;
 	}

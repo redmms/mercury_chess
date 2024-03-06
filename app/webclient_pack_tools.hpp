@@ -1,4 +1,4 @@
-void WebClient::writePack(package_ty data) {
+void WebClient::writePack(packnum data) {
     send_stream << quint8(data);
 }
 
@@ -28,14 +28,14 @@ void WebClient::writePack(const QPixmap& data) {
     writePack(arr);
 }
 
-void WebClient::readPack(package_ty &data)
+void WebClient::readPack(packnum &data)
 {
     quint8 byte;
     read_stream >> byte;
-    if (byte < package_ty::registration || byte > package_ty::already_registered)
-        qDebug() << "Error: package_ty from read_package is out of range";
+    if (byte < packnum::registration || byte > packnum::already_registered)
+        qDebug() << "Error: packnum from read_package is out of range";
     else
-        data = package_ty(byte);
+        data = packnum(byte);
 }
 
 void WebClient::readPack(QByteArray& data) {

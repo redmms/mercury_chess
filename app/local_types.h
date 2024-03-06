@@ -1,21 +1,15 @@
 #pragma once
-#ifndef pove
-#define pove std::pair<virtu, virtu>
-#define povec const pove& 
-#endif // !pove && !povec 
 // WARNING: if you include this file,
 // place #endif to the end of your file
 // or use #undef after #include or include this file after other files
-// using defines for pove, povec and coorder
-#ifndef coorder
-#define coorder const scoord& 
-#endif // !coorder
+// using defines for vove, vovec and coorder
 #ifndef vove
 #define vove std::pair<VirtualTile, VirtualTile>
 #endif
+#include <QPointer>
 
 #include <utility>
-enum package_ty : uint8_t {
+enum packnum : uint8_t {
     registration,
     login,
     new_name,
@@ -65,64 +59,12 @@ enum tatus : uint8_t {
     invalid_move
 };
 
-#include <stdexcept>
-struct scoord{
-    int x = 0;
-    int y = 0;
-    scoord(std::initializer_list<int> values) {
-        if (values.size() != 2) {
-            throw std::invalid_argument("Initializer list must contain exactly 2 values.");
-        }
-        auto it = values.begin();
-        x = *it++;
-        y = *it;
-    }
-    scoord() : x(0), y(0) {}
-    scoord(const std::pair<int, int>& p) : x(p.first), y(p.second) {}
-    bool isValid(){
-        return x >=0 && x <= 7 && y >= 0 && y <= 7;
-    }
-    bool operator == (const scoord& r) const {
-        return x == r.x && y == r.y;
-    }
-    bool operator != (const scoord& r) const {
-        return x != r.x || y != r.y;
-    }
-    bool operator<(const scoord& r) const {
-        return (y != r.y ? y < r.y : x < r.x); // necessary for placing 
-        // piece idxs on board in archiver
-    }
-    operator std::pair<int, int>() const {
-        return std::make_pair(x, y);
-    }
-    operator bool() {
-        return isValid();
-    }
-};
-
-class Tile;
-#include <QPointer>
-struct virtu{
-//    virtu(){tile = nullptr; color = false; name = 'e';}
-    Tile* tile;
-    bool color = true;
-    char name = 'K'; // this way you will soon know if something went wrong
-};
-
-struct halfmove{
-    pove move;
-    char promo = 'e';
-    bool castling = false;
-    bool pass = false;
-    bool turn = false;
-};
-
-struct halfvove {
-    vove move;
-    char promo = 'e';
-    bool castling = false;
-    bool pass = false;
-    bool turn = false;
+enum promnum {
+    to_knight,
+    to_bishop,
+    to_castle,
+    to_queen,
+    no_promotion
 };
 
 #include <QDateTime>
@@ -153,26 +95,55 @@ inline void showBox(QString header,
     msg_box.exec();
 }
 
-enum promo_ty {
-    to_knight,
-    to_bishop,
-    to_castle,
-    to_queen,
-    no_promotion
+#include <stdexcept>
+struct scoord {
+    int x = 0;
+    int y = 0;
+    scoord(std::initializer_list<int> values) {
+        if (values.size() != 2) {
+            throw std::invalid_argument("Initializer list must contain exactly 2 values.");
+        }
+        auto it = values.begin();
+        x = *it++;
+        y = *it;
+    }
+    scoord() : x(0), y(0) {}
+    scoord(const std::pair<int, int>& p) : x(p.first), y(p.second) {}
+    bool isValid() {
+        return x >= 0 && x <= 7 && y >= 0 && y <= 7;
+    }
+    bool operator == (const scoord& r) const {
+        return x == r.x && y == r.y;
+    }
+    bool operator != (const scoord& r) const {
+        return x != r.x || y != r.y;
+    }
+    bool operator<(const scoord& r) const {
+        return (y != r.y ? y < r.y : x < r.x); // necessary for placing 
+        // piece idxs on board in archiver
+    }
+    operator std::pair<int, int>() const {
+        return std::make_pair(x, y);
+    }
+    operator bool() {
+        return isValid();
+    }
 };
 
 import bitremedy;
 struct bitmove {
     bitremedy piece = {};
     bitremedy move = {};
-    promo_ty promo = promo_ty::no_promotion;
+    promnum promo = promnum::no_promotion;
 };
 
 #include <map>
-extern std::map<char, promo_ty> promo_by_char;
+extern std::map<char, promnum> promo_by_char;
 
-extern std::map<promo_ty, char> char_by_promo;
+extern std::map<promnum, char> char_by_promo;
 
 #include <QVariant>
 extern std::map<QString, QVariant> settings;
-/*( "settings_" + curTime() + ".ini", QSettings::IniFormat )*/
+
+struct halfmove;
+

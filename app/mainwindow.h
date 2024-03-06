@@ -31,14 +31,14 @@ public:
     QPointer<WebClient> net;
     std::map<std::string, QPointer<QSoundEffect>> sounds;
     QPointer<QGraphicsDropShadowEffect> avatar_effect;
-	QBitmap pic_mask;
+    QBitmap pic_mask;
     QPointer<QWidget> last_tab;
-	const int max_nick;
+    const int max_nick;
     QPointer<QVBoxLayout> message_layout;
     QPointer<QWidget> message_box;
-	QFont message_font;
-	QFontMetrics message_metrics;
-	int max_message_width;
+    QFont message_font;
+    QFontMetrics message_metrics;
+    int max_message_width;
     QPointer<RoundedScrollArea> rounded_area;
     bool game_active;
     bool waiting_for_invite_respond;
@@ -49,17 +49,17 @@ public:
     QString app_dir;
     int current_move;
 
-	void showStatus(const QString& status);  // FIX: will const& cause problems or not?
-	void switchGlow();
-	bool eventFilter(QObject* object, QEvent* event);
+    void showStatus(const QString& status);  // FIX: will const& cause problems or not?
+    void switchGlow();
+    bool eventFilter(QObject* object, QEvent* event);
     void openStopGameDialog();
     void openInDevDialog();
-    void writeStory(int order, halfmove move);
+    void writeStory(int order, halfmove hmove);
     QString coordToString(scoord coord);
     int changeLocalName(QString name);
     //int changeOnlineName(QString name);
 
-	MainWindow(QWidget* parent, QString app_dir_, QApplication* app);
+    MainWindow(QWidget* parent, QString app_dir_, QApplication* app);
     ~MainWindow();
 
     QPointer<QApplication> app;
@@ -76,13 +76,13 @@ public:
     void updateApp();
 
 signals:
-	void timeToSwitchTime();
+    void timeToSwitchTime();
     void editReturnPressed();
     void timeToSleep();
 
 private slots:
     // user defined slots
-	void statusSlot(tatus status);
+    void statusSlot(tatus status);
     void editReturnSlot();
 
     // buttons from .ui file
@@ -126,5 +126,5 @@ private slots:
     void my_history_previous_button_clicked();
 
 protected slots:
-	void endSlot(endnum end_type);
+    void endSlot(endnum end_type);
 };

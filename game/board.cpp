@@ -1,6 +1,7 @@
 #pragma once
 #include "board.h"
 #include "../app/mainwindow.h"
+#include "tile.h"
 #include <QEventLoop>
 #include <QLayout>
 #include <QDebug>
@@ -75,7 +76,7 @@ void Board::reactOnClick(Tile* tile) {
                  settings["game_regime"].toString() != "friend_online") &&
                 tile->piece_name != 'e') {
             from_tile = tile; // FIX: are you sure?
-			valid.showValid(tile);
+			valid.showValid(tile->coord);
 		}
 	}
     else if (tile != from_tile && turn == tile->piece_color && tile->piece_name != 'e') {
@@ -83,9 +84,9 @@ void Board::reactOnClick(Tile* tile) {
 		// is on the piece of same color then pick it instead
 		valid.hideValid();
         from_tile = tile;
-		valid.showValid(tile);
+		valid.showValid(tile->coord);
 	}
-	else if (valid.isValid(tile)) {
+	else if (valid.isValid(tile->coord)) {
 		// if it's the second click and move is valid
 		// then move pieces
         halfMove(from_tile, tile);
@@ -247,34 +248,34 @@ void Board::openPromotion(Tile* from)
 	loop.exec();
 }
 
-void Board::saveMove(Tile* from, Tile* to, pove& move)
+void Board::saveMoveNormally(Tile* from, Tile* to, vove& move)
 {
     move.first = from->toVirtu();
     move.second = to->toVirtu();
 }
 
-void Board::revertVirtualMove(pove& move)
+void Board::revertVirtualMove(vove& move)
 {
-	virtu from = move.first;
-	virtu to = move.second;
+	VirtualTile from = move.first;
+	VirtualTile to = move.second;
     restoreTile(from);
     restoreTile(to);
-    if (last_virtually_passed.tile != nullptr){
+    if (last_virtually_passed.piece_name != 'e'){
         restoreTile(last_virtually_passed);
     }
     move = {};
 }
 
-void Board::moveVirtually(Tile* from, Tile* to, pove& move)
+void Board::moveVirtually(Tile* from, Tile* to, vove& move)
 {
-    if (valid.canPassVirtually(from, to, move)){
-        last_virtually_passed = tiles[to->coord.x][from->coord.y]->toVirtu();
-        tiles[to->coord.x][from->coord.y]->piece_name = 'e';
+    if (valid.canPass(from->coord, to->coord)){
+        last_virtually_passed = theTile({to->coord.x, from->coord.y})->toVirtu();
+        theTile({to->coord.x, from->coord.y})->piece_name = 'e';
     }
     else{
-        last_virtually_passed.tile = nullptr;
+        last_virtually_passed.piece_name = 'e';
     }
-    saveMove(from, to, move);
+    saveMoveNormally(from, to, move);
     to->piece_color = from->piece_color;
     to->piece_name = from->piece_name;
     from->piece_name = 'e';
@@ -283,7 +284,7 @@ void Board::moveVirtually(Tile* from, Tile* to, pove& move)
 void Board::moveNormally(Tile* from, Tile* to)
 {
 //    halfmove last_move;
-//    saveMove(from, to, last_move.move); // should be used before moving
+//    saveMoveNormally(from, to, last_move.move); // should be used before moving
 //    history.push_back(last_move);
     to->setPiece(from->piece_name, from->piece_color);
     from->setPiece('e', 0);
@@ -306,29 +307,38 @@ void Board::passPawn(Tile* from, Tile* to)
     tiles[to->coord.x][from->coord.y]->setPiece('e', 0);
 }
 
-void Board::restoreTile(virtu saved)
+void Board::restoreTile(VirtualTile saved)
 {
-    saved.tile->piece_color = saved.color;
-    saved.tile->piece_name = saved.name;
+    theTile(saved)->setPiece(saved.piece_name, saved.piece_color);
 }
 
 bitmove Board::toBitmove(halfmove hmove)
 {
-	Tile* from = hmove.move.first.tile;
-	Tile* to = hmove.move.second.tile;
+	Tile* from = theTile(hmove.move.first);
+	Tile* to = theTile(hmove.move.second);
 	return { toPieceIdx(from), toMoveIdx(to), promo_by_char[hmove.promo] };
 }
 
 bitremedy Board::toPieceIdx(Tile* from) {
-	unsigned char piece_idx = distance(valid.movable_pieces.begin(), valid.movable_pieces.find(from));
+	unsigned char piece_idx = distance(valid.movable_pieces.begin(), valid.movable_pieces.find(from->coord));
 	int bitsn = fsm::MinBits(valid.movable_pieces.size() - 1);
 	return { piece_idx, fsm::MinBits(valid.movable_pieces.size() - 1), false };
 }
 bitremedy Board::toMoveIdx(Tile* to) {
-	unsigned char move_idx = distance(valid.valid_moves.begin(), valid.valid_moves.find(to));
+	unsigned char move_idx = distance(valid.valid_moves.begin(), valid.valid_moves.find(to->coord));
 	int sz = valid.valid_moves.size() - 1;
 	int bitsn = fsm::MinBits(sz);
 	return { move_idx, fsm::MinBits(valid.valid_moves.size() - 1), false };
+}
+
+Tile* Board::theTile(scoord coord)
+{
+	return tiles[coord.x][coord.y];
+}
+
+Tile* Board::theTile(VirtualTile tile)
+{
+	return theTile(tile.coord);
 }
 
 //int Board::idx(scoord coord)
@@ -383,12 +393,12 @@ void Board::promotePawn(Tile* from, char into)
 
 void Board::promotePawn(scoord from, char into)
 {
-	promotePawn(valid.theTile(from), into);
+	promotePawn(theTile(from), into);
 }
 
 void Board::halfMove(scoord from, scoord to)
 {
-	halfMove(valid.theTile(from), valid.theTile(to));
+	halfMove(theTile(from), theTile(to));
 }
 
 void Board::halfMove(Tile* from, Tile* to)
@@ -400,7 +410,7 @@ void Board::halfMove(Tile* from, Tile* to)
 	// we check stalemate right after the move - for the opponent's color
 	bitmove bmove;
 	if (game_regime == "friend_online" && turn != side) {
-		valid.findValid(from);
+		valid.findValid(from->coord);
 	}
 	bmove.move = toMoveIdx(to);
 	valid.hideValid();
@@ -423,13 +433,13 @@ void Board::halfMove(Tile* from, Tile* to)
 	if (valid.differentColor(to->coord))
         emit_status = turn == side ? tatus::opponent_piece_eaten : tatus::user_piece_eaten;
 
-    Tile* rook;
-    if (valid.canCastle(from, to, rook)) {
-		castleKing(from, to, rook);
+    scoord rook;
+    if (valid.canCastle(from->coord, to->coord, rook)) {
+		castleKing(from, to, theTile(rook));
         last_move.castling = true;
 		emit_status = tatus::castling;
 	}
-	else if (valid.canPass(from, to)) {
+	else if (valid.canPass(from->coord, to->coord)) {
 		passPawn(from, to);
         last_move.pass = true;
         emit_status = turn == side ? tatus::opponent_piece_eaten : tatus::user_piece_eaten;
@@ -437,7 +447,7 @@ void Board::halfMove(Tile* from, Tile* to)
 	else
 		moveNormally(from, to);
 
-	if (valid.canPromote(to, to)) {
+	if (valid.canPromote(to->coord, to->coord)) {
         if ((game_regime == "friend_online" && turn == side) || game_regime == "friend_offline"){
             openPromotion(to);  // waits until the signal from a tile received
             last_move.promo = last_promotion;
@@ -475,7 +485,7 @@ void Board::halfMove(Tile* from, Tile* to)
 		//emit needBoardUpdate();
 }
 
-//void Board::virtualHalfMove(Tile* from, Tile* to, char promo_ty_par)
+//void Board::virtualHalfMove(Tile* from, Tile* to, char promnum_par)
 //{ // just a prototype
 //	if (Tile* rook; valid.canCastle(from, to, &rook)) {
 //		//castleKingVirtually(from, to, rook);
@@ -486,7 +496,7 @@ void Board::halfMove(Tile* from, Tile* to)
 //	if (valid.canPromote(to, to)) {
 //        if (turn == side){
 //            //openPromotion(to);  // waits until the signal from a tile received
-//            last_promotion = promo_ty_par;
+//            last_promotion = promnum_par;
 //            promotePawn(to);
 //        }
 //	}

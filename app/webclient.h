@@ -14,14 +14,14 @@ class WebClient : public QObject
 	QDataStream read_stream;
 	QDataStream send_stream;
 
-	void writePack(package_ty);
+	void writePack(packnum);
 	void writePack(quint8);
 	void writePack(bool);
 	void writePack(const QByteArray&);
 	void writePack(const QString&);
 	void writePack(const QPixmap&);
 
-	void readPack(package_ty&);
+	void readPack(packnum&);
 	void readPack(quint8&);
 	void readPack(bool&);
 	void readPack(QByteArray&);
@@ -34,7 +34,7 @@ public:
 	~WebClient();
 
     void initSocket();
-    void checkConnection(package_ty type);
+    void checkConnection(packnum type);
     void connectToServer();
     void packFromSock(QTcpSocket* socket, QByteArray& received_package);
     void connectNewHost();
@@ -52,7 +52,7 @@ signals:
 	void endedReadingInvite();
 
 public slots:
-    void sendToServer(package_ty type, bool respond = false, QString message = "", scoord from = {}, scoord to = {}, char promotion_type = 'e');
+    void sendToServer(packnum type, bool respond = false, QString message = "", scoord from = {}, scoord to = {}, char promotion_type = 'e');
 	void readFromServer();
 
 };

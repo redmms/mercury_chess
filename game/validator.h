@@ -1,58 +1,23 @@
 #pragma once
-#include "../game/tile.h"
-#include <functional>
-#include <set>
-using lambda = std::function<bool(scoord)>;
-using checker = std::function<bool(scoord, bool&)>;
+#include "virtual_validator.h"
+#include "tile.h"
 
 class Board;
-class Validator {
-friend class Archiver;
-friend class Board;
+class Validator : public VirtualValidator {
 protected:
-    Board& board;
-    std::set<scoord, TileCmp> movable_pieces;
-    std::set<scoord, TileCmp> valid_moves;
-    bool check;
-    bool has_moved[6];
-    scoord rooks_kings[6];
-    scoord castling_destination[6];
-    std::list<scoord> should_be_free[6];
-    std::list<scoord> should_be_safe[6];
-    std::list<scoord> perp_dir;
-    std::list<scoord> diag_dir;
-
-    std::function<void(scoord)> addValid;
-    std::function<void(scoord, scoord, checker, bool&)> fastThrough;
-    std::function<bool(scoord, checker, const std::list<scoord>&)> fastLine;
-    std::function<bool(scoord, lambda, lambda, bool&)> enemyFinder;
-
-    void kingPotential(scoord coord, std::list<scoord>& coords);
-    void knightPotential(scoord coord, std::list<scoord>& coords);
-    bool underAttack(scoord coord);
-    void findValid(Tile* from);
+    Board* board;
 
 public:
-    Validator(Board* mother_board);
+    Validator(Board* mother_board = 0);
 
-    std::function<Tile*(scoord)> theTile;
-    std::function<bool(scoord)> inBoard;
-    std::function<bool(scoord)> occupied;
-    std::function<bool(scoord)> differentColor;
-    std::function<char(scoord)> pieceName;
+    Tile& theTile(scoord) override;
+    bool theTurn() override;
+    Tile& theWKing() override;
+    Tile& theBKing() override;
+    void moveVirtually(scoord, scoord, vove&) override;
+    void revertVirtualMove(vove&) override;
+    const std::vector<halfmove>& theStory() override;
 
     void showValid(scoord from);
     void hideValid();
-    bool isValid(scoord move);
-    bool empty();
-    bool inCheck(bool color);
-    bool inCheckmate(bool color);
-    bool inStalemate(bool color);
-    bool canCastle(scoord from, scoord to, scoord& rook);
-    bool canPass(scoord from, scoord to);
-    bool canPassVirtually(scoord from, scoord to, pove virtual_move);
-    bool canPromote(scoord pawn, scoord destination);
-    void reactOnMove(scoord from, scoord to);
-    void bringBack(scoord from, scoord to);
-    qint64 countMovesTest(int depth = 5, int i = 0);
 };
