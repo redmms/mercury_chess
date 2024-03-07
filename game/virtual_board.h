@@ -21,6 +21,7 @@ public:
 	VirtualBoard(QObject* parent_);
 
 	// move forward
+	void saveMoveNormally(scoord from, scoord to, vove& move);
 	void moveNormally(scoord from, scoord to);
 	void castleKing(scoord king, scoord destination, scoord rook);
 	void passPawn(scoord from, scoord to);
@@ -50,5 +51,3 @@ signals:
 	void moveMade(scoord from, scoord to, char promotion_type);
 	void theEnd(endnum end_type);
 };
-
-//void saveMoveNormally(const VirtualTile& from, const VirtualTile& to, vove& move);

@@ -22,7 +22,7 @@ public:
 	int tile_size;
 	std::vector<bitmove> bistory;
 
-	Board(QLabel* background_, MainWindow* parent_);
+	Board(MainWindow* parent_, QLabel* background_);
 	~Board();
 
 	void drawLetters(bool side);
