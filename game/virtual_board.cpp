@@ -16,120 +16,113 @@ VirtualBoard::VirtualBoard(QObject* parent) :
 	setTiles();
 }
 
-void VirtualBoard::setTiles()
+void VirtualBoard::saveMoveNormally(scoord from, scoord to, vove& move)
 {
-	for (int y = 0; y < 8; y++) {
-		for (int x = 0; x < 8; x++) {
-			tiles[x][y] = VirtualTile({ x, y }, 'e', false, this);
-		}
-	}
-
-	// black pawns
-	for (int x = 0; x < 8; x++) {
-		tiles[x][6].setPiece('P', 0);
-		//black_piece_coords[x + 8] = {x, 6};
-	}
-
-	// white pawns
-	for (int x = 0; x < 8; x++) {
-		tiles[x][1].setPiece('P', 1);
-	}
-
-	// black pieces
-	string pieces = "RNBQKBNR";
-	for (int x = 0; x < 8; x++) {
-		tiles[x][7].setPiece(pieces[x], 0);
-		//black_piece_coords[x] = {x, 7};
-	}
-
-	// white pieces
-	for (int x = 0; x < 8; x++) {
-		tiles[x][0].setPiece(pieces[x], 1);
-		//piece_coords[x + 8] = {x, 0};
-	}
+	move = {*theTile(from), *theTile(to)};
+	// FIX: will it call VirtualBoard::theTile() or Board::theTile() ?
 }
 
-//void VirtualBoard::saveMoveNormally(VirtualTile from, VirtualTile to, vove& move)
-//{
-//	move = {from, to};
-//}
-
-void VirtualBoard::moveNormally(VirtualTile& from, VirtualTile& to)
+void VirtualBoard::moveNormally(scoord from, scoord to)
 {
-	to.setPiece(from.piece_name, from.piece_color);
-	from.setPiece('e', 0);
-	valid.reactOnMove(from.coord, to.coord);
+	auto from_tile = theTile(from);
+	auto to_tile = theTile(to);
+	to_tile->setPiece(from_tile->piece_name, from_tile->piece_color);
+	from_tile->setPiece('e', 0);
+	vvalid.reactOnMove(from, to);
 }
 
-void VirtualBoard::revertMoveNormally(vove& move)
-{
-	VirtualTile from_tile = move.first;
-	scoord from_coord = from_tile.coord;
-	VirtualTile to_tile = move.second;
-	scoord to_coord = to_tile.coord;
-	restoreTile(theTile(from_coord), from_tile);
-	restoreTile(theTile(to_coord), to_tile);
-	move = {};
-}
-
-void VirtualBoard::castleKing(VirtualTile& king, VirtualTile& destination, VirtualTile& rook)
+void VirtualBoard::castleKing(scoord king, scoord destination, scoord rook)
 {
 	moveNormally(king, destination);
-	int k = destination.coord.x - king.coord.x > 0 ? -1 : 1;
-	// because the rook is always on the left or right side of king after castling
-	int x = destination.coord.x + k;
-	int y = destination.coord.y;
-	moveNormally(rook, tiles[x][y]);
+	int k = destination.x - king.x > 0 ? -1 : 1;
+	int x = destination.x + k;
+	int y = destination.y;
+	scoord rook_destination{x, y};
+	moveNormally(rook, rook_destination);
 }
 
-void VirtualBoard::passPawn(VirtualTile& from, VirtualTile& to)
+void VirtualBoard::passPawn(scoord from, scoord to)
 {
 	moveNormally(from, to);
-	tiles[to.coord.x][from.coord.y].setPiece('e', 0);
+	theTile({to.x, from.y})->setPiece('e', 0);
 }
 
-void VirtualBoard::promotePawn(VirtualTile& from, char into)
+void VirtualBoard::halfMove(scoord from, scoord to, char promo, bool save_story)
 {
-	from.setPiece(into, from.piece_color);
-	last_promotion = into;
+	//valid.valid_moves.clear();
+	halfmove last_move;
+	saveMoveNormally(from, to, last_move.move);
+	scoord rook;
+	if (valid.canCastle(from.coord, to.coord, rook)) {
+		castleKing(from, to, theTile(rook));
+		last_move.castling = true;
+	}
+	else if (valid.canPass(from.coord, to.coord)) {
+		passPawn(from, to);
+		last_move.pass = true;
+	}
+	else {
+		moveNormally(from, to);
+	}
+	if (valid.canPromote(to.coord, to.coord)) {
+		promotePawn(to, promo);
+		last_move.promo = promo;
+	}
+	last_move.turn = turn;
+	if (save_story) {
+		history.push_back(last_move);
+	}
+	turn = !turn;
+	if (valid.inCheck(turn))
+		if (valid.inStalemate(turn))  // check + stalemate == checkmate
+			emit theEnd(turn == side ? endnum::opponent_wins : endnum::user_wins);
+		else if (valid.inStalemate(turn))
+			emit theEnd(endnum::draw_by_stalemate);
 }
 
-void VirtualBoard::promotePawn(scoord from, char into)
+void VirtualBoard::doCurrentMove()
 {
-	promotePawn(theTile(from), into);
+	halfmove hmove = history[current_move];
+	scoord from = hmove.move.first.coord;
+	scoord to = hmove.move.second.coord;
+	char promo = hmove.promo;
+	halfMove(from, to, promo, false);
+	current_move++;
 }
 
-void VirtualBoard::restoreTile(VirtualTile& restored, VirtualTile saved)
+void VirtualBoard::restoreTile(const VirtualTile& saved)
 {
-	restored.setPiece(saved.piece_name, saved.piece_color);
+	theTile(saved)->setPiece(saved.piece_name, saved.piece_color);
+}
+
+void VirtualBoard::revertMoveNormally(vove move)
+{
+	restoreTile(move.first);
+	restoreTile(move.second);
 }
 
 void VirtualBoard::revertCastling(vove move)
 {	
-	VirtualTile& from = theTile(move.first);
-	VirtualTile& to = theTile(move.second);
-	valid.bringBack(from.coord, to.coord);
+	scoord from = move.first.coord;
+	scoord to = move.second.coord;
+	int k = to.x - from.x > 0 ? -1 : 1;
+	int x = to.x + k;
+	int y = to.y;
+	scoord rook{x, y};
+	scoord rook_corner{x + k*3, y};
+	vvalid.bringBack(from, to);
 	revertMoveNormally(move);
-	scoord rook;
-	if (valid.canCastle(from.coord, to.coord, rook)) { // FIX: will not work, because has_moved[] in VirtualValidator valid wasn't updated back for the rook
-		int k = to.coord.x - from.coord.x > 0 ? -1 : 1;
-		int x = to.coord.x + k;
-		int y = to.coord.y;
-		vove rook_move = { theTile(rook), tiles[x][y] };
-		revertMoveNormally(rook_move);
-	}
-	else {
-		qWarning() << "valid.canCastle(rook) returned false though it definetely should has returned true";
-	}
-	
+	vvalid.bringBack(rook_corner, rook);
+	theTile(rook_corner)->setPiece('R', theTile(rook)->piece_color);
+	theTile(rook)->setPiece('e', 0);
 }
 
 void VirtualBoard::revertPass(vove move)
 {
 	revertMoveNormally(move);
-	VirtualTile from = move.first;
-	VirtualTile to = move.second;
-	tiles[to.coord.x][from.coord.y].setPiece('P', !from.piece_color);
+	scoord from = move.first.coord;
+	scoord to = move.second.coord;
+	theTile({ to.x, from.y })->setPiece('P', !move.first.piece_color);
 }
 
 void VirtualBoard::revertPromotion(vove move)
@@ -162,66 +155,45 @@ void VirtualBoard::revertCurrentMove()
 	current_move--;
 }
 
-void VirtualBoard::revertLastMove()
+// beggining of virtual methods
+VirtualTile* VirtualBoard::theTile(scoord coord)
 {
-	if (!history.empty()) {
-		revertHalfmove(history.back());
-		history.pop_back();		
-	}
+	return &vtiles[coord.x][coord.y];
 }
 
-void VirtualBoard::doCurrentMove()
-{	
-	halfmove hmove = history[current_move];
-	VirtualTile from = hmove.move.first;
-	VirtualTile to = hmove.move.second;
-	char promo = hmove.promo;
-	halfMove(from, to, promo);
-	current_move++;
-}
-
-VirtualTile& VirtualBoard::theTile(scoord coord)
-{
-	return tiles[coord.x][coord.y];
-}
-
-VirtualTile& VirtualBoard::theTile(VirtualTile tile)
+VirtualTile* VirtualBoard::theTile(VirtualTile tile)
 {
 	return theTile(tile.coord);
 }
 
-void VirtualBoard::halfMove(scoord from, scoord to, char promo)
+void VirtualBoard::setTiles()
 {
-	halfMove(theTile(from), theTile(to), promo);
+	for (int y = 0; y < 8; y++) {
+		for (int x = 0; x < 8; x++) {
+			vtiles[x][y] = VirtualTile({ x, y }, 'e', false, this);
+		}
+	}
+	// black pawns
+	for (int x = 0; x < 8; x++) {
+		vtiles[x][6].setPiece('P', 0);
+	}
+	// white pawns
+	for (int x = 0; x < 8; x++) {
+		vtiles[x][1].setPiece('P', 1);
+	}
+	// black pieces
+	string pieces = "RNBQKBNR";
+	for (int x = 0; x < 8; x++) {
+		vtiles[x][7].setPiece(pieces[x], 0);
+	}
+	// white pieces
+	for (int x = 0; x < 8; x++) {
+		vtiles[x][0].setPiece(pieces[x], 1);
+	}
 }
 
-void VirtualBoard::halfMove(VirtualTile& from, VirtualTile& to, char promo)
+void VirtualBoard::promotePawn(scoord from, char into)
 {
-	//valid.valid_moves.clear();
-	halfmove last_move;
-	last_move.move = {from, to};
-	scoord rook;
-	if (valid.canCastle(from.coord, to.coord, rook)) {
-		castleKing(from, to, theTile(rook));
-		last_move.castling = true;
-	}
-	else if (valid.canPass(from.coord, to.coord)) {
-		passPawn(from, to);
-		last_move.pass = true;
-	}
-	else {
-		moveNormally(from, to);
-	}
-	if (valid.canPromote(to.coord, to.coord)) {
-		promotePawn(to, promo);
-		last_move.promo = promo;
-	}
-	last_move.turn = turn;
-	history.push_back(last_move);
-	turn = !turn;
-	if (valid.inCheck(turn))
-		if (valid.inStalemate(turn))  // check + stalemate == checkmate
-			emit theEnd(turn == side ? endnum::opponent_wins : endnum::user_wins);
-	else if (valid.inStalemate(turn))
-		emit theEnd(endnum::draw_by_stalemate);
+	theTile(from)->setPiece(into, theTile(from)->piece_color);
 }
+// end of virtual methods

@@ -7,11 +7,11 @@ class VirtualBoard : public QObject {
 	Q_OBJECT
 
 public:
-	VirtualValidator valid;
-	VirtualTile tiles[8][8];
-	VirtualTile* from_tile;
-	VirtualTile* white_king;
-	VirtualTile* black_king;
+	VirtualValidator vvalid;
+	VirtualTile vtiles[8][8];
+	VirtualTile* vfrom_tile;
+	VirtualTile* vwhite_king;
+	VirtualTile* vblack_king;
 	bool turn;
 	bool side;
 	int current_move;
@@ -29,7 +29,7 @@ public:
 	void doCurrentMove();
 
 	// move backward (undo)
-	void restoreTile(VirtualTile saved);
+	void restoreTile(const VirtualTile& saved);
 	void revertMoveNormally(vove move);
 	void revertCastling(vove move);
 	void revertPass(vove move);
