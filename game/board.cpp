@@ -2,9 +2,11 @@
 #include "board.h"
 #include "../app/mainwindow.h"
 #include "tile.h"
+#include "virtual_tile.h"
 #include <QEventLoop>
 #include <QLayout>
 #include <QDebug>
+#include <QLabel>
 import finestream;
 using namespace std;
 
@@ -23,17 +25,17 @@ Board::Board(QLabel* background, MainWindow* mainwindow_) :
     //menu{},
     board_css(
 		"Board{"
-		"background-color: rgb(170, 170, 125);"
-		"border: 1 solid black;"
-		"border-radius: 14px;}"
+			"background-color: rgb(170, 170, 125);"
+			"border: 1 solid black;"
+			"border-radius: 14px;}"
 		"Tile{"
-		"border-radius: 7;}"
+			"border-radius: 7;}"
 	),
 	promo_css(
 		"Tile{"
-		"background-color: white;}:"
+			"background-color: white;}:"
 		"hover{"
-		"background-color: rgb(170,85,127);}"
+			"background-color: rgb(170,85,127);}"
     ),
     last_promotion('e'),
     last_virtually_passed{},
