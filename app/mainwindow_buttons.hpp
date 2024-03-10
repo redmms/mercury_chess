@@ -423,7 +423,7 @@ void MainWindow::on_actionSave_game_triggered()
     }
 
     // Write game to the file
-    Archiver archiver(this);
+    Archiver archiver;
     int error = archiver.writeGame(board->end_type, board->bistory, archive_fullname.toStdString());
     if (!error) {
         showBox("Good news",
@@ -457,7 +457,7 @@ void MainWindow::on_actionLoad_game_triggered()
     }
 
     // Read game from the file
-    Archiver archiver(this);
+    Archiver archiver;
     endnum end_type;
     vector<halfmove> history;
     int error = archiver.readGame(end_type, history, archive_fullname.toStdString());

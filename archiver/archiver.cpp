@@ -3,15 +3,14 @@
 #include "../game/virtual_board.h"
 #include "../game/virtual_validator.h"
 #include "../game/validator.h"
+//#include "../game/board.h"
 //#include <QDebug>
 //#include <sstream>
 using namespace std;
 
 //stringstream sout;
 
-Archiver::Archiver(QObject* parent) :
-	QObject(parent)
-{}
+Archiver::Archiver() {}
 
 int Archiver::writeGame(endnum end_type, const std::vector<bitmove>& history, std::string filename)
 {
@@ -101,8 +100,8 @@ int Archiver::readGame(endnum& end_type, std::vector<halfmove>& history, std::st
 	//     << " moves: " << bitset<8>(moves_num)
 	//     << " end: " << end_type.toStr();
 
-	VirtualBoard board(this);
-	VirtualValidator& valid = board.valid;
+	VirtualBoard board;
+	VirtualValidator& valid = board.vvalid;
 	valid.inStalemate(true);
 	for (int i = 0; i < moves_num; i++) {
 		//int order = i + 1;
@@ -124,7 +123,7 @@ int Archiver::readGame(endnum& end_type, std::vector<halfmove>& history, std::st
 
 inline int Archiver::readMove(bitmove& bmove, fsm::ifinestream& ifs, VirtualBoard& board) 
 {
-	VirtualValidator& valid = board.valid;
+	VirtualValidator& valid = board.vvalid;
 	bmove.piece.BITSN = fsm::MinBits(valid.movable_pieces.size() - 1);
 	ifs >> bmove.piece;
 	if (bmove.piece >= valid.movable_pieces.size()) {
@@ -151,27 +150,33 @@ inline int Archiver::readMove(bitmove& bmove, fsm::ifinestream& ifs, VirtualBoar
 		//sout << " promo: " << promo;
 	}
 	//sout << endl;
-	board.halfMove(from, to, char_by_promo[bmove.promo]);
+	endnum end_type;
+	board.halfMove(from, to, char_by_promo[bmove.promo], end_type);
 	return 0;
 }
 
-bitmove Archiver::toBitmove(halfmove hmove, Validator& valid) {
-	bitmove bmove;
+bitmove Archiver::toBitmove(halfmove hmove, Validator& valid)
+{
 	scoord from = hmove.move.first.coord;
 	scoord to = hmove.move.second.coord;
+	return { toPieceIdx(from, valid), toMoveIdx(to, valid), promo_by_char[hmove.promo] };
+}
+
+bitremedy Archiver::toPieceIdx(scoord from, Validator& valid) {
 	unsigned char piece_idx = distance(valid.movable_pieces.begin(), valid.movable_pieces.find(from));
+	return { piece_idx, fsm::MinBits(valid.movable_pieces.size() - 1), false };
+}
+
+bitremedy Archiver::toMoveIdx(scoord to, Validator& valid) {
 	unsigned char move_idx = distance(valid.valid_moves.begin(), valid.valid_moves.find(to));
-	bmove.piece = bitremedy(piece_idx, fsm::MinBits(valid.movable_pieces.size() - 1), false);
-	bmove.move = bitremedy(move_idx, fsm::MinBits(valid.valid_moves.size() - 1), false);
-	bmove.promo = promo_by_char[hmove.promo];
-	return bmove;
+	return { move_idx, fsm::MinBits(valid.valid_moves.size() - 1), false };
 }
 
 halfmove Archiver::toHalfmove(bitmove bmove, VirtualValidator& valid) {
 	scoord from = *next(valid.movable_pieces.begin(), int(bmove.piece));
 	scoord to = *next(valid.valid_moves.begin(), int(bmove.move)); // FIX: will these Validator members be actual and valid at the moment?
 	halfmove hmove;
-	hmove.move = { valid.theTile(from), valid.theTile(to) };
+	hmove.move = { *valid.theTile(from), *valid.theTile(to) };
 	hmove.promo = char_by_promo[bmove.promo];
 	scoord rook_stub;
 	hmove.castling = valid.canCastle(from, to, rook_stub);

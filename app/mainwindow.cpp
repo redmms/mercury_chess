@@ -360,11 +360,11 @@ void MainWindow::startGame(QString game_regime) // side true for user - white
 
     if (board){
         Board* old_board = board;
-        board = (new Board(old_board, this));
+        board = (new Board(this, old_board));
         delete old_board;
     }
     else if (ui->board_background){
-        board = (new Board(ui->board_background, this));
+        board = (new Board(this, ui->board_background));
         ui->board_background->~QLabel();
     }
     else{

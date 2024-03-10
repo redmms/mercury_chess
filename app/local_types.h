@@ -122,12 +122,12 @@ struct scoord {
         return (y != r.y ? y < r.y : x < r.x); // necessary for placing 
         // piece idxs on board in archiver
     }
-    operator std::pair<int, int>() const {
-        return std::make_pair(x, y);
-    }
-    operator bool() {
-        return isValid();
-    }
+    //operator std::pair<int, int>() const {
+    //    return std::make_pair(x, y);
+    //}
+    //operator bool() {
+    //    return isValid();
+    //}
 };
 
 import bitremedy;

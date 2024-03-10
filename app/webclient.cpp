@@ -336,15 +336,9 @@ void WebClient::readFromServer()
             qDebug() << "ERROR: trying to write a move to nonexisting board";
             return;
         }
-        mainwindow->board->halfMove(from, to);
-        quint8 promo_int;
-        readPack(promo_int);
-        char promotion_type = char(promo_int);
-        if (promotion_type != 'e'){
-            bool color = !mainwindow->board->side;
-            Board& board = *mainwindow->board;
-            board.promotePawn(to, promotion_type);
-        }
+        quint8 promo;
+        readPack(promo);
+        mainwindow->board->halfMove(from, to, promo);
         break;
     }
     case packnum::chat_message:

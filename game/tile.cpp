@@ -4,9 +4,9 @@
 #include <QDebug>
 using namespace std;
 
-Tile::Tile(Board* mother_board, scoord tile_coord, bool side) :
-	QLabel(mother_board),
-	VirtualTile(tile_coord, 'e', false),
+Tile::Tile(Board* parent_, scoord tile_coord, bool side) :
+	QLabel(parent_),
+	VirtualTile(tile_coord, 'e', false, parent_),
 	black{ 120, 120, 90 },
 	white{ 211, 211, 158 },
 	selected(Qt::green),
@@ -24,7 +24,7 @@ Tile::Tile(Board* mother_board, scoord tile_coord, bool side) :
 	css_colors["hover"][1] = hover.name(QColor::HexRgb);
 
 	dyeNormal();
-	auto size = mother_board->tile_size;
+	auto size = parent_->tile_size;
 	if (side)
 		setGeometry(size / 2 + coord.x * size, size / 2 + (7 - coord.y) * size,
 			size, size); // size/2 is the indent from the left upper corner
@@ -71,8 +71,8 @@ void Tile::setPiece(char name, bool color)
 		break;
 	case 'K':
 		piece = ":images/king_" + add;
-        if (color) ((Board*)QLabel::parent())->white_king = this;
-        else ((Board*)QLabel::parent())->black_king = this;
+        if (color) ((Board*)parent())->white_king = coord;
+        else ((Board*)parent())->black_king = coord;
 		break;
 	case 'Q':
 		piece = ":images/queen_" + add;
@@ -85,14 +85,6 @@ void Tile::setPiece(char name, bool color)
 			"for the files. Add them again to .qrc file if you've changed the project's"
 			"structure.";
 	}
-
-//	QSvgRenderer svgRenderer(piece);
-//    QSize imageSize(100, 100);
-//	QImage image(imageSize, QImage::Format_ARGB32);
-//	image.fill(Qt::transparent);
-//	QPainter painter(&image);
-//	svgRenderer.render(&painter);
-//	setPixmap(QPixmap::fromImage(image).scaled(width(), height()));
     setPixmap(piece);
 }
 

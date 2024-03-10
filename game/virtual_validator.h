@@ -1,7 +1,5 @@
 #pragma once
 #include "../app/local_types.h"
-//#include "virtual_tile.h"
-//#include "virtual_board.h"
 #include <functional>
 #include <set>
 using lambda = std::function<bool(scoord)>;
@@ -26,7 +24,7 @@ protected:
     std::list<scoord> perp_dir;
     std::list<scoord> diag_dir;
 
-    std::function<void(scoord)> addValid;
+    std::function<void(scoord, std::set<scoord>&)> addValid;
     std::function<void(scoord, scoord, checker, bool&)> fastThrough;
     std::function<bool(scoord, checker, const std::list<scoord>&)> fastLine;
     std::function<bool(scoord, lambda, lambda, bool&)> enemyFinder;
@@ -34,7 +32,9 @@ protected:
     void kingPotential(scoord coord, std::list<scoord>& coords);
     void knightPotential(scoord coord, std::list<scoord>& coords);
     bool underAttack(scoord coord);
+    //bool fastValid(scoord from);
     void findValid(scoord from);
+    void findValid(scoord from, std::set<scoord>& container);
 
 public:
     VirtualValidator(VirtualBoard* mother_board = 0);
@@ -44,19 +44,20 @@ public:
     std::function<bool(scoord)> differentColor;
     std::function<char(scoord)> pieceName;
 
-    virtual VirtualTile& theTile(scoord);
-    virtual bool theTurn();
-    virtual VirtualTile& theWKing();
-    virtual VirtualTile& theBKing();
-    virtual void moveVirtually(scoord, scoord, vove&);
-    virtual void revertVirtualMove(vove&);
-    virtual const std::vector<halfmove>& theStory();
+    virtual VirtualTile* theTile(scoord);
+    bool theTurn();
+    scoord theWKing();
+    scoord theBKing();
+    void moveVirtually(scoord from, scoord to, char promo, endnum& end_type, halfmove& saved_move);
+    void revertVirtualMove(halfmove saved_move);
+    const std::vector<halfmove>& theStory();
 
     bool isValid(scoord move);
     bool empty();
     bool inCheck(bool color);
     bool inCheckmate(bool color);
     bool inStalemate(bool color);
+    bool fastInStalemate(bool color);
     bool canCastle(scoord from, scoord to, scoord& rook);
     bool canPass(scoord from, scoord to);
     bool canPromote(scoord pawn, scoord destination);

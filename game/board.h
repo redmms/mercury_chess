@@ -1,21 +1,19 @@
 #pragma once
 #include "virtual_board.h"
 #include "validator.h"
+#include <QLabel>
 
-class QLabel;
 class VirtualTile;
 class Tile;
 class WebClient;
 class MainWindow;
 class Board : public QLabel, public VirtualBoard {
-public:
+	Q_OBJECT
 
+public:
 	MainWindow* mainwindow;
     Validator valid;
     Tile* tiles[8][8];
-    Tile* from_tile;
-    Tile* white_king;
-    Tile* black_king;
     Tile* menu[4];
 	QString board_css;
 	QString promo_css;
@@ -25,22 +23,26 @@ public:
 	Board(MainWindow* parent_, QLabel* background_);
 	~Board();
 
-	void drawLetters(bool side);
-	void drawNumbers(bool side);
-	void openPromotion(scoord from);
-	void moveVirtually(scoord from, scoord to, vove& move);
-	void revertVirtualMove(vove move);
+	void initLetter(int x, int y, int width, int height, QString ch);
+	void drawLetters();
+	void drawNumbers();
+	char openPromotion(scoord from);
+	void halfMove(scoord from, scoord to, char promo);
+	void halfMove(scoord from, scoord to, char promo, halfmove& saved_hmove); 
+	// one of these 3 functions will be called in reactOnClick depending on settings
+	void halfMove(scoord from, scoord to, char promo, bitmove& saved_bmove, halfmove& saved_hmove);
 
 	// virtual methods
 	Tile* theTile(scoord coord) override;
-	Tile* theTile(VirtualTile tile) override;
-	void setTiles(bool side) override;
+	void initTiles() override;
 
 signals:
+	void moveMade(scoord from, scoord to, char promotion_type);
+	void theEnd(endnum end_type);
 	void newStatus(tatus status);
 	void promotionEnd();
 
-private slots:
-	void reactOnClick(scoord tile);
-	void promotePawn(scoord from, char into) override;
+public slots:
+	void reactOnClick(Tile* tile);
+	void promotePawn(scoord from, char into);
 };

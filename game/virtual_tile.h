@@ -10,7 +10,7 @@ public:
 	bool piece_color;
 	bool tile_color;
 	
-	VirtualTile(scoord tile_coord_ = {}, char piece_name_ = 'e', bool piece_color_ = false, VirtualBoard* mother_board_ = 0);
+	VirtualTile(scoord tile_coord_ = {}, char piece_name_ = 'e', bool piece_color_ = false, VirtualBoard* parent_ = 0);
 
 	virtual void setPiece(char elem, bool color);
 };

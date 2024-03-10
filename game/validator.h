@@ -8,16 +8,9 @@ protected:
     Board* board;
 
 public:
-    Validator(Board* mother_board = 0);
+    Validator(Board* mother_board);
 
-    Tile& theTile(scoord) override;
-    bool theTurn() override;
-    Tile& theWKing() override;
-    Tile& theBKing() override;
-    void moveVirtually(scoord, scoord, vove&) override;
-    void revertVirtualMove(vove&) override;
-    const std::vector<halfmove>& theStory() override;
-
+    Tile* theTile(scoord) override; // FIX: do we need this at all?
     void showValid(scoord from);
     void hideValid();
 };

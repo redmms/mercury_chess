@@ -3,6 +3,9 @@
 #include "virtual_board.h"
 #include "virtual_tile.h"
 #include <QDebug>
+#include <windows.h>  // Äëÿ AllocConsole()
+#include <cstdio>  
+#include <iostream>
 using namespace std;
 using lambda = function<bool(scoord)>;
 using checker = function<bool(scoord, bool&)>;
@@ -33,50 +36,50 @@ VirtualValidator::VirtualValidator(VirtualBoard* mother_board) :
 	perp_dir{ { 0,  1 }, { 0,  -1 }, { 1,  0 },  { -1, 0 } },
 	diag_dir{ { 1,  1 }, { 1, -1 },  { -1,  1 }, { -1, -1 } },
 	inBoard([](scoord coord) -> bool {
-	return coord.x >= 0 && coord.x < 8 && coord.y >= 0 && coord.y < 8;
-		}),
+		return coord.x >= 0 && coord.x < 8 && coord.y >= 0 && coord.y < 8;
+	}),
 	occupied([&](scoord coord) -> bool {
-	return theTile(coord).piece_name != 'e';
-		}),
+		return theTile(coord)->piece_name != 'e';
+	}),
 	differentColor([&](scoord coord) -> bool {
 	// may be realized differently, with either turn or piece color
-	return occupied(coord) && theTile(coord).piece_color != theTurn();
-		}),
+		return occupied(coord) && theTile(coord)->piece_color != theTurn();
+	}),
 	pieceName([&](scoord coord) -> char {
-	return theTile(coord).piece_name;
-		}),
-	addValid([&](scoord coord) -> void {
-	valid_moves.emplace(coord);
-		}),
+		return theTile(coord)->piece_name;
+	}),
+	addValid([&](scoord coord, set<scoord>& container) -> void {
+		container.emplace(coord);
+	}),
 	fastThrough([&](scoord coord, scoord add, checker stop_cond, bool& result) -> void {
 	// here range is (from, to] or (from, to), depending on stop_cond
-	do { coord.x += add.x, coord.y += add.y; } while (!stop_cond(coord, result));
-		}),
+		do { coord.x += add.x, coord.y += add.y; } while (!stop_cond(coord, result));
+	}),
 	fastLine([&](scoord coord, checker stop_cond, const list<scoord>& adds) -> bool {
-	bool result = false;
-	for (auto dir : adds) {
-		fastThrough(coord, dir, stop_cond, result);
-		if (result)
-			return true;
-	}
-	return false;
-		}),
+		bool result = false;
+		for (auto dir : adds) {
+			fastThrough(coord, dir, stop_cond, result);
+			if (result)
+				return true;
+		}
+		return false;
+	}),
 	enemyFinder([&](scoord coord, lambda comparison, lambda borders, bool& result) -> bool {
-	if (!borders(coord)) { // borders checking should always go first
-		result = false; // then it's the end of a cycle
-		return true;
-	}
-	else if (differentColor(coord)) {
-		result = comparison(coord);
-		return true; // then stop
-	}
-	else
-		return false; // then continue
-		})
+		if (!borders(coord)) { // borders checking should always go first
+			result = false; // then it's the end of a cycle
+			return true;
+		}
+		else if (differentColor(coord)) {
+			result = comparison(coord);
+			return true; // then stop
+		}
+		else
+			return false; // then continue
+	})
 {}
 
 // beginning of virtual methods
-VirtualTile& VirtualValidator::theTile(scoord coord)
+VirtualTile* VirtualValidator::theTile(scoord coord)
 {
 	return vboard->theTile(coord);
 }
@@ -86,25 +89,24 @@ bool VirtualValidator::theTurn()
 	return vboard->turn;
 }
 
-VirtualTile& VirtualValidator::theWKing()
+scoord VirtualValidator::theWKing()
 {
-	return *vboard->white_king;
+	return vboard->white_king;
 }
 
-VirtualTile& VirtualValidator::theBKing()
+scoord VirtualValidator::theBKing()
 {
-	return *vboard->black_king;
+	return vboard->black_king;
 }
 
-void VirtualValidator::moveVirtually(scoord from, scoord to, vove& saved_move)
+void VirtualValidator::moveVirtually(scoord from, scoord to, char promo, endnum& end_type, halfmove& saved_move)
 {
-	saved_move = { theTile(from), theTile(to) };
-	vboard->moveNormally(vboard->theTile(from), vboard->theTile(to));
+	vboard->halfMove(from, to, promo, end_type, saved_move, true);
 }
 
-void VirtualValidator::revertVirtualMove(vove& saved_move)
+void VirtualValidator::revertVirtualMove(halfmove saved_move)
 {
-	vboard->revertMoveNormally(saved_move);
+	vboard->revertHalfmove(saved_move, true);
 }
 
 const std::vector<halfmove>& VirtualValidator::theStory()
@@ -172,8 +174,220 @@ bool VirtualValidator::underAttack(scoord coord)
 		};
 	return fastLine(coord, checkDiag, diag_dir);
 }
+//
+//bool VirtualValidator::fastValid(scoord from)
+//{
+//	auto from_tile = theTile(from);
+//	const bool turn = theTurn();
+//	const char piece = from_tile->piece_name;
+//	const scoord king = turn ? theWKing() : theBKing();
+//	int X, Y;
+//	bool first_evaluation = true, may_exposure = false;
+//	scoord add;
+//	list <scoord> potenial_moves;
+//
+//
+//	// Direction cycles:
+//	auto fastDiag = 
+//	auto onDiagonals = [&](scoord coord, lambda stop_cond, lambda borders_cond)
+//		{
+//			bool res = false;
+//			for (scoord dir : diag_dir)
+//				res |= runThrough(coord, dir, stop_cond, borders_cond);
+//			return res;
+//		};
+//	auto onPerp = [&](scoord coord, lambda stop_cond, lambda borders_cond)
+//		{
+//			bool res = false;
+//			for (scoord dir : perp_dir)
+//				res |= runThrough(coord, dir, stop_cond, borders_cond);
+//			return res;
+//		};
+//
+//	// Usefull formulas:
+//	auto findDirection = [](scoord beg, scoord end) -> scoord {
+//		// if two tiles are on the same diagonal or perpendicular
+//		// it will return unit vector, which can be used as increments for cycles, 
+//		// otherwise it's undefined behavior
+//		int X = end.x - beg.x;
+//		int Y = end.y - beg.y;
+//		scoord add{ X > 0 ? 1 : -1,  Y > 0 ? 1 : -1 };
+//		if (!Y) add.y = 0;
+//		if (!X) add.x = 0;
+//		return add;
+//		};
+//	auto notAlignsKing = [&](scoord coord, scoord king, scoord from) {
+//		// checks that "coord" tile is not on the same line with "king" tile and "from"
+//		// tile, with the least operations possible
+//		return (from.x - coord.x) * (coord.y - king.y) !=
+//			(from.y - coord.y) * (coord.x - king.x);
+//		};
+//
+//	// Lambdas about king:
+//	auto exposureKing = [&](scoord coord) -> bool {
+//		if (first_evaluation) {
+//			X = from.x - king.x,
+//				Y = from.y - king.y;
+//			bool from_aligns_king = abs(X) == abs(Y) || !X || !Y;
+//			if (from_aligns_king) {
+//				add = findDirection(king, from);
+//				auto bordersBetween = [king, from](scoord coord) -> bool {
+//					return coord != king && coord != from;
+//					// whithout "if(from_align_king)"
+//					// checking this will lead to borders violation sometimess (only if "from" tile
+//					// is not aligned with "king" tile), e.g. for knight; be carefull
+//					// also cycle may potentially leave the borders if from is equal king 
+//					// (the moving piece is king)
+//					};
+//				bool nothing_between = !runThrough(king, add, occupied, bordersBetween);
+//				auto threatensToKing = [&](scoord coord) -> bool {
+//					char name = pieceName(coord);
+//					return (abs(X) == abs(Y)
+//						? differentColor(coord) && (name == 'B' || name == 'Q')
+//						: differentColor(coord) && (name == 'R' || name == 'Q'));
+//					};
+//				auto bordersAfter = [&](scoord coord) {
+//					return inBoard(coord) && (!occupied(coord) || differentColor(coord));
+//					};
+//				auto checkerAfter = [&](scoord coord, bool& result) -> bool {
+//					return enemyFinder(coord, threatensToKing, bordersAfter, result);
+//					};
+//				bool occurs_threat;
+//				fastThrough(from, add, checkerAfter, occurs_threat);
+//				may_exposure = from_aligns_king && nothing_between && occurs_threat;
+//			}
+//			first_evaluation = false;
+//		}
+//		return may_exposure && notAlignsKing(coord, king, from); // if not aligns king then exposure him
+//		// otherwise it will protect king with its own body
+//		};
+//	auto letKingDie = [&](scoord coord) {
+//		// FIX: actually canPass() check should be in exposureKing() logically,
+//		// but it will cause an exact copy of this function in eposureKing()
+//		if (check || canPass(from, coord)) {
+//			halfmove virtual_move;
+//			endnum end_type;
+//			moveVirtually(from, coord, 'e', end_type, virtual_move);
+//			bool check_remains =
+//				pieceName(coord) == 'K' ? underAttack(coord) : underAttack(king);
+//			revertVirtualMove(virtual_move);
+//			return check_remains;
+//		}
+//		return false;
+//		};
+//	auto castlingPotential = [&](list<scoord>& coords) {
+//		// adds coords of potential castling destination for king to the list
+//		if (turn)
+//			coords = { {2, 0}, {6, 0} };
+//		else
+//			coords = { {2, 7}, {6, 7} };
+//		};
+//
+//	// Checker conditions:
+//	// For knight, rook, bishop and queen
+//	auto canMoveTo = [&](scoord coord) -> bool {
+//		return inBoard(coord) && (!occupied(coord) || differentColor(coord)) &&
+//			pieceName(coord) != 'K' && !exposureKing(coord);
+//		};
+//	// For knight
+//	auto canMoveKnightTo = [&](scoord coord) {
+//		return inBoard(coord) && (!occupied(coord) || differentColor(coord)) &&
+//			pieceName(coord) != 'K' && !exposureKing(coord) && !letKingDie(coord);
+//		};
+//	// For king
+//	auto canMoveKingTo = [&](scoord coord) -> bool {
+//		return inBoard(coord) && (!occupied(coord) || differentColor(coord)) &&
+//			pieceName(coord) != 'K' && !underAttack(coord) && !letKingDie(coord);
+//		};
+//	// For pawn
+//	auto pawnCanEat = [&](scoord coord) -> bool {
+//		return inBoard(coord) && !exposureKing(coord) && !letKingDie(coord) &&
+//			(!occupied(coord) && canPass(from, coord) || differentColor(coord) &&
+//				pieceName(coord) != 'K');
+//		};
+//	auto pawnCanMove = [&](scoord coord) -> bool {
+//		return inBoard(coord) && !occupied(coord) && !exposureKing(coord);
+//		};
+//
+//	// Adding coords to this->valid_moves;
+//	auto addMove = [&](scoord coord) -> bool {  // FIX: should be reread
+//		bool let_die;
+//		if (canMoveTo(coord)) {
+//			let_die = letKingDie(coord);
+//			if (!let_die)
+//				addValid(coord, container);
+//			// don't add to valid_moves, but continue the cycle,
+//			// threat may be somewhere next on the line
+//			if (occupied(coord))
+//				return true; // add move but stop, we can eat but cannot go next
+//			return false; // continue
+//		}
+//		else
+//			return true; // break cycle
+//		};
+//	auto addPawnMoves = [&](scoord coord) -> void {
+//		int x = coord.x, y = coord.y;
+//		scoord move;
+//		int k = turn ? 1 : -1;
+//		move = { x, y + 1 * k };
+//		if (pawnCanMove(move)) {
+//			if (!letKingDie(move))
+//				addValid(move, container);
+//			move = { x, y + 2 * k };
+//			if ((turn ? from.y == 1 : from.y == 6) &&
+//				pawnCanMove(move) && !letKingDie(move))
+//				addValid(move, container);
+//		}
+//		move = { x - 1, y + 1 * k };
+//		if (pawnCanEat(move) && !letKingDie(move))
+//			addValid(move, container);
+//		move = { x + 1, y + 1 * k };
+//		if (pawnCanEat(move) && !letKingDie(move))
+//			addValid(move, container);
+//		};
+//
+//	switch (piece)
+//	{
+//	case 'P':  // pawn
+//		addPawnMoves(from);
+//		break;
+//	case 'N':  // knight
+//		knightPotential(from, potenial_moves);
+//		for (auto coord : potenial_moves)
+//			if (canMoveKnightTo(coord))
+//				addValid(coord, container);
+//		break;
+//	case 'K':  // king
+//	{
+//		kingPotential(from, potenial_moves);
+//		for (auto coord : potenial_moves)
+//			if (canMoveKingTo(coord))
+//				addValid(coord, container);
+//		castlingPotential(potenial_moves);
+//		scoord rook_stub;
+//		for (auto coord : potenial_moves)
+//			if (canCastle(from, coord, rook_stub))
+//				addValid(coord, container);
+//		break;
+//	}
+//	case 'B':  // bishop
+//		onDiagonals(from, addMove, inBoard);
+//		break;
+//	case 'R':  // rook
+//		onPerp(from, addMove, inBoard);
+//		break;
+//	case 'Q':  // queen
+//		onPerp(from, addMove, inBoard);
+//		onDiagonals(from, addMove, inBoard);
+//	};
+//}
 
 void VirtualValidator::findValid(scoord from)
+{
+	findValid(from, valid_moves);
+}
+
+void VirtualValidator::findValid(scoord from, set<scoord>& container)
 {
 	// NOTE: for the use of this code, we consider that vboard goes [x][y]
 	// instead of [i][j] that is equal to [y][x];
@@ -182,8 +396,8 @@ void VirtualValidator::findValid(scoord from)
 	//valid_moves.clear();
 	auto from_tile = theTile(from);
 	const bool turn = theTurn();
-	const char piece = from_tile.piece_name;
-	const scoord king = turn ? theWKing().coord : theBKing().coord;
+	const char piece = from_tile->piece_name;
+	const scoord king = turn ? theWKing() : theBKing();
 	int X, Y;
 	bool first_evaluation = true, may_exposure = false;
 	scoord add;
@@ -278,8 +492,9 @@ void VirtualValidator::findValid(scoord from)
 		// FIX: actually canPass() check should be in exposureKing() logically,
 		// but it will cause an exact copy of this function in eposureKing()
 		if (check || canPass(from, coord)) {
-			vove virtual_move;
-			moveVirtually(from, coord, virtual_move);
+			halfmove virtual_move;
+			endnum end_type;
+			moveVirtually(from, coord, 'e', end_type, virtual_move);
 			bool check_remains =
 				pieceName(coord) == 'K' ? underAttack(coord) : underAttack(king);
 			revertVirtualMove(virtual_move);
@@ -327,7 +542,7 @@ void VirtualValidator::findValid(scoord from)
 		if (canMoveTo(coord)) {
 			let_die = letKingDie(coord);
 			if (!let_die)
-				addValid(coord);
+				addValid(coord, container);
 			// don't add to valid_moves, but continue the cycle,
 			// threat may be somewhere next on the line
 			if (occupied(coord))
@@ -344,18 +559,18 @@ void VirtualValidator::findValid(scoord from)
 		move = { x, y + 1 * k };
 		if (pawnCanMove(move)) {
 			if (!letKingDie(move))
-				addValid(move);
+				addValid(move, container);
 			move = { x, y + 2 * k };
 			if ((turn ? from.y == 1 : from.y == 6) &&
 				pawnCanMove(move) && !letKingDie(move))
-				addValid(move);
+				addValid(move, container);
 		}
 		move = { x - 1, y + 1 * k };
 		if (pawnCanEat(move) && !letKingDie(move))
-			addValid(move);
+			addValid(move, container);
 		move = { x + 1, y + 1 * k };
 		if (pawnCanEat(move) && !letKingDie(move))
-			addValid(move);
+			addValid(move, container);
 		};
 
 	switch (piece)
@@ -367,19 +582,19 @@ void VirtualValidator::findValid(scoord from)
 		knightPotential(from, potenial_moves);
 		for (auto coord : potenial_moves)
 			if (canMoveKnightTo(coord))
-				addValid(coord);
+				addValid(coord, container);
 		break;
 	case 'K':  // king
 	{
 		kingPotential(from, potenial_moves);
 		for (auto coord : potenial_moves)
 			if (canMoveKingTo(coord))
-				addValid(coord);
+				addValid(coord, container);
 		castlingPotential(potenial_moves);
 		scoord rook_stub;
 		for (auto coord : potenial_moves)
 			if (canCastle(from, coord, rook_stub))
-				addValid(coord);
+				addValid(coord, container);
 		break;
 	}
 	case 'B':  // bishop
@@ -407,27 +622,27 @@ bool VirtualValidator::empty()
 bool VirtualValidator::inCheck(bool color)
 {
 	auto king = color ? theWKing() : theBKing(); // FIX: how auto will behave here with white_king type Tile*
-	return (check = underAttack(king.coord));
+	return (check = underAttack(king));
 }
 
 bool VirtualValidator::inCheckmate(bool color)
 {
 	auto king = color ? theWKing() : theBKing();
-	return (check = underAttack(king.coord)) && inStalemate(king.piece_color);
+	return (check = underAttack(king)) && inStalemate(color);
 }
 
 bool VirtualValidator::inStalemate(bool color)
 {
 	movable_pieces.clear();
-	valid_moves.clear();
+	set<scoord> temp_valid_moves;
 	bool stalemate = true;
 	for (int x = 0; x < 8; x++) {
 		for (int y = 0; y < 8; y++) {
 			scoord coord{ x, y };
 			if (occupied(coord) && !differentColor(coord)) {
-				findValid(coord);
-				if (!empty()) {
-					valid_moves.clear();
+				findValid(coord, temp_valid_moves);
+				if (!temp_valid_moves.empty()) {
+					temp_valid_moves.clear();
 					movable_pieces.insert(coord);
 					stalemate = false;
 				}
@@ -437,17 +652,34 @@ bool VirtualValidator::inStalemate(bool color)
 	return stalemate;
 }
 
+bool VirtualValidator::fastInStalemate(bool color)
+{
+	for (int x = 0; x < 8; x++) {
+		for (int y = 0; y < 8; y++) {
+			scoord coord{ x, y };
+			if (occupied(coord) && !differentColor(coord)) {
+				set<scoord> temp_valid_moves;
+				findValid(coord, temp_valid_moves);
+				if (!temp_valid_moves.empty()) {
+					return false;
+				}
+			}
+		}
+	}
+	return true;
+}
+
 bool VirtualValidator::canCastle(scoord from, scoord to, scoord& rook)
 {
 	list<int> castling_side;
-	if (theTurn() && theTile(from).piece_name == 'K' && !has_moved[1])
+	if (theTurn() && theTile(from)->piece_name == 'K' && !has_moved[1])
 		castling_side = { 0, 2 };
-	else if (!theTurn() && theTile(from).piece_name == 'K' && !has_moved[4])
+	else if (!theTurn() && theTile(from)->piece_name == 'K' && !has_moved[4])
 		castling_side = { 3, 5 };
 	for (int i : castling_side) {
 		if (to == castling_destination[i] && !has_moved[i]) {
 			for (auto coord : should_be_free[i])
-				if (theTile(coord).piece_name != 'e')
+				if (theTile(coord)->piece_name != 'e')
 					return false;
 			for (auto coord : should_be_safe[i])
 				if (underAttack(coord))
@@ -467,11 +699,10 @@ bool VirtualValidator::canPass(scoord from, scoord to)
 	VirtualTile opp_from_tile = last_move.first;
 	VirtualTile opp_to_tile = last_move.second;
 	scoord opp_from = opp_from_tile.coord;
-	scoord opp_to = opp_from_tile.coord;
-	VirtualTile from_tile = theTile(from);
-	VirtualTile to_tile = theTile(to);
+	scoord opp_to = opp_to_tile.coord;
+	auto from_tile = theTile(from);
 	return (opp_from_tile.piece_name == 'P' &&
-		opp_from_tile.piece_color != from_tile.piece_color &&
+		opp_from_tile.piece_color != from_tile->piece_color &&
 		abs(opp_to.y - opp_from.y) == 2 &&
 		opp_from.x == to.x &&
 		from.y == opp_to.y);
@@ -479,7 +710,7 @@ bool VirtualValidator::canPass(scoord from, scoord to)
 
 bool VirtualValidator::canPromote(scoord pawn, scoord destination)
 {
-	return theTile(pawn).piece_name == 'P' && destination.y == (theTurn() ? 7 : 0);
+	return theTile(pawn)->piece_name == 'P' && destination.y == (theTurn() ? 7 : 0);
 }
 
 void VirtualValidator::reactOnMove(scoord from, scoord to)

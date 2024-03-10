@@ -2,52 +2,51 @@
 #include "../app/local_types.h"
 #include "virtual_validator.h"
 #include "virtual_tile.h"
+#include <string>
 
-class VirtualBoard : public QObject {
-	Q_OBJECT
-
+class VirtualBoard {
 public:
 	VirtualValidator vvalid;
-	VirtualTile vtiles[8][8];
-	VirtualTile* vfrom_tile;
-	VirtualTile* vwhite_king;
-	VirtualTile* vblack_king;
-	bool turn;
+	VirtualTile* tiles[8][8];
+	scoord from_coord;
+	scoord white_king;
+	scoord black_king;
+	bool turn = true;
 	bool side;
 	int current_move;
 	endnum end_type;
 	std::vector<halfmove> history;
 
-	VirtualBoard(QObject* parent_);
+	VirtualBoard();
 
 	// move forward
 	void saveMoveNormally(scoord from, scoord to, vove& move);
-	void moveNormally(scoord from, scoord to);
-	void castleKing(scoord king, scoord destination, scoord rook);
-	void passPawn(scoord from, scoord to);
-	void halfMove(scoord from, scoord to, char promo = 'e', bool save_story = true);
-	void doCurrentMove();
+	void moveNormally(scoord from, scoord to, bool virtually = false);
+	void castleKing(scoord king, scoord destination, scoord rook, bool virtually = false);
+	void passPawn(scoord from, scoord to, bool virtually = false);
+	virtual void promotePawn(scoord from, char into, bool virtually = true);
+	void halfMove(scoord from, scoord to, char promo, endnum& end_type);
+	void halfMove(scoord from, scoord to, char promo, endnum& end_type, halfmove& saved, bool virtually = false);
 
 	// move backward (undo)
-	void restoreTile(const VirtualTile& saved);
-	void revertMoveNormally(vove move);
-	void revertCastling(vove move);
-	void revertPass(vove move);
-	void revertPromotion(vove move);
-	void revertHalfmove(halfmove move);
+	void restoreTile(const VirtualTile& saved, bool virtually = false);
+	void revertMoveNormally(vove move, bool virtually = false);
+	void revertCastling(vove move, bool virtually = false);
+	void revertPass(vove move, bool virtually = false);
+	void revertPromotion(vove move, bool virtually = false);
+	void revertHalfmove(halfmove saved, bool virtually = false);
+
+	// methods for watching history
+	void doCurrentMove();
 	void revertCurrentMove();
 
-	// virtual methods
-	virtual VirtualTile* theTile(scoord coord);
-	virtual VirtualTile* theTile(VirtualTile tile);
-	virtual void setTiles();
-	virtual void promotePawn(scoord from, char into);
+	// tile initialization
+	virtual void initTiles();
+	void setTiles();
 
-	auto operator [](int i) {
-		return tiles[i];
-	}
+	// tile access
+	 virtual VirtualTile* theTile(scoord coord);
+	 //virtual VirtualTile* overTile(scoord coord, bool virtually = false);
 
-signals:
-	void moveMade(scoord from, scoord to, char promotion_type);
-	void theEnd(endnum end_type);
+	 std::string toStr();
 };

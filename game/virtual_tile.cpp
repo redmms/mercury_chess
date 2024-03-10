@@ -16,7 +16,7 @@ void VirtualTile::setPiece(char elem, bool color)
 	piece_color = color;
 	piece_name = elem;
 	if (elem == 'K') {
-		if (color) board->white_king = this;
-		else board->black_king = this;
+		if (color) board->white_king = coord;
+		else board->black_king = coord;
 	}
 }
