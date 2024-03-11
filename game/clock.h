@@ -10,9 +10,9 @@ class ChessClock : public QObject{
     bool side;
     QPointer<QLabel> black_label;
     QPointer<QLabel> white_label;
-	int max_time;
-	int black_remains;
-	int white_remains;
+    int max_time;
+    int black_remains;
+    int white_remains;
     QPointer<QTimer> black_timer;
     QPointer<QTimer> white_timer;
     QPointer<QTimer> sec_counter;
@@ -21,17 +21,17 @@ class ChessClock : public QObject{
 public:
     ChessClock(QObject* parent, QLabel* opponent_label, QLabel* user_label, bool side_, int max_minutes);
 
-	void stopTimer();
+    void stopTimer();
 
 signals:
-	void userOut();
-	void opponentOut();
+    void userOut();
+    void opponentOut();
 
 private slots:
-	void updateTimer();
-	void gameTimeout();
+    void updateTimer();
+    void gameTimeout();
 
 public slots:
-	void startTimer();
-	void switchTimer();
+    void startTimer();
+    void switchTimer();
 };

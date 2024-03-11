@@ -24,23 +24,23 @@ using namespace std;
 
 MainWindow::MainWindow(QWidget* parent, QString app_dir_, QApplication* app) :
     app(app),
-	QMainWindow(0),
+    QMainWindow(0),
     app_dir(app_dir_),
     board{},
     clock{},
-	net(new WebClient(this)),
-	sounds{},
+    net(new WebClient(this)),
+    sounds{},
     avatar_effect(new QGraphicsDropShadowEffect(this)),
-	user_pic(":images/profile"),
-	opp_pic(":images/profile"),
+    user_pic(":images/profile"),
+    opp_pic(":images/profile"),
     default_pic(":images/profile"),
-	pic_mask{},
+    pic_mask{},
     last_tab{},
     max_nick(12),
     message_layout(new QVBoxLayout()),
-	message_box(new QWidget(this)),
-	message_font{ "Segoe Print", 12 },
-	message_metrics{ message_font },
+    message_box(new QWidget(this)),
+    message_font{ "Segoe Print", 12 },
+    message_metrics{ message_font },
     max_message_width{},
     rounded_area(new RoundedScrollArea(this, QColor(0, 102, 51))),
     game_active(false),
@@ -53,15 +53,15 @@ MainWindow::MainWindow(QWidget* parent, QString app_dir_, QApplication* app) :
     history_label(new QLabel(this)),
     current_move(0)
 {
-	// .ui file finish strokes
-	ui->setupUi(this);
+    // .ui file finish strokes
+    ui->setupUi(this);
     last_tab = ui->pre_tab;
-	ui->mainToolBar->hide();
-	ui->tabWidget->tabBar()->hide();
+    ui->mainToolBar->hide();
+    ui->tabWidget->tabBar()->hide();
     ui->tabWidget->setCurrentWidget(ui->pre_tab);
-	for (int i = 0, tab_count = ui->tabWidget->count(); i < tab_count; i++)
+    for (int i = 0, tab_count = ui->tabWidget->count(); i < tab_count; i++)
         ui->tabWidget->widget(i)->setStyleSheet("QTabWidget::tab > QWidget > QWidget{background-image: url(:/images/background);}"); //background-color: #75752d;
-	// fixes the background color for tabs. There's some bug in Designer
+    // fixes the background color for tabs. There's some bug in Designer
     ui->statusBar->hide();
     ui->draw_button->disconnect();
     ui->resign_button->disconnect();
@@ -74,79 +74,79 @@ MainWindow::MainWindow(QWidget* parent, QString app_dir_, QApplication* app) :
 
     srand(time(0));
 
-	// sounds init
+    // sounds init
     sounds["move"]=(new QSoundEffect);
-	sounds["move"]->setSource(QUrl::fromLocalFile(":/sounds/move"));
+    sounds["move"]->setSource(QUrl::fromLocalFile(":/sounds/move"));
     sounds["user's piece eaten"]=(new QSoundEffect);
-	sounds["user's piece eaten"]->setSource(QUrl::fromLocalFile(":/sounds/user_eaten"));
-	sounds["user's piece eaten"]->setVolume(0.6f);
+    sounds["user's piece eaten"]->setSource(QUrl::fromLocalFile(":/sounds/user_eaten"));
+    sounds["user's piece eaten"]->setVolume(0.6f);
     sounds["opponent's piece eaten"]=(new QSoundEffect);
-	sounds["opponent's piece eaten"]->setSource(QUrl::fromLocalFile(":/sounds/opp_eaten"));
-	sounds["opponent's piece eaten"]->setVolume(0.7f);
+    sounds["opponent's piece eaten"]->setSource(QUrl::fromLocalFile(":/sounds/opp_eaten"));
+    sounds["opponent's piece eaten"]->setVolume(0.7f);
     sounds["castling"]=(new QSoundEffect);
-	sounds["castling"]->setSource(QUrl::fromLocalFile(":/sounds/castling"));
+    sounds["castling"]->setSource(QUrl::fromLocalFile(":/sounds/castling"));
     sounds["promotion"]=(new QSoundEffect);
-	sounds["promotion"]->setSource(QUrl::fromLocalFile(":/sounds/promotion"));
+    sounds["promotion"]->setSource(QUrl::fromLocalFile(":/sounds/promotion"));
     sounds["check to user"]=(new QSoundEffect);
-	sounds["check to user"]->setSource(QUrl::fromLocalFile(":/sounds/check"));
-	sounds["check to user"]->setVolume(0.7f);
+    sounds["check to user"]->setSource(QUrl::fromLocalFile(":/sounds/check"));
+    sounds["check to user"]->setVolume(0.7f);
     sounds["check to opponent"]=(new QSoundEffect);
-	sounds["check to opponent"]->setSource(QUrl::fromLocalFile(":/sounds/check_to_opp"));
+    sounds["check to opponent"]->setSource(QUrl::fromLocalFile(":/sounds/check_to_opp"));
     sounds["check to opponent"]->setVolume(0.3f);
     sounds["invalid move"]=(new QSoundEffect);
-	sounds["invalid move"]->setSource(QUrl::fromLocalFile(":/sounds/invalid"));
+    sounds["invalid move"]->setSource(QUrl::fromLocalFile(":/sounds/invalid"));
     sounds["lose"]=(new QSoundEffect);
-	sounds["lose"]->setSource(QUrl::fromLocalFile(":/sounds/lose"));
+    sounds["lose"]->setSource(QUrl::fromLocalFile(":/sounds/lose"));
     sounds["lose"]->setVolume(0.5f);
     sounds["win"]=(new QSoundEffect);
-	sounds["win"]->setSource(QUrl::fromLocalFile(":/sounds/win"));
-	sounds["win"]->setVolume(0.8f);
+    sounds["win"]->setSource(QUrl::fromLocalFile(":/sounds/win"));
+    sounds["win"]->setVolume(0.8f);
     sounds["draw"]=(new QSoundEffect);
-	sounds["draw"]->setSource(QUrl::fromLocalFile(":/sounds/draw"));
+    sounds["draw"]->setSource(QUrl::fromLocalFile(":/sounds/draw"));
 
-	// settings init
+    // settings init
     //settings = QSettings("settings_" + curTime() + ".ini", QSettings::IniFormat);
     settings["user_name"].setValue(QString("Lazy") + 
-		QString::number(rand() % (int)pow(10, max_nick - 4)));
-	settings["opp_name"].setValue(QString("Player2"));
-	settings["time_setup"].setValue(0);
-	settings["match_side"].setValue(true);
+        QString::number(rand() % (int)pow(10, max_nick - 4)));
+    settings["opp_name"].setValue(QString("Player2"));
+    settings["time_setup"].setValue(0);
+    settings["match_side"].setValue(true);
     settings["game_regime"].setValue(QString("friend_offline"));
     settings["ip_address"].setValue(default_address);
     settings["port_address"].setValue(default_port);
 
-	// glow effect for avatars
+    // glow effect for avatars
     avatar_effect->setBlurRadius(40);
-	avatar_effect->setOffset(0, 0);
-	avatar_effect->setColor(Qt::green);
+    avatar_effect->setOffset(0, 0);
+    avatar_effect->setColor(Qt::green);
 
-	// mask for rounded borders on avatars
-	auto mask_size = ui->user_avatar->width();
-	QPixmap  pix(mask_size, mask_size); // initialize a mask for avatar's rounded corners
-	pix.fill(Qt::transparent);
-	QPainter painter(&pix);
+    // mask for rounded borders on avatars
+    auto mask_size = ui->user_avatar->width();
+    QPixmap  pix(mask_size, mask_size); // initialize a mask for avatar's rounded corners
+    pix.fill(Qt::transparent);
+    QPainter painter(&pix);
     painter.setBrush(Qt::color1); //Qt::black
-	painter.drawRoundedRect(0, 0, mask_size, mask_size, 14, 14);
-	pic_mask = pix.createMaskFromColor(Qt::transparent);
+    painter.drawRoundedRect(0, 0, mask_size, mask_size, 14, 14);
+    pic_mask = pix.createMaskFromColor(Qt::transparent);
 
-	// user and opponent avatars in game and settings
+    // user and opponent avatars in game and settings
     ui->user_avatar->setMask(pic_mask);
     ui->opponent_avatar->setMask(pic_mask);
-	ui->profile_avatar->setMask(pic_mask); // picture in the settings
-	ui->profile_name->setText(settings["user_name"].toString());
-	ui->profile_avatar->setPixmap(user_pic);
+    ui->profile_avatar->setMask(pic_mask); // picture in the settings
+    ui->profile_name->setText(settings["user_name"].toString());
+    ui->profile_avatar->setPixmap(user_pic);
 
-	// time limit buttons from friend_connect_tab 
-	auto layout = ui->time_limits_layout;
-	QPushButton* button;
-	for (int i = 1; i < 10; i++) {
-		button = qobject_cast<QPushButton*>(layout->itemAt(i)->widget());
+    // time limit buttons from friend_connect_tab 
+    auto layout = ui->time_limits_layout;
+    QPushButton* button;
+    for (int i = 1; i < 10; i++) {
+        button = qobject_cast<QPushButton*>(layout->itemAt(i)->widget());
         if (button)
             connect(button, &QPushButton::clicked, [this, button]() {
                 int minutes_n = button->text().toInt(); //button->objectName().mid(3).toInt()
                 settings["time_setup"].setValue(minutes_n);
             });
-	}
+    }
 
     // prepare scroll_area before making a chat
     rounded_area->setStyleSheet("QAbstractScrollArea{background: transparent; border: none;}");
@@ -159,12 +159,12 @@ MainWindow::MainWindow(QWidget* parent, QString app_dir_, QApplication* app) :
     ui->game_grid->replaceWidget(ui->chat_area, rounded_area);
     ui->chat_area->~QScrollArea();
 
-	// chat
+    // chat
     max_message_width = rounded_area->minimumWidth() - 20;
     message_layout->setContentsMargins(10, 5, 10, 5);
     message_box->setLayout(message_layout);
     message_box->resize(rounded_area->width() - 28, 0);
-	message_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+    message_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     message_box->setStyleSheet("background-color: transparent;"); //#1B1C1F
     rounded_area->setWidget(message_box);
     rounded_area->setWidgetResizable(true);
@@ -344,15 +344,15 @@ void MainWindow::startGame(QString game_regime) // side true for user - white
         connect(ui->resign_button, &QPushButton::clicked, this, &MainWindow::my_history_next_button_clicked);
         connect(ui->draw_button, &QPushButton::clicked, this, &MainWindow::my_history_previous_button_clicked);
     }
-	openTab(ui->game_tab);
+    openTab(ui->game_tab);
     activateWindow();
-	ui->user_avatar->setPixmap(user_pic);
-	ui->user_name->setText(settings["user_name"].toString());
-	ui->opponent_avatar->setPixmap(opp_pic);
-	ui->opponent_name->setText(settings["opp_name"].toString());
-	bool match_side = settings["match_side"].toBool();
+    ui->user_avatar->setPixmap(user_pic);
+    ui->user_name->setText(settings["user_name"].toString());
+    ui->opponent_avatar->setPixmap(opp_pic);
+    ui->opponent_name->setText(settings["opp_name"].toString());
+    bool match_side = settings["match_side"].toBool();
     (match_side ? ui->user_avatar : ui->opponent_avatar)->setGraphicsEffect(avatar_effect);
-	for (QLayoutItem* child; (child = message_layout->takeAt(0)) != nullptr; child->widget()->~QWidget()) {}
+    for (QLayoutItem* child; (child = message_layout->takeAt(0)) != nullptr; child->widget()->~QWidget()) {}
     message_box->resize(rounded_area->width(), 0);
     ui->statusBar->show();
     history_label->clear();
@@ -394,7 +394,7 @@ void MainWindow::startGame(QString game_regime) // side true for user - white
         clock->startTimer();
     }
 
-	showStatus("Ready? Go!");
+    showStatus("Ready? Go!");
     game_active = true;
 
 }
@@ -407,10 +407,10 @@ void MainWindow::endSlot(endnum end_type)
     }
     if (clock)
         clock->stopTimer();
-	board->setEnabled(false);
-	ui->draw_button->disconnect();
-	ui->resign_button->disconnect();
-	ui->actionProfile->setEnabled(true);
+    board->setEnabled(false);
+    ui->draw_button->disconnect();
+    ui->resign_button->disconnect();
+    ui->actionProfile->setEnabled(true);
     disconnect(this, &MainWindow::editReturnPressed, this, &MainWindow::editReturnSlot);
     ui->message_edit->removeEventFilter(this);
     game_active = false;
@@ -488,42 +488,42 @@ void MainWindow::statusSlot(tatus status)
 //    int i = 3;
 ////    for (int i = 1; i <= 5; i++)
 //        qDebug() << "Counted moves:" << board->valid->countMovesTest(i);
-	switch (status) {
-	case tatus::check_to_user:
-		sounds["check to user"]->play();
-		showStatus("Check! Protect His Majesty!");
-		break;
-	case tatus::check_to_opponent:
-		sounds["check to opponent"]->play();
-		showStatus("You are a fearless person!");
-		break;
+    switch (status) {
+    case tatus::check_to_user:
+        sounds["check to user"]->play();
+        showStatus("Check! Protect His Majesty!");
+        break;
+    case tatus::check_to_opponent:
+        sounds["check to opponent"]->play();
+        showStatus("You are a fearless person!");
+        break;
     case tatus::user_piece_eaten:
-		sounds["user's piece eaten"]->play();
-		showStatus(board->turn ? "White's turn" : "Black's turn");
-		break;
+        sounds["user's piece eaten"]->play();
+        showStatus(board->turn ? "White's turn" : "Black's turn");
+        break;
     case tatus::opponent_piece_eaten:
-		sounds["opponent's piece eaten"]->play();
-		showStatus(board->turn ? "White's turn" : "Black's turn");
-		break;
-	case tatus::just_new_turn:
-		sounds["move"]->play();
-		showStatus(board->turn ? "White's turn" : "Black's turn");
-		break;
-	case tatus::invalid_move:
-		sounds["invalid move"]->play();
-		showStatus("Invalid move");
-		return; // will not switch glow effect
-	case tatus::castling:
-		sounds["castling"]->play();
-		showStatus(board->turn ? "White's turn" : "Black's turn");
-		break;
-	case tatus::promotion:
-		sounds["promotion"]->play();
-		showStatus(board->turn ? "White's turn" : "Black's turn");
-		break;
-	}
-	switchGlow();
-	emit timeToSwitchTime();
+        sounds["opponent's piece eaten"]->play();
+        showStatus(board->turn ? "White's turn" : "Black's turn");
+        break;
+    case tatus::just_new_turn:
+        sounds["move"]->play();
+        showStatus(board->turn ? "White's turn" : "Black's turn");
+        break;
+    case tatus::invalid_move:
+        sounds["invalid move"]->play();
+        showStatus("Invalid move");
+        return; // will not switch glow effect
+    case tatus::castling:
+        sounds["castling"]->play();
+        showStatus(board->turn ? "White's turn" : "Black's turn");
+        break;
+    case tatus::promotion:
+        sounds["promotion"]->play();
+        showStatus(board->turn ? "White's turn" : "Black's turn");
+        break;
+    }
+    switchGlow();
+    emit timeToSwitchTime();
     size_t order = board->history.size();
     halfmove last_move = board->history.back();
     writeStory(order, last_move);
@@ -531,46 +531,46 @@ void MainWindow::statusSlot(tatus status)
 
 void MainWindow::printMessage(QString name, bool own, QString text)
 {
-	if (text.isEmpty())
-		return;
+    if (text.isEmpty())
+        return;
 
-	QChar ch;
-	for (int cur_len = 0, pos = 0; pos < text.size(); pos++) {
-		ch = text[pos];
-		if (ch == ' ' || ch == '\n')
-			cur_len = 0;
-		else {
-			cur_len += message_metrics.size(0, ch).width();
-			if (cur_len > (max_message_width - 10)) {
-				text.insert(pos, "\n");
-				cur_len = 0;
-			}
-		}
-	}
+    QChar ch;
+    for (int cur_len = 0, pos = 0; pos < text.size(); pos++) {
+        ch = text[pos];
+        if (ch == ' ' || ch == '\n')
+            cur_len = 0;
+        else {
+            cur_len += message_metrics.size(0, ch).width();
+            if (cur_len > (max_message_width - 10)) {
+                text.insert(pos, "\n");
+                cur_len = 0;
+            }
+        }
+    }
 
     QPointer<QLabel> message(new QLabel(this));
     if (own)
         message->setStyleSheet("background-color: rgb(0,179,60); border-radius: 14;");
     else
         message->setStyleSheet("background-color: rgb(0,128,21); border-radius: 14;");
-	message->setIndent(5);
-	message->setMargin(5);
-	message->setMaximumWidth(max_message_width);
-	message->setFont(message_font);
-	message->setWordWrap(true);
-	message->setText(name + "\n" + text);
-	message->adjustSize();
-	message->setMinimumSize(message->size());
-	message->setMaximumSize(message->size());
+    message->setIndent(5);
+    message->setMargin(5);
+    message->setMaximumWidth(max_message_width);
+    message->setFont(message_font);
+    message->setWordWrap(true);
+    message->setText(name + "\n" + text);
+    message->adjustSize();
+    message->setMinimumSize(message->size());
+    message->setMaximumSize(message->size());
     if (own)
         message_layout->addWidget(message, 0, Qt::AlignTop | Qt::AlignRight);
     else
         message_layout->addWidget(message, 0, Qt::AlignTop | Qt::AlignLeft);
     message_box->resize(message_box->width(), message_box->height() + message->height() + 10);
-	// 10 is layout margin here, for shortness
+    // 10 is layout margin here, for shortness
 
-	QTimer::singleShot(100, [&]() {
+    QTimer::singleShot(100, [&]() {
         auto scroller = rounded_area->verticalScrollBar();
-		scroller->setValue(scroller->maximum());
-		});
+        scroller->setValue(scroller->maximum());
+        });
 }

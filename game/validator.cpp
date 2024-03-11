@@ -7,36 +7,36 @@ using lambda = function<bool(scoord)>;
 using checker = function<bool(scoord, bool&)>;
 
 Validator::Validator(Board* mother_board) :
-	VirtualValidator(mother_board),
-	board(mother_board)
+    VirtualValidator(mother_board),
+    board(mother_board)
 {}
 
 Tile* Validator::theTile(scoord coord)
 {
-	return board->theTile(coord);
+    return board->theTile(coord);
 }
 
 void Validator::showValid(scoord from)
 {
-	findValid(from);
-	if (!valid_moves.empty()) {
-		for (auto move : valid_moves)
-			theTile(move)->dyeValid();
-		theTile(from)->dyeSelected();
-	}
+    findValid(from);
+    if (!valid_moves.empty()) {
+        for (auto move : valid_moves)
+            theTile(move)->dyeValid();
+        theTile(from)->dyeSelected();
+    }
 }
 
 void Validator::hideValid()
 {
-	QString game_regime = settings["game_regime"].toString();
-	if (game_regime != "history") {
-		scoord from = board->from_coord;
-		if (from != scoord{-1, -1})
-			theTile(from)->dyeNormal();
-		else
-			qDebug() << "You try to dyeNormal() from_coord that is nullptr";
-		for (auto move : valid_moves)
-			theTile(move)->dyeNormal();
-	}
-	valid_moves.clear();
+    QString game_regime = settings["game_regime"].toString();
+    if (game_regime != "history") {
+        scoord from = board->from_coord;
+        if (from != scoord{-1, -1})
+            theTile(from)->dyeNormal();
+        else
+            qDebug() << "You try to dyeNormal() from_coord that is nullptr";
+        for (auto move : valid_moves)
+            theTile(move)->dyeNormal();
+    }
+    valid_moves.clear();
 }

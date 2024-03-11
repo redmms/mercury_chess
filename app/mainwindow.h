@@ -5,7 +5,7 @@
 
 namespace Ui
 {
-	class MainWindow;
+    class MainWindow;
 }
 
 class WebClient;
@@ -23,7 +23,7 @@ class QEvent;
 class QVBoxLayout;
 class MainWindow : public QMainWindow
 {
-	Q_OBJECT
+    Q_OBJECT
 friend class WebClient;
 friend class Board;
 public:
@@ -86,14 +86,14 @@ private slots:
     void editReturnSlot();
 
     // buttons from .ui file
-	void on_draw_button_clicked();
-	void on_resign_button_clicked();
-	void on_change_photo_button_clicked();
-	void on_change_name_button_clicked();
-	void on_back_from_settings_clicked();
-	void on_registrate_button_clicked();
-	void on_guest_button_clicked();
-	void on_send_invite_button_clicked();
+    void on_draw_button_clicked();
+    void on_resign_button_clicked();
+    void on_change_photo_button_clicked();
+    void on_change_name_button_clicked();
+    void on_back_from_settings_clicked();
+    void on_registrate_button_clicked();
+    void on_guest_button_clicked();
+    void on_send_invite_button_clicked();
     void on_login_button_clicked();
     void on_end_login_button_clicked();
     void on_back_from_login_button_clicked();

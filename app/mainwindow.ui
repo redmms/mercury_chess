@@ -381,7 +381,7 @@ background-color: qlineargradient(x: 0, y: 0, x2: 1, y2: 1, stop: 0 #634b30, sto
       </property>
       <property name="styleSheet">
        <string notr="true">QTabWidget::pane { 
-	border: none; 
+    border: none; 
 }</string>
       </property>
       <property name="currentIndex">

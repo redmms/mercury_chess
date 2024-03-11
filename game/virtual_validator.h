@@ -16,6 +16,7 @@ protected:
     std::set<scoord> movable_pieces;
     std::set<scoord> valid_moves;
     bool check;
+    bool last_state[6];
     bool has_moved[6];
     scoord rooks_kings[6];
     scoord castling_destination[6];
@@ -48,9 +49,10 @@ public:
     bool theTurn();
     scoord theWKing();
     scoord theBKing();
-    void moveVirtually(scoord from, scoord to, char promo, endnum& end_type, halfmove& saved_move);
-    void revertVirtualMove(halfmove saved_move);
+    void moveVirtually(scoord from, scoord to, char promo, halfmove& saved_move, bool check_saved);
+    void revertVirtualMove(halfmove saved_move, bool check_saved);
     const std::vector<halfmove>& theStory();
+    void printHasMoved();
 
     bool isValid(scoord move);
     bool empty();
