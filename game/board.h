@@ -5,7 +5,6 @@
 
 class VirtualTile;
 class Tile;
-class WebClient;
 class MainWindow;
 class Board : public QLabel, public VirtualBoard {
 	Q_OBJECT
@@ -27,14 +26,13 @@ public:
 	void drawLetters();
 	void drawNumbers();
 	char openPromotion(scoord from);
-	void halfMove(scoord from, scoord to, char promo);
-	void halfMove(scoord from, scoord to, char promo, halfmove& saved_hmove); 
-	// one of these 3 functions will be called in reactOnClick depending on settings
+	void promotePawn(scoord from, char& into, bool virtually = false) override;
+	void halfMove(scoord from, scoord to, char promo) override;
 	void halfMove(scoord from, scoord to, char promo, bitmove& saved_bmove, halfmove& saved_hmove);
-
-	// virtual methods
+	void emitCurrentStatus(const halfmove& saved);
 	Tile* theTile(scoord coord) override;
 	void initTiles() override;
+	void saveBitmove(scoord from, scoord to, bitmove& bmove);
 
 signals:
 	void moveMade(scoord from, scoord to, char promotion_type);
@@ -44,5 +42,4 @@ signals:
 
 public slots:
 	void reactOnClick(Tile* tile);
-	void promotePawn(scoord from, char into);
 };

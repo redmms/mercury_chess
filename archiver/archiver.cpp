@@ -150,8 +150,7 @@ inline int Archiver::readMove(bitmove& bmove, fsm::ifinestream& ifs, VirtualBoar
 		//sout << " promo: " << promo;
 	}
 	//sout << endl;
-	endnum end_type;
-	board.halfMove(from, to, char_by_promo[bmove.promo], end_type);
+	board.halfMove(from, to, char_by_promo[bmove.promo]);
 	return 0;
 }
 
@@ -174,7 +173,8 @@ bitremedy Archiver::toMoveIdx(scoord to, Validator& valid) {
 
 halfmove Archiver::toHalfmove(bitmove bmove, VirtualValidator& valid) {
 	scoord from = *next(valid.movable_pieces.begin(), int(bmove.piece));
-	scoord to = *next(valid.valid_moves.begin(), int(bmove.move)); // FIX: will these Validator members be actual and valid at the moment?
+	scoord to = *next(valid.valid_moves.begin(), int(bmove.move)); 
+	// you need to control that these Validator members will be actual and valid at the moment
 	halfmove hmove;
 	hmove.move = { *valid.theTile(from), *valid.theTile(to) };
 	hmove.promo = char_by_promo[bmove.promo];

@@ -21,7 +21,7 @@ class Tile : public QLabel, public VirtualTile {
 public:
 	Tile(Board* mother_board = 0, scoord coord = scoord(), bool side = true);
 
-	void setPiece(char elem, bool color) override;
+	void setPiece(char elem, bool color, bool virtually = false) override;
 	void dyeNormal();
 	void dyeSelected();
 	void dyeValid();

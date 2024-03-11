@@ -12,13 +12,5 @@ public:
 	
 	VirtualTile(scoord tile_coord_ = {}, char piece_name_ = 'e', bool piece_color_ = false, VirtualBoard* parent_ = 0);
 
-	virtual void setPiece(char elem, bool color);
-};
-
-struct halfmove {
-	vove move;
-	char promo = 'e';
-	bool castling = false;
-	bool pass = false;
-	bool turn = false;
+	virtual void setPiece(char elem, bool color, bool virtually = false);
 };

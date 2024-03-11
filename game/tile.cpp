@@ -47,8 +47,12 @@ QColor Tile::mixColors(QColor color_a, QColor color_b, float b_coef)
 		255);
 }
 
-void Tile::setPiece(char name, bool color)
+void Tile::setPiece(char name, bool color, bool virtually)
 {
+	if (virtually) {
+		VirtualTile::setPiece(name, color, virtually);
+		return;
+	}
 	piece_name = name;
 	piece_color = color;
 	if (name == 'e') {

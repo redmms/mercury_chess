@@ -7,10 +7,10 @@ using namespace std;
 
 VirtualBoard::VirtualBoard() :
 	vvalid(this),
-	from_coord{},  // always actualized in Tile::setPiece()
-	white_king{},  // ditto
-	black_king{},  // ditto
-	//turn(true),  // true for white turn;
+	from_coord{-1, -1},  // always actualized in Tile::setPiece()
+	white_king{4, 0},  // ditto
+	black_king{4, 7},  // ditto
+	turn(true),  // true for white turn;
 	side(settings["match_side"].toBool()),
 	current_move(0),
 	end_type(endnum::interrupt)
@@ -19,18 +19,43 @@ VirtualBoard::VirtualBoard() :
 	setTiles();
 }
 
+VirtualBoard::VirtualBoard(VirtualBoard& copy) :
+	vvalid(this),
+	from_coord{copy.from_coord},  // always actualized in Tile::setPiece()
+	white_king{copy.white_king},  // ditto
+	black_king{copy.black_king},  // ditto
+	turn(copy.turn),  // true for white turn;
+	side(copy.side),
+	current_move(copy.current_move),
+	end_type(copy.end_type)
+{
+	for (int x = 0; x < 8; x++) {
+		for (int y = 0; y < 8; y++) {
+			tiles[x][y] = (VirtualTile*) (copy.tiles[x][y]);
+		}
+	}
+}
+
+VirtualBoard::~VirtualBoard()
+{
+	for (int x = 0; x < 8; x++) {
+		for (int y = 0; y < 8; y++) {
+			delete VirtualBoard::tiles[x][y];
+		}
+	}
+}
+
 void VirtualBoard::saveMoveNormally(scoord from, scoord to, vove& move)
 {
 	move = {*theTile(from), *theTile(to)};
-	// FIX: will it call VirtualBoard::theTile() or Board::theTile() ?
 }
 
 void VirtualBoard::moveNormally(scoord from, scoord to, bool virtually)
 {	
-	auto from_tile = overTile(from, virtually);
-	auto to_tile = overTile(to, virtually);
-	to_tile->setPiece(from_tile->piece_name, from_tile->piece_color);
-	from_tile->setPiece('e', 0);
+	auto from_tile = theTile(from);
+	auto to_tile = theTile(to);
+	to_tile->setPiece(from_tile->piece_name, from_tile->piece_color, virtually);
+	from_tile->setPiece('e', 0, virtually);
 	vvalid.reactOnMove(from, to);
 }
 
@@ -46,9 +71,9 @@ void VirtualBoard::castleKing(scoord king, scoord destination, scoord rook, bool
 
 void VirtualBoard::passPawn(scoord from, scoord to, bool virtually)
 {
-	auto opp_to_tile = overTile({ to.x, from.y }, virtually);
+	auto opp_to_tile = theTile({ to.x, from.y });
 	moveNormally(from, to, virtually);
-	opp_to_tile->setPiece('e', 0);
+	opp_to_tile->setPiece('e', 0, virtually);
 }
 
 void VirtualBoard::halfMove(scoord from, scoord to, char promo, endnum& end_type)
@@ -67,14 +92,6 @@ void VirtualBoard::halfMove(scoord from, scoord to, char promo, endnum& end_type
 		promotePawn(to, promo);
 	}
 	turn = !turn;
-	if (vvalid.inCheck(turn)){
-		if (vvalid.inStalemate(turn)) {  // check + stalemate == checkmate
-			end_type = turn == side ? endnum::opponent_wins : endnum::user_wins;
-		}
-	}
-	else if (vvalid.inStalemate(turn)) {
-		end_type = endnum::draw_by_stalemate;
-	}
 }
 
 void VirtualBoard::halfMove(scoord from, scoord to, char promo, endnum& end_type, halfmove& saved, bool virtually)
@@ -96,27 +113,19 @@ void VirtualBoard::halfMove(scoord from, scoord to, char promo, endnum& end_type
 		moveNormally(from, to, virtually);
 	}
 	if (vvalid.canPromote(to, to)) {
-		promotePawn(to, promo); // FIX: could cause problems in call of moveVirtually()
+		promotePawn(to, promo, virtually); // FIX: could cause problems in call of moveVirtually()
 		saved.promo = promo;
 	}
 	saved.turn = turn;
 	turn = !turn;
-	if (vvalid.inCheck(turn)) {
-		if (vvalid.inStalemate(turn)) {
-			end_type = turn == side ? endnum::opponent_wins : endnum::user_wins;
-		}
-	}
-	else if (vvalid.fastInStalemate(turn)) {
-		end_type = endnum::draw_by_stalemate;
-	}
 	cout << "After:\n"; // FIX: don't forget to delete
 	cout << toStr();
 }
 
 void VirtualBoard::restoreTile(const VirtualTile& saved, bool virtually)
 {
-	auto tile = overTile(saved.coord, virtually);
-	tile->setPiece(saved.piece_name, saved.piece_color);
+	auto tile = theTile(saved.coord);
+	tile->setPiece(saved.piece_name, saved.piece_color, virtually);
 }
 
 void VirtualBoard::revertMoveNormally(vove move, bool virtually)
@@ -137,10 +146,10 @@ void VirtualBoard::revertCastling(vove move, bool virtually)
 	vvalid.bringBack(from, to);
 	revertMoveNormally(move, virtually);
 	vvalid.bringBack(rook_corner, rook);
-	auto corner_tile = overTile(rook_corner, virtually);
-	auto rook_tile = overTile(rook, virtually);
-	corner_tile->setPiece('R', rook_tile->piece_color);
-	rook_tile->setPiece('e', 0);
+	auto corner_tile = theTile(rook_corner);
+	auto rook_tile = theTile(rook);
+	corner_tile->setPiece('R', rook_tile->piece_color, virtually);
+	rook_tile->setPiece('e', 0, virtually);
 }
 
 void VirtualBoard::revertPass(vove move, bool virtually)
@@ -148,8 +157,8 @@ void VirtualBoard::revertPass(vove move, bool virtually)
 	revertMoveNormally(move, virtually);
 	scoord from = move.first.coord;
 	scoord to = move.second.coord;
-	auto opp_to_tile = overTile({ to.x, from.y }, virtually);
-	opp_to_tile->setPiece('P', !move.first.piece_color);
+	auto opp_to_tile = theTile({ to.x, from.y });
+	opp_to_tile->setPiece('P', !move.first.piece_color, virtually);
 }
 
 void VirtualBoard::revertPromotion(vove move, bool virtually)
@@ -222,11 +231,6 @@ VirtualTile* VirtualBoard::theTile(scoord coord)
 	return VirtualBoard::tiles[coord.x][coord.y];
 }
 
-VirtualTile* VirtualBoard::overTile(scoord coord, bool virtually)
-{
-	return virtually ? (VirtualTile*) theTile(coord) : theTile(coord);
-}
-
 string VirtualBoard::toStr()
 {
 	string view;
@@ -251,7 +255,7 @@ void VirtualBoard::initTiles()
 
 void VirtualBoard::promotePawn(scoord from, char into, bool virtually)
 {	
-	auto pawn_tile = overTile(from, virtually);
-	pawn_tile->setPiece(into, pawn_tile->piece_color);
+	auto pawn_tile = theTile(from);
+	pawn_tile->setPiece(into, pawn_tile->piece_color, virtually);
 }
 // end of virtual methods

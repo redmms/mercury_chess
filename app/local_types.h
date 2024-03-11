@@ -145,5 +145,11 @@ extern std::map<promnum, char> char_by_promo;
 #include <QVariant>
 extern std::map<QString, QVariant> settings;
 
-struct halfmove;
-
+class VirtualTile;
+struct halfmove {
+    vove move;
+    char promo = 'e';
+    bool castling = false;
+    bool pass = false;
+    bool turn = false;
+};

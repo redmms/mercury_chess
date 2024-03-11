@@ -11,7 +11,7 @@ VirtualTile::VirtualTile(scoord tile_coord_, char piece_name_, bool piece_color_
 	board(mother_board_)
 {}
 
-void VirtualTile::setPiece(char elem, bool color)
+void VirtualTile::setPiece(char elem, bool color, bool virtually)
 {
 	piece_color = color;
 	piece_name = elem;

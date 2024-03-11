@@ -41,9 +41,9 @@ VirtualValidator::VirtualValidator(VirtualBoard* mother_board) :
 	occupied([&](scoord coord) -> bool {
 		return theTile(coord)->piece_name != 'e';
 	}),
-	differentColor([&](scoord coord) -> bool {
+	differentColor([&](scoord coord, bool color) -> bool {
 	// may be realized differently, with either turn or piece color
-		return occupied(coord) && theTile(coord)->piece_color != theTurn();
+		return occupied(coord) && theTile(coord)->piece_color != color;
 	}),
 	pieceName([&](scoord coord) -> char {
 		return theTile(coord)->piece_name;

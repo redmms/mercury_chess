@@ -11,22 +11,24 @@ public:
 	scoord from_coord;
 	scoord white_king;
 	scoord black_king;
-	bool turn = true;
+	bool turn;
 	bool side;
 	int current_move;
 	endnum end_type;
 	std::vector<halfmove> history;
 
 	VirtualBoard();
+	VirtualBoard(VirtualBoard& copy);
+	~VirtualBoard();
 
 	// move forward
 	void saveMoveNormally(scoord from, scoord to, vove& move);
 	void moveNormally(scoord from, scoord to, bool virtually = false);
 	void castleKing(scoord king, scoord destination, scoord rook, bool virtually = false);
 	void passPawn(scoord from, scoord to, bool virtually = false);
-	virtual void promotePawn(scoord from, char into, bool virtually = true);
-	void halfMove(scoord from, scoord to, char promo, endnum& end_type);
-	void halfMove(scoord from, scoord to, char promo, endnum& end_type, halfmove& saved, bool virtually = false);
+	virtual void promotePawn(scoord from, char& into, bool virtually = true);
+	virtual void halfMove(scoord from, scoord to, char promo);
+	void halfMove(scoord from, scoord to, char promo, halfmove& saved, bool virtually = false);
 
 	// move backward (undo)
 	void restoreTile(const VirtualTile& saved, bool virtually = false);
@@ -46,7 +48,6 @@ public:
 
 	// tile access
 	 virtual VirtualTile* theTile(scoord coord);
-	 //virtual VirtualTile* overTile(scoord coord, bool virtually = false);
 
 	 std::string toStr();
 };

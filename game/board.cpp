@@ -1,18 +1,15 @@
 #pragma once
 #include "board.h"
-#include "../app/mainwindow.h"
 #include "tile.h"
-#include "virtual_tile.h"
 #include "../archiver/archiver.h"
+#include "../app/mainwindow.h"
 #include <QEventLoop>
 #include <QLayout>
-#include <QDebug>
-import finestream;
 using namespace std;
 
 Board::Board(MainWindow* parent_, QLabel* background_) :
 	QLabel(parent_),
-	//VirtualBoard(this),
+	VirtualBoard(),
 	mainwindow(parent_),
 	tile_size(background_->width() / 9),
 	valid(this),
@@ -51,7 +48,7 @@ Board::~Board()
 {
 	for (int x = 0; x < 8; x++) {
 		for (int y = 0; y < 8; y++) {
-			delete tiles[x][y];
+			delete Board::tiles[x][y];
 		}
 	}
 }
@@ -95,16 +92,15 @@ void Board::reactOnClick(Tile* tile) {
 	if (game_regime == "history") {
 		return;
 	}
-    else if (from_coord == scoord{-1, -1}) {
-		// if it's first click then pick the piece and
-		// show valid moves
-        if (turn == tile->piece_color &&
+    else if (from_coord == scoord{-1, -1} &&
+			turn == tile->piece_color &&
             (side == tile->piece_color ||
             game_regime != "friend_online") &&
             tile->piece_name != 'e') {
-				from_coord = coord; // FIX: are you sure?
+			// if it's first click then pick the piece and
+			// show valid moves
+				from_coord = coord;
 				valid.showValid(coord);
-		}
 	}
     else if (coord != from_coord 
 			&& turn == tile->piece_color 
@@ -118,11 +114,12 @@ void Board::reactOnClick(Tile* tile) {
 	else if (valid.isValid(coord)) {
 		// if it's the second click and move is valid
 		// then move pieces
-		valid.hideValid();
-		halfmove move;
-        halfMove(from_coord, coord, 'e', move);
-		history.push_back(move);
-		//valid.hideValid(); // FIX: should go after halfMove
+		halfmove hmove; 
+		bitmove bmove;
+        halfMove(from_coord, coord, 'e', bmove, hmove);
+		history.push_back(hmove); 
+		bistory.push_back(bmove);
+		valid.hideValid(); // order matters here
         from_coord = {-1, -1};
 	}
 	else
@@ -143,7 +140,7 @@ char Board::openPromotion(scoord from)
 		menu[i]->show();
 		QObject::connect(menu[i], &Tile::tileClicked, [&](Tile* into) {
 			promo = into->piece_name;
-			promotePawn(from, promo);
+			emit promotionEnd();
 		});
 		QObject::connect(this, &Board::promotionEnd, &loop, &QEventLoop::quit);
 	}
@@ -151,6 +148,12 @@ char Board::openPromotion(scoord from)
 		for (int y = 0; y < 8; y++)
 			tiles[x][y]->setEnabled(false);
 	loop.exec();
+	for (int i = 0; i < 4; i++) {
+		delete menu[i];
+	}
+	for (int x = 0; x < 8; x++)
+		for (int y = 0; y < 8; y++)
+			tiles[x][y]->setEnabled(true);
 	return promo;
 }
 
@@ -170,190 +173,68 @@ Tile* Board::theTile(scoord coord)
 	return Board::tiles[coord.x][coord.y];
 }
 
-void Board::promotePawn(scoord from, char into)
-{
-	theTile(from)->setPiece(into, theTile(from)->piece_color); // FIX: how halfMove() will know promotion type?
+void Board::promotePawn(scoord from, char& into, bool virtually)
+{	
 	QString game_regime = settings["game_regime"].toString();
 	if (game_regime == "friend_offline" || game_regime == "friend_online" && turn == side) {
-		for (int i = 0; i < 4; i++) {
-			delete menu[i];
-		}
-		for (int x = 0; x < 8; x++)
-			for (int y = 0; y < 8; y++)
-				tiles[x][y]->setEnabled(true);
+		into = openPromotion(to);
 	}
-	emit promotionEnd();
+	theTile(from)->setPiece(into, theTile(from)->piece_color);
 }
 
 void Board::halfMove(scoord from, scoord to, char promo)
 {
-	QString game_regime = settings["game_regime"].toString();
-
-	tatus emit_status = tatus::just_new_turn;
-	if (valid.differentColor(to))
-		emit_status = turn == side ? tatus::opponent_piece_eaten : tatus::user_piece_eaten;
-
-	scoord rook;
-	if (valid.canCastle(from, to, rook)) {
-		castleKing(from, to, rook);
-		emit_status = tatus::castling;
-	}
-	else if (valid.canPass(from, to)) {
-		passPawn(from, to);
-		emit_status = turn == side ? tatus::opponent_piece_eaten : tatus::user_piece_eaten;
-	}
-	else
-		moveNormally(from, to);
-
-	char chosen_promo = 'e';
-	if (game_regime == "history" && promo != 'e') {
-		promotePawn(to, promo);
-		emit_status = tatus::promotion;
-	}
-	else if ((game_regime == "friend_online" && turn == side || game_regime == "friend_offline") && valid.canPromote(to, to)) {
-		chosen_promo = openPromotion(to);  // waits until the signal from a tile received
-		emit_status = tatus::promotion;
-	}
-
-	if (turn == side)
-		emit moveMade(from, to, promo != 'e' ? promo : chosen_promo);
-
-	turn = !turn;
-	if (valid.inCheck(turn))
-		if (valid.inStalemate(turn))  // check + stalemate == checkmate
-			emit theEnd(turn == side ? endnum::opponent_wins : endnum::user_wins);
-		else
-			emit newStatus(turn == side ? tatus::check_to_user : tatus::check_to_opponent);
-	else if (valid.inStalemate(turn))
-		emit theEnd(endnum::draw_by_stalemate);
-	else
-		emit newStatus(emit_status);
-
-}
-
-void Board::halfMove(scoord from, scoord to, char promo, halfmove& hmove)
-{
-	QString game_regime = settings["game_regime"].toString();
-
-	saveMoveNormally(from, to, hmove.move);
-	tatus emit_status = tatus::just_new_turn;
-	if (valid.differentColor(to))
-		emit_status = turn == side ? tatus::opponent_piece_eaten : tatus::user_piece_eaten;
-
-	scoord rook;
-	if (valid.canCastle(from, to, rook)) {
-		castleKing(from, to, rook);
-		hmove.castling = true;
-		emit_status = tatus::castling;
-	}
-	else if (valid.canPass(from, to)) {
-		passPawn(from, to);
-		hmove.pass = true;
-		emit_status = turn == side ? tatus::opponent_piece_eaten : tatus::user_piece_eaten;
-	}
-	else
-		moveNormally(from, to);
-
-	if (game_regime == "history" && promo != 'e') {
-		promotePawn(to, promo);
-		emit_status = tatus::promotion;
-	}
-	else if ((game_regime == "friend_online" && turn == side || game_regime == "friend_offline") && valid.canPromote(to, to)) {
-		hmove.promo = openPromotion(to);  // waits until the signal from a tile received
-		emit_status = tatus::promotion;
-	}
-
-	if (turn == side)
-		emit moveMade(from, to, promo != 'e' ? promo : hmove.promo);
-
-	hmove.turn = turn;
-	history.push_back(hmove);
-
-	turn = !turn;
-	if (valid.inCheck(turn))
-		if (valid.inStalemate(turn))  // check + stalemate == checkmate
-			emit theEnd(turn == side ? endnum::opponent_wins : endnum::user_wins);
-		else
-			emit newStatus(turn == side ? tatus::check_to_user : tatus::check_to_opponent);
-	else if (valid.inStalemate(turn))
-		emit theEnd(endnum::draw_by_stalemate);
-	else
-		emit newStatus(emit_status);
+	halfmove saved;
+	VirtualBoard::halfMove(from, to, promo, saved);
+	emitCurrentStatus(saved);
 }
 
 void Board::halfMove(scoord from, scoord to, char promo, bitmove& bmove, halfmove& hmove)
 {
-	QString game_regime = settings["game_regime"].toString();
+	saveBitmove(from, to, bmove); // order matters here
+	VirtualBoard::halfMove(from, to, promo, hmove);
+	bmove.promo = promo_by_char[hmove.promo]; // known after openPromotion() only
+	emitCurrentStatus(hmove);
+}
 
-	// we do it before new move, but after the last one, which we convert
-	// because at the moment of stalemate search we don't know what move we'll do -
-	// we check stalemate right after the move - for the opponent's color
+void Board::saveBitmove(scoord from, scoord to, bitmove& bmove)
+{
+	QString game_regime = settings["game_regime"].toString();
 	if (game_regime == "friend_online" && turn != side) {
 		valid.findValid(from);
 	}
 	bmove.move = Archiver::toMoveIdx(to, valid);
-	valid.hideValid();
-	if (history.empty()){ // first move
-		if (turn != true) {
-			qWarning() << "Board::history is empty but turn is not white as it should be for the first move";
-		}
+	if (history.empty()) { // first move
 		valid.inStalemate(true);
-		// should go afer findValid, because it cleares valid_moves
-		// FIX: inStalemate() тоже меняет valid_moves во время поиска 
-	} 
+	}
 	bmove.piece = Archiver::toPieceIdx(from, valid);
-	// FIX: but the problem is - we don't call inStalemate for the first move
-	// and we need to call it externally. Or we don't?
+}
 
-	saveMoveNormally(from, to, hmove.move);
-    //char promotion_type = 'e';
-	tatus emit_status = tatus::just_new_turn;
-	if (valid.differentColor(to))
-        emit_status = turn == side ? tatus::opponent_piece_eaten : tatus::user_piece_eaten;
+void Board::emitCurrentStatus(const halfmove& saved)
+{
+	auto from_tile = saved.move.first;
+	auto to_tile = saved.move.second;
+	scoord from = from_tile.coord;
+	scoord to = to_tile.coord;
 
-    scoord rook;
-    if (valid.canCastle(from, to, rook)) {
-		castleKing(from, to, rook);
-		hmove.castling = true;
-		emit_status = tatus::castling;
-	}
-	else if (valid.canPass(from, to)) {
-		passPawn(from, to);
-		hmove.pass = true;
-        emit_status = turn == side ? tatus::opponent_piece_eaten : tatus::user_piece_eaten;
-	}
-	else
-		moveNormally(from, to);
+	if (saved.turn == side)
+		emit moveMade(from, to, saved.promo);
 
-	if (game_regime == "history" && promo != 'e') {
-		promotePawn(to, promo);
-		emit_status = tatus::promotion;
-	}
-	else if ((game_regime == "friend_online" && turn == side || game_regime == "friend_offline") && valid.canPromote(to, to)) {
-		hmove.promo = openPromotion(to);  // waits until the signal from a tile received
-		bmove.promo = promo_by_char[hmove.promo];
-		emit_status = tatus::promotion;
-	}
-
-    if (turn == side)
-        emit moveMade(from, to, promo != 'e' ? promo : hmove.promo);
-
-	hmove.turn = turn;
-    history.push_back(hmove);
-	bistory.push_back(bmove);
-
-	turn = !turn;
 	if (valid.inCheck(turn))
 		if (valid.inStalemate(turn))  // check + stalemate == checkmate
-            emit theEnd(turn == side ? endnum::opponent_wins : endnum::user_wins);
+			emit theEnd(turn == side ? opponent_wins : user_wins);
 		else
-            emit newStatus(turn == side ? tatus::check_to_user : tatus::check_to_opponent);
+			emit newStatus(turn == side ? check_to_user : check_to_opponent);
 	else if (valid.inStalemate(turn))
-		emit theEnd(endnum::draw_by_stalemate);
+		emit theEnd(draw_by_stalemate);
+	else if (saved.castling)
+		emit newStatus(castling);
+	else if (saved.promo)
+		emit newStatus(promotion);
+	else if (from_tile.piece_name != 'e' &&
+			to_tile.piece_name != 'e' &&
+			from_tile.piece_color != to_tile.piece_color)
+		emit newStatus(saved.turn == side ? opponent_piece_eaten : user_piece_eaten);
 	else
-		emit newStatus(emit_status);
-
-
-		// bitmove.move should be updated during a halfmove, but bitmove.piece before it, 
-		// even though they are separate values
+		emit newStatus(just_new_turn);
 }
