@@ -52,7 +52,7 @@ public:
         }
     }
     bitremedy() {};
-    virtual ~bitremedy() {};
+     ~bitremedy() {};
     // TODO: add constructor from char and other 1 byte types
 
     operator int() const {
@@ -71,13 +71,13 @@ public:
         return char(COPY.UCBYTE);
     }
 
-    virtual void CheckBitsn() const {
+     void CheckBitsn() const {
         if ((BITSN > CHB || BITSN < 0)) {
             throw out_of_range("ERROR: invalid BITSN value. It should be from 0 to 8"
                                "(or up to byte size of your machine).");
         }
     }
-    virtual void CheckMargins() const {
+     void CheckMargins() const {
         if (MOVED_LEFT) {
             if (bool(UCBYTE << BITSN)) { // will it work with CHB > 8? Or we need to use (uchar)()?
                 throw logic_error("ERROR: extra '1' bits in bitremedy.CBYTE. Use "
@@ -91,11 +91,11 @@ public:
             }
         }
     }
-    virtual inline void CheckValidity() const {
+     inline void CheckValidity() const {
         CheckBitsn();
         CheckMargins(); // should be in this exact order
     }
-    virtual inline void ConstructorBitsnTest() const {
+     inline void ConstructorBitsnTest() const {
         try {
             CheckBitsn();
         }
@@ -104,7 +104,7 @@ public:
             abort();
         }
     }
-    virtual inline void ValidityTest() const {
+     inline void ValidityTest() const {
         try {
             CheckValidity();
         }
@@ -113,7 +113,7 @@ public:
             abort();
         }
     }
-    virtual inline bool IsValidTest() const {
+     inline bool IsValidTest() const {
         try {
             CheckValidity();
             return true;
@@ -163,7 +163,7 @@ public:
         }
         return *this;
     }
-    virtual bitremedy AddToRight(bitremedy ADDEND_) {
+     bitremedy AddToRight(bitremedy ADDEND_) {
         // merges two unfull bytes moving them to the left and returns left aligned remedy as bitremedy REMEDY
         int BIT_SUM = this->BITSN + ADDEND_.BITSN;
         if (BIT_SUM == CHB << 1) {
@@ -182,7 +182,7 @@ public:
         RestoreLastAlign();
         return REMEDY;
     }
-    virtual bitremedy AddToLeft(bitremedy ADDEND_) {
+     bitremedy AddToLeft(bitremedy ADDEND_) {
         // merges two unfull bytes moving them to the left and returns left aligned remedy as bitremedy REMEDY
         int BIT_SUM = this->BITSN + ADDEND_.BITSN;
         if (BIT_SUM == CHB << 1) {

@@ -23,7 +23,8 @@ void MainWindow::on_change_photo_button_clicked()
         tr("Images (*.png *.jpg *.jpeg *.pgm)"));
     QSize user_size = ui->user_avatar->size();
     if (!avatar_address.isEmpty()){
-        user_pic = QPixmap(avatar_address).scaled(user_size);
+        QPixmap user_pic = QPixmap(avatar_address).scaled(user_size);
+        setPic("user_pic", user_pic);
         ui->profile_avatar->setPixmap(user_pic);
         if (game_active)
             ui->user_avatar->setPixmap(user_pic);
@@ -50,6 +51,7 @@ void MainWindow::on_change_name_button_clicked()
             QMessageBox::Warning);
     }
     else if (err == 2) {
+        int max_nick = settings["max_nick"].toInt();
         showBox("So huge!",
             "This nickname is too long. Maximum length is " + QString::number(max_nick),
             QMessageBox::Warning);
@@ -89,6 +91,7 @@ void MainWindow::on_registrate_button_clicked()
 void MainWindow::on_end_login_button_clicked()
 {
     QString entered_username = ui->login_edit->text();
+    int max_nick = settings["max_nick"].toInt();
     if (ui->login_password->text().isEmpty()){
         showBox("Too small for the party!",
                 "You need to enter a login",
@@ -129,6 +132,7 @@ void MainWindow::on_back_from_login_button_clicked()
 
 void MainWindow::on_guest_button_clicked()
 {
+    int max_nick = settings["max_nick"].toInt();
     login_regime = 3;
     QString random_username = "Lazy" + QString::number(std::rand() % (int)std::pow(10, max_nick - 4));
     changeLocalName(random_username);
@@ -138,10 +142,6 @@ void MainWindow::on_guest_button_clicked()
 
 void MainWindow::on_send_invite_button_clicked() // FIX: here - packnum::invite, user's name, user's image,
 {
-//    if (waiting_for_invite_respond){
-//        qDebug() << "Tried to send match invite several times";
-//        return;
-//    }
     int chosen_time = settings["time_setup"].toInt();
     QString opp_name = ui->friend_name_edit->text();
     QString user_name = settings["user_name"].toString();
@@ -161,19 +161,10 @@ void MainWindow::on_send_invite_button_clicked() // FIX: here - packnum::invite,
                 QMessageBox::Warning);
     }
     else {
-        //QEventLoop loop; // FIX: should whow "Waiting for friend's respond" message with a rolling widget
-//        connect(net.data(), &WebClient::endedReadingInvite, [&](){
-//            QApplication::restoreOverrideCursor();
-//            waiting_for_invite_respond = false;
-//            loop.quit();
-//        });
-        bool match_side = std::rand() % 2;
+        bool match_side = rand() % 2;
         settings["match_side"].setValue(match_side);
         settings["opp_name"].setValue(opp_name);
-        net->sendToServer(packnum::invite);
-       // QApplication::setOverrideCursor(Qt::WaitCursor);
-        waiting_for_invite_respond = true;
-        //loop.exec();
+        net->sendToServer(invite);
     }
 }
 
@@ -183,7 +174,7 @@ void MainWindow::editReturnSlot()
     printMessage(settings["user_name"].toString(), true, message_text);
     ui->message_edit->clear();
     if (settings["game_regime"].toString() == "friend_online")
-        net->sendToServer(packnum::chat_message, false, message_text); // FIX: works even after the end of the game
+        net->sendToServer(chat_message, false, message_text); // FIX: works even after the end of the game
 }
 
 bool MainWindow::eventFilter(QObject* object, QEvent* event)
@@ -221,20 +212,11 @@ void MainWindow::on_actionToggle_fullscreen_triggered()
 
 void MainWindow::on_actionWith_friend_offline_triggered()
 {
-    OfflineDialog dialog(this, default_pic);
-    connect(&dialog, &OfflineDialog::newOppName, [&](QString name) {
-        settings["opp_name"].setValue(name);
-    });
-    connect(&dialog, &OfflineDialog::newOppPic, [&](QPixmap pic) {
-        opp_pic = pic;
-    });
-    auto res = dialog.exec();
-    if (res == QDialog::Rejected){
-        opp_pic = default_pic;
-        settings["opp_name"].setValue(QString("Friend"));
+    OfflineDialog dialog(this);
+    if (dialog.exec() == QDialog::Rejected) {
+        setPic("opp_pic", getPic("def_pic"));
+        settings["opp_name"].setValue((QString)"Friend");
     }
-    //QString game_regime = settings["game_regime").toString();
-    //settings[ ] = ("game_regime", "friend_offline");
     startGame("friend_offline");
 }
 
@@ -254,8 +236,10 @@ void MainWindow::on_change_ip_button_clicked()
 
 void MainWindow::on_restore_default_button_clicked()
 {
-    settings["ip_address"].setValue(default_address);
-    settings["port_address"].setValue(default_port);
+    QString def_address = settings["def_address"].toString();
+    settings["ip_address"].setValue(def_address);
+    int def_port = settings["def_port"].toInt();
+    settings["port_address"].setValue(def_port);
     net->connectNewHost();
     ui->ip_edit->clear();
     ui->port_edit->clear();
@@ -273,30 +257,12 @@ void MainWindow::my_offline_back_button_clicked()
 
 void MainWindow::my_history_next_button_clicked()
 {
-    openInDevDialog();
-    //auto& history = board->history;
-
-    //// FIX: should be like this:
-    //board->nextMove();
-
-    //halfmove move = history[current_move];
-    //Tile* from = move.move.first.tile;
-    //Tile* to = move.move.second.tile;
-    //board->halfMove(from, to);
-    //current_move++;
+    board->doCurrentMove();
 }
 
 void MainWindow::my_history_previous_button_clicked()
 {
-    openInDevDialog();
-
-    //// FIX: should be like this:
-    //board->revertCurrentMove();
-
-    //auto& history = *board->history;
-    //halfmove move = history[current_move];
-    //board.revertMove(move);
-    //current_move--;
+    board->revertCurrentMove();
 }
 
 void MainWindow::on_actionAbout_triggered()
@@ -327,19 +293,19 @@ void MainWindow::on_actionAbout_Qt_triggered()
 
 void MainWindow::on_actionWith_AI_triggered()
 {
-    openInDevDialog();
+    openInDevBox();
 }
 
 
 void MainWindow::on_actionTraining_triggered()
 {
-    openInDevDialog();
+    openInDevBox();
 }
 
 
 void MainWindow::on_actionRandomly_triggered()
 {
-    openInDevDialog();
+    openInDevBox();
 }
 
 
@@ -352,7 +318,7 @@ void MainWindow::on_actionRules_triggered()
 
 void MainWindow::on_actionSend_suggestion_triggered()
 {
-    QDesktopServices::openUrl(QUrl("mailto:mmd18cury@yandex.ru?subject=Suggestion&body=Please, make it impossible to lose.", QUrl::TolerantMode));
+    QDesktopServices::openUrl(QUrl("mailto:mmd18cury@yandex.ru?subject=MercuryChess:Suggestion&body=Please, make it impossible to lose.", QUrl::TolerantMode));
 }
 
 #include <fstream>
@@ -361,7 +327,7 @@ void MainWindow::on_actionReport_a_bug_triggered()
     //extern std::ofstream log_ofstream;
     extern std::ofstream log_ofstream;
     log_ofstream.flush();
-    QDesktopServices::openUrl(QUrl("mailto:mmd18cury@yandex.ru?subject=Bug report&body=Please attach the log file. Choose to attach a file and enter next path, then choose log.txt file: " + app_dir, QUrl::TolerantMode));
+    QDesktopServices::openUrl(QUrl("mailto:mmd18cury@yandex.ru?subject=MercuryChess:Bug report&body=Please attach the log file. Choose to attach a file and enter next path, then choose log.txt file: " + app_dir, QUrl::TolerantMode));
 }
 
 
@@ -424,7 +390,7 @@ void MainWindow::on_actionSave_game_triggered()
 
     // Write game to the file
     Archiver archiver;
-    int error = archiver.writeGame(board->end_type, board->bistory, archive_fullname.toStdString());
+    int error = archiver.writeGame(board->end_type, board->bistory, archive_fullname);
     if (!error) {
         showBox("Good news",
             "Operation done successfuly.");
@@ -460,9 +426,11 @@ void MainWindow::on_actionLoad_game_triggered()
     Archiver archiver;
     endnum end_type;
     vector<halfmove> history;
-    int error = archiver.readGame(end_type, history, archive_fullname.toStdString());
+    int error = archiver.readGame(end_type, history, archive_fullname);
     if (!error) {
         startGame("history");
+        for (int i = 0, size = history.size(); i < size; i++)
+            writeStory(i + 1, history[i]);
         board->end_type = end_type;
         board->history = history;
     }

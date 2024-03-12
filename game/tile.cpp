@@ -4,9 +4,9 @@
 #include <QDebug>
 using namespace std;
 
-Tile::Tile(Board* parent_, scoord tile_coord, bool side) :
+Tile::Tile(scoord tile_coord_, char piece_name_, bool piece_color_, bool side_, Board* parent_) :
     QLabel(parent_),
-    VirtualTile(tile_coord, 'e', false, parent_),
+    VirtualTile(tile_coord_, piece_name_, piece_color_, parent_),
     black{ 120, 120, 90 },
     white{ 211, 211, 158 },
     selected(Qt::green),
@@ -25,12 +25,14 @@ Tile::Tile(Board* parent_, scoord tile_coord, bool side) :
 
     dyeNormal();
     auto size = parent_->tile_size;
-    if (side)
+    if (side_)
         setGeometry(size / 2 + coord.x * size, size / 2 + (7 - coord.y) * size,
             size, size); // size/2 is the indent from the left upper corner
     else
         setGeometry(size / 2 + (7 - coord.x) * size, size / 2 + coord.y * size,
             size, size);
+
+    setPiece(piece_name_, piece_color_);
 }
 
 void Tile::mousePressEvent(QMouseEvent* event)

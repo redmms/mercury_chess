@@ -19,24 +19,17 @@
 #include <QTimer>
 #include <QDebug>
 #include <QString>
-#include <QApplication>
 using namespace std;
 
-MainWindow::MainWindow(QWidget* parent, QString app_dir_, QApplication* app) :
-    app(app),
-    QMainWindow(0),
+MainWindow::MainWindow(QString app_dir_) :
+    QMainWindow(nullptr),
     app_dir(app_dir_),
     board{},
     clock{},
     net(new WebClient(this)),
     sounds{},
     avatar_effect(new QGraphicsDropShadowEffect(this)),
-    user_pic(":images/profile"),
-    opp_pic(":images/profile"),
-    default_pic(":images/profile"),
-    pic_mask{},
     last_tab{},
-    max_nick(12),
     message_layout(new QVBoxLayout()),
     message_box(new QWidget(this)),
     message_font{ "Segoe Print", 12 },
@@ -45,13 +38,9 @@ MainWindow::MainWindow(QWidget* parent, QString app_dir_, QApplication* app) :
     rounded_area(new RoundedScrollArea(this, QColor(0, 102, 51))),
     game_active(false),
     login_regime(0),
-    waiting_for_invite_respond(false),
     ui(new Ui::MainWindow),
-    default_address(/*"127.0.0.1"*/"40.113.33.140"),
-    default_port(49001),
     history_area(new HorizontalScrollArea(this, QColor(111, 196, 81))),
-    history_label(new QLabel(this)),
-    current_move(0)
+    history_label(new QLabel(this))
 {
     // .ui file finish strokes
     ui->setupUi(this);
@@ -103,17 +92,8 @@ MainWindow::MainWindow(QWidget* parent, QString app_dir_, QApplication* app) :
     sounds["win"]->setVolume(0.8f);
     sounds["draw"]=(new QSoundEffect);
     sounds["draw"]->setSource(QUrl::fromLocalFile(":/sounds/draw"));
-
-    // settings init
-    //settings = QSettings("settings_" + curTime() + ".ini", QSettings::IniFormat);
-    settings["user_name"].setValue(QString("Lazy") + 
-        QString::number(rand() % (int)pow(10, max_nick - 4)));
-    settings["opp_name"].setValue(QString("Player2"));
-    settings["time_setup"].setValue(0);
-    settings["match_side"].setValue(true);
-    settings["game_regime"].setValue(QString("friend_offline"));
-    settings["ip_address"].setValue(default_address);
-    settings["port_address"].setValue(default_port);
+    sounds["start"]=(new QSoundEffect);
+    sounds["start"]->setSource(QUrl::fromLocalFile(":/sounds/start"));
 
     // glow effect for avatars
     avatar_effect->setBlurRadius(40);
@@ -127,14 +107,32 @@ MainWindow::MainWindow(QWidget* parent, QString app_dir_, QApplication* app) :
     QPainter painter(&pix);
     painter.setBrush(Qt::color1); //Qt::black
     painter.drawRoundedRect(0, 0, mask_size, mask_size, 14, 14);
-    pic_mask = pix.createMaskFromColor(Qt::transparent);
+    QBitmap pic_mask = pix.createMaskFromColor(Qt::transparent);
+
+    // settings init
+//settings = QSettings("settings_" + curTime() + ".ini", QSettings::IniFormat);
+    settings["user_name"].setValue(QString("Lazy") +
+        QString::number(rand() % (int)pow(10, 8)));
+    settings["opp_name"].setValue(QString("Player2"));
+    settings["time_setup"].setValue(0);
+    settings["match_side"].setValue(true);
+    settings["game_regime"].setValue(QString("friend_offline"));
+    settings["def_port"].setValue(49001);
+    settings["port_address"].setValue(49001);
+    settings["def_address"].setValue(/*"127.0.0.1"*/(QString)"40.113.33.140");
+    settings["ip_address"].setValue(/*"127.0.0.1"*/(QString)"40.113.33.140");
+    settings["max_nick"].setValue(12);
+    setPic("def_pic", QPixmap(":images/profile"));
+    setPic("user_pic", QPixmap(":images/profile"));
+    setPic("opp_pic", QPixmap(":images/profile"));
+    setBMap("pic_mask", pic_mask);
 
     // user and opponent avatars in game and settings
-    ui->user_avatar->setMask(pic_mask);
-    ui->opponent_avatar->setMask(pic_mask);
-    ui->profile_avatar->setMask(pic_mask); // picture in the settings
+    ui->user_avatar->setMask(getBMap("pic_mask"));
+    ui->opponent_avatar->setMask(getBMap("pic_mask"));
+    ui->profile_avatar->setMask(getBMap("pic_mask")); // picture in the settings
     ui->profile_name->setText(settings["user_name"].toString());
-    ui->profile_avatar->setPixmap(user_pic);
+    ui->profile_avatar->setPixmap(QPixmap(":images/profile"));
 
     // time limit buttons from friend_connect_tab 
     auto layout = ui->time_limits_layout;
@@ -213,14 +211,14 @@ void MainWindow::openTab(QWidget* page)
     ui->tabWidget->setCurrentWidget(page);
 }
 
-void MainWindow::openStopGameDialog()
+void MainWindow::openStopGameBox()
 {
     showBox("Stop active game",
             "Stop your current game at first.",
             QMessageBox::Warning);
 }
 
-void MainWindow::openInDevDialog()
+void MainWindow::openInDevBox()
 {
     showBox("Not available yet",
             "This function hasn't been developed yet, but you can donate money to speed up the process.");
@@ -248,6 +246,7 @@ QString MainWindow::coordToString(scoord coord)
 
 int MainWindow::changeLocalName(QString name)
 {
+    int max_nick = settings["max_nick"].toInt();
     if (name.isEmpty()) {
         return 1;
     }
@@ -333,7 +332,7 @@ void MainWindow::startGame(QString game_regime) // side true for user - white
         connect(ui->draw_button, &QPushButton::clicked, this, &MainWindow::my_offline_stop_button_clicked);
     }
     else if (game_regime == "history") {
-        opp_pic = default_pic;
+        setPic("opp_pic", getPic("default_pic"));
         ui->message_edit->setPlainText("Chat is off. But you can chat with yourself if you are a hikikomori."); 
         ui->user_timer->setText("");
         ui->opponent_timer->setText("");
@@ -346,9 +345,9 @@ void MainWindow::startGame(QString game_regime) // side true for user - white
     }
     openTab(ui->game_tab);
     activateWindow();
-    ui->user_avatar->setPixmap(user_pic);
+    ui->user_avatar->setPixmap(getPic("user_pic"));
     ui->user_name->setText(settings["user_name"].toString());
-    ui->opponent_avatar->setPixmap(opp_pic);
+    ui->opponent_avatar->setPixmap(getPic("opp_pic"));
     ui->opponent_name->setText(settings["opp_name"].toString());
     bool match_side = settings["match_side"].toBool();
     (match_side ? ui->user_avatar : ui->opponent_avatar)->setGraphicsEffect(avatar_effect);
@@ -396,7 +395,7 @@ void MainWindow::startGame(QString game_regime) // side true for user - white
 
     showStatus("Ready? Go!");
     game_active = true;
-
+    sounds["start"]->play();
 }
 
 void MainWindow::endSlot(endnum end_type)
@@ -526,7 +525,10 @@ void MainWindow::statusSlot(tatus status)
     emit timeToSwitchTime();
     size_t order = board->history.size();
     halfmove last_move = board->history.back();
-    writeStory(order, last_move);
+    QString game_regime = settings["game_regime"].toString();
+    if (game_regime != "history") {
+        writeStory(order, last_move);
+    }
 }
 
 void MainWindow::printMessage(QString name, bool own, QString text)

@@ -9,7 +9,6 @@ using namespace std;
 
 Board::Board(MainWindow* parent_, QLabel* background_) :
     QLabel(parent_),
-    mainwindow(parent_),
     tile_size(background_->width() / 9),
     valid(new Validator(this)),
     tiles{{nullptr}},
@@ -53,12 +52,12 @@ Board::Board(MainWindow* parent_, QLabel* background_) :
 
 Board::~Board()
 {
+    delete valid;
     for (int x = 0; x < 8; x++) {
         for (int y = 0; y < 8; y++) {
-            delete Board::tiles[x][y];
+            delete tiles[x][y];
         }
     }
-    delete valid;
 }
 
 void Board::initLetter(int x, int y, int width, int height, QString ch)
@@ -137,9 +136,8 @@ char Board::openPromotion(scoord from)
     char promo;
     scoord menu_coord = from;
     for (int i = 0, k = turn ? -1 : 1; i < 4; i++, menu_coord.y += k) {
-        menu[i] = (new Tile(this, menu_coord, side));
+        menu[i] = (new Tile(menu_coord, pieces[i], turn, side, this));
         menu[i]->setStyleSheet(promo_css);
-        menu[i]->setPiece(pieces[i], turn);
         menu[i]->raise();
         menu[i]->show();
         QObject::connect(menu[i], &Tile::tileClicked, [&](Tile* into) {
@@ -165,7 +163,7 @@ void Board::initTiles()
 {
     for (int y = 0; y < 8; y++) {
         for (int x = 0; x < 8; x++) {
-            tiles[x][y] = (new Tile(this, { x, y }, side));
+            tiles[x][y] = (new Tile({ x, y }, 'e', false, side, this));
             // uses Board::tile_side bool side to coordinate itself on board, i.e. setGeometry()
             QObject::connect(tiles[x][y], &Tile::tileClicked, this, &Board::reactOnClick);
         }
@@ -241,7 +239,8 @@ void Board::emitCurrentStatus(const halfmove& saved)
         emit newStatus(promotion);
     else if (from_tile.piece_name != 'e' &&
             to_tile.piece_name != 'e' &&
-            from_tile.piece_color != to_tile.piece_color)
+            from_tile.piece_color != to_tile.piece_color ||
+            saved.pass)
         emit newStatus(saved.turn == side ? opponent_piece_eaten : user_piece_eaten);
     else
         emit newStatus(just_new_turn);

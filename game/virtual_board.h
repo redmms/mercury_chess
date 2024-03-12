@@ -20,8 +20,14 @@ public:
     std::vector<halfmove> history;
 
     VirtualBoard();
-    //VirtualBoard(VirtualBoard& copy);
-    ~VirtualBoard();
+    virtual ~VirtualBoard() {};
+
+    // member access
+    virtual VirtualTile* theTile(scoord coord);
+    bool theTurn();
+    scoord wKing();
+    scoord bKing();
+    const std::vector<halfmove>& story();
 
     // move forward
     void saveMoveNormally(scoord from, scoord to, vove& move);
@@ -47,9 +53,6 @@ public:
     // tile initialization
     virtual void initTiles();
     void setTiles();
-
-    // tile access
-    virtual VirtualTile* theTile(scoord coord);
 
     std::string toStr(bool stat = false);
 };

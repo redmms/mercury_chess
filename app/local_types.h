@@ -6,7 +6,6 @@
 #ifndef vove
 #define vove std::pair<VirtualTile, VirtualTile>
 #endif
-#include <QPointer>
 
 #include <utility>
 enum packnum : uint8_t {
@@ -146,3 +145,28 @@ extern std::map<promnum, char> char_by_promo;
 extern std::map<QString, QVariant> settings;
 
 struct halfmove;
+
+#include <QBuffer>
+#include <QBitmap>
+inline void setPic(QString par, const QPixmap& pic) {
+    QByteArray arr;
+    QBuffer buffer(&arr);
+    buffer.open(QIODevice::WriteOnly);
+    pic.save(&buffer, "PNG");
+    settings[par].setValue(arr);
+}
+
+inline QPixmap getPic(QString par) {
+    QByteArray arr = settings[par].toByteArray();
+    QPixmap pic;
+    pic.loadFromData(arr, "PNG");
+    return pic;
+}
+
+inline void setBMap(QString par, const QBitmap& bmap) {
+    settings[par] = QVariant(bmap);
+}
+
+inline QBitmap getBMap(QString par) {
+    return qvariant_cast<QBitmap>(settings[par]);
+}

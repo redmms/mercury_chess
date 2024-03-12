@@ -7,25 +7,13 @@
 #include <QFileDialog>
 using namespace std;
 
-OfflineDialog::OfflineDialog(QWidget *parent, QPixmap default_pic_) :
-    QDialog(parent),
-    default_pic(default_pic_),
-    opp_pic(default_pic_),
+OfflineDialog::OfflineDialog(QWidget *parent_) :
+    QDialog(parent_),
     ui(new Ui::OfflineDialog)
 {
     ui->setupUi(this);
-    ui->friend_avatar->setPixmap(default_pic);
-    //setStyleSheet("background-image: url(:/images/background);");
-
-    auto mask_size = ui->friend_avatar->width();
-    QPixmap  pix(mask_size, mask_size); // initialize a mask for avatar's rounded corners
-    pix.fill(Qt::transparent);
-    QPainter painter(&pix);
-    painter.setBrush(Qt::color1); //Qt::black
-    painter.drawRoundedRect(0, 0, mask_size, mask_size, 14, 14);
-    QBitmap pic_mask = pix.createMaskFromColor(Qt::transparent);
-
-    ui->friend_avatar->setMask(pic_mask);
+    ui->friend_avatar->setPixmap(getPic("def_pic"));
+    ui->friend_avatar->setMask(getBMap("pic_mask"));
     setWindowTitle("Choose your opponent's name");
 }
 
@@ -33,7 +21,7 @@ OfflineDialog::~OfflineDialog() {
     delete ui;
 }
 
-bool OfflineDialog::readName()
+bool OfflineDialog::checkName()
 {
     QString new_name = ui->friend_edit->text();
     if (new_name.isEmpty()) {
@@ -49,39 +37,30 @@ bool OfflineDialog::readName()
         return false;
     }
     else {
-        opp_name = new_name;
         return true;
     }
 }
-
 
 void OfflineDialog::on_choose_photo_button_clicked()
 {
     QString avatar_address = QFileDialog::getOpenFileName(this, "Open File",
         QString("Choose a photo for opponent's avatar. Avatar picture will be scaled to 100x100 pixel image."),
         tr("Images (*.png *.jpg *.jpeg *.pgm)"));
-    QSize user_size = {100, 100};
     if (!avatar_address.isEmpty()){
-        opp_pic = QPixmap(avatar_address).scaled(user_size);
-        ui->friend_avatar->setPixmap(opp_pic);
+        ui->friend_avatar->setPixmap(QPixmap(avatar_address).scaled(100, 100));
     }
 }
 
-
 void OfflineDialog::on_save_button_clicked()
 {
-    bool name_change_successful = readName();
-    if (name_change_successful){
-        emit newOppPic(opp_pic);
-        emit newOppName(opp_name);
+    if (checkName()){
+        setPic("opp_pic", *ui->friend_avatar->pixmap());
+        settings["opp_name"].setValue(ui->friend_edit->text());
         accept();
-    }
-    //this->~OfflineDialog();
+    } 
 }
 
 void OfflineDialog::on_dismiss_button_clicked()
 {
     reject();
-    //this->~OfflineDialog();
 }
-

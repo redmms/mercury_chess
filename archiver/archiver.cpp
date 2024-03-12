@@ -7,22 +7,23 @@
 //#include "../game/board.h"
 //#include <QDebug>
 //#include <sstream>
+import finestream;
 using namespace std;
 
 //stringstream sout;
 
 Archiver::Archiver() {}
 
-int Archiver::writeGame(endnum end_type, const std::vector<bitmove>& history, std::string filename)
+int Archiver::writeGame(endnum end_type, const std::vector<bitmove>& history, QString filename)
 {
     try {
-        fsm::ofinestream pofs(filename);
+        fsm::ofinestream pofs(filename.toStdString());
     }
     catch (const exception& e) {
         cerr << e.what() << endl;
         return 1;
     }
-    fsm::ofinestream ofs(filename);
+    fsm::ofinestream ofs(filename.toStdString());
     if (history.empty()) {
         cerr << "You are trying to write an empty game" << endl;
         return 2;
@@ -61,16 +62,16 @@ int Archiver::writeMove(bitmove move, fsm::ofinestream& ofs) {
     return 0;
 }
 
-int Archiver::readGame(endnum& end_type, std::vector<halfmove>& history, std::string filename)
+int Archiver::readGame(endnum& end_type, std::vector<halfmove>& history, QString filename)
 {
     try {
-        fsm::ifinestream pifs(filename);
+        fsm::ifinestream pifs(filename.toStdString());
     }
     catch (const exception& e) {
         cerr << e.what() << endl;
         return 1;
     }
-    fsm::ifinestream ifs(filename);
+    fsm::ifinestream ifs(filename.toStdString());
 
     uint8_t version;
     ifs >> version;

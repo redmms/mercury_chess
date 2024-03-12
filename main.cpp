@@ -17,7 +17,7 @@ int main(int argc, char *argv[])
     app.setOrganizationName("MMD18 soft");
     app.setApplicationName("MercuryChess" + curTime());
     QString app_dir = app.applicationDirPath();
-    MainWindow mainwindow(0, app_dir, &app);
+    MainWindow mainwindow(app_dir);
     mainwindow.showMaximized();
     return app.exec();
 }

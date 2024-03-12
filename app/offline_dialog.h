@@ -1,7 +1,6 @@
 #pragma once
 #include <QDialog>
 
-//FIX: could be simplified, using settings variable
 namespace Ui {
     class OfflineDialog;
 }
@@ -9,19 +8,13 @@ namespace Ui {
 class OfflineDialog : public QDialog{
     Q_OBJECT
 
-    QPixmap default_pic;
-    QPixmap opp_pic;
-    QString opp_name;
     Ui::OfflineDialog *ui;
 
-    bool readName();
-public:
-    explicit OfflineDialog(QWidget *parent, QPixmap default_pic_);
-    ~OfflineDialog();
+    bool checkName();
 
-signals:
-    void newOppName(QString name);
-    void newOppPic(QPixmap picture);
+public:
+    explicit OfflineDialog(QWidget *parent_);
+    ~OfflineDialog();
 
 private slots:
     void on_choose_photo_button_clicked();

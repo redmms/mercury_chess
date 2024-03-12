@@ -19,7 +19,7 @@ class Tile : public QLabel, public VirtualTile {
     QColor mixColors(QColor color_a, QColor color_b, float b_coef);
 
 public:
-    Tile(Board* mother_board = 0, scoord coord = scoord(), bool side = true);
+    Tile(scoord tile_coord_ = {}, char piece_name_ = 'e', bool piece_color_ = false, bool side_ = true, Board* parent_ = 0);
 
     void setPiece(char elem, bool color, bool virtually = false) override;
     void dyeNormal();

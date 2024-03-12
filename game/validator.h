@@ -10,7 +10,7 @@ protected:
 public:
     Validator(Board* mother_board);
 
-    Tile* theTile(scoord) override; // FIX: do we need this at all?
+    Tile* theTile(scoord) override;
     void showValid(scoord from);
     void hideValid();
 };

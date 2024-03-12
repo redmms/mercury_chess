@@ -1,5 +1,6 @@
 #pragma once
 #include "../app/local_types.h"
+#include <QPointer>
 
 class MainWindow;
 class QTcpSocket;

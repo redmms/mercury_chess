@@ -2,7 +2,6 @@
     <qresource prefix="/images">
         <file alias="bishop_black">images/bishop_black.svg</file>
         <file alias="bishop_white">images/bishop_white.svg</file>
-        <file alias="exp">images/exp.png</file>
         <file alias="king_black">images/king_black.svg</file>
         <file alias="king_white">images/king_white.svg</file>
         <file alias="knight_black">images/knight_black.svg</file>
@@ -29,5 +28,6 @@
         <file alias="lose">sounds/nice/wav/lose.wav</file>
         <file alias="draw">sounds/nice/wav/the_end_close_the_board.wav</file>
         <file alias="check_to_opp">sounds/nice/wav/check_to_opp.wav</file>
+        <file alias="start">sounds/nice/wav/start.wav</file>
     </qresource>
 </RCC>

@@ -10,7 +10,6 @@ class Board : public QLabel, public VirtualBoard {
     Q_OBJECT
 
 public:
-    MainWindow* mainwindow;
     Validator* valid;
     Tile* tiles[8][8];
     Tile* menu[4];

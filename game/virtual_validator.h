@@ -12,7 +12,7 @@ class VirtualValidator {
     friend class Board;
     friend class VirtualBoard;
 protected:
-    VirtualBoard* vboard;
+    VirtualBoard* board;
     std::set<scoord> movable_pieces;
     std::set<scoord> valid_moves;
     bool check;
@@ -36,6 +36,8 @@ protected:
     //bool fastValid(scoord from);
     void findValid(scoord from);
     void findValid(scoord from, std::set<scoord>& container);
+    void moveVirtually(scoord from, scoord to, char promo, halfmove& saved_move, bool& check_saved);
+    void revertVirtualMove(halfmove saved_move, bool check_saved);
 
 public:
     VirtualValidator(VirtualBoard* mother_board = 0);
@@ -45,14 +47,11 @@ public:
     std::function<bool(scoord)> differentColor;
     std::function<char(scoord)> pieceName;
 
-    virtual VirtualTile* theTile(scoord);
+    virtual VirtualTile* theTile(scoord coord);
     bool theTurn();
-    scoord theWKing();
-    scoord theBKing();
-    void moveVirtually(scoord from, scoord to, char promo, halfmove& saved_move, bool check_saved);
-    void revertVirtualMove(halfmove saved_move, bool check_saved);
-    const std::vector<halfmove>& theStory();
-    void printHasMoved();
+    scoord wKing();
+    scoord bKing();
+    const std::vector<halfmove>& story();
 
     bool isValid(scoord move);
     bool empty();
@@ -66,4 +65,5 @@ public:
     void reactOnMove(scoord from, scoord to);
     void bringBack(scoord from, scoord to);
     //qint64 countMovesTest(int depth = 5, int i = 0);
+    //void printHasMoved();
 };

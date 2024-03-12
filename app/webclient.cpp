@@ -194,13 +194,13 @@ void WebClient::sendToServer(packnum type, bool respond, QString message, scoord
         writePack(settings["user_name"].toString());
         writePack((quint8) (settings["time_setup"].toInt()));
         writePack(!settings["match_side"].toBool());
-        writePack(mainwindow->user_pic);
+        writePack(getPic("user_pic"));
         break;     
     case packnum::invite_respond:
         writePack(packnum::invite_respond);
         writePack(respond);
         if (respond)
-            writePack(mainwindow->user_pic);
+            writePack(getPic("user_pic"));
         break;
     case packnum::move:
         writePack(packnum::move);
@@ -289,9 +289,9 @@ void WebClient::readFromServer()
         connect(&msg_box, &QMessageBox::accepted, [&](){
             settings["opp_name"].setValue(opp_name);
             if (!picture.isNull() && picture.size() == QSize{100, 100})
-                mainwindow->opp_pic = picture;
+                setPic("opp_pic", picture);
             else
-                mainwindow->opp_pic = mainwindow->default_pic;
+                setPic("opp_pic", getPic("def_pic"));
             settings["match_side"].setValue(side);
             settings["time_setup"].setValue(int(time));
             mainwindow->startGame("friend_online");
@@ -315,9 +315,9 @@ void WebClient::readFromServer()
             QPixmap picture;
             readPack(picture);
             if (!picture.isNull() && picture.size() == QSize{100, 100})
-                mainwindow->opp_pic = picture;
+                setPic("opp_pic", picture);
             else
-                mainwindow->opp_pic = mainwindow->default_pic;
+                setPic("opp_pic", getPic("def_pic"));
             mainwindow->startGame("friend_online");
         }
         emit endedReadingInvite();

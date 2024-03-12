@@ -20,30 +20,29 @@ VirtualBoard::VirtualBoard() :
     setTiles();
 }
 
-//VirtualBoard::VirtualBoard(VirtualBoard& copy) :
-//    valid(this),
-//    from_coord{copy.from_coord},  // always actualized in Tile::setPiece()
-//    white_king{copy.white_king},  // ditto
-//    black_king{copy.black_king},  // ditto
-//    turn(copy.turn),  // true for white turn;
-//    side(copy.side),
-//    current_move(copy.current_move),
-//    end_type(copy.end_type)
-//{
-//    for (int x = 0; x < 8; x++) {
-//        for (int y = 0; y < 8; y++) {
-//            tiles[x][y] = (VirtualTile*) (copy.tiles[x][y]);
-//        }
-//    }
-//}
-
-VirtualBoard::~VirtualBoard()
+VirtualTile* VirtualBoard::theTile(scoord coord)
 {
-    for (int x = 0; x < 8; x++) {
-        for (int y = 0; y < 8; y++) {
-            delete VirtualBoard::tiles[x][y];
-        }
-    }
+    return VirtualBoard::tiles[coord.x][coord.y];
+}
+
+bool VirtualBoard::theTurn()
+{
+    return turn;
+}
+
+scoord VirtualBoard::wKing()
+{
+    return white_king;
+}
+
+scoord VirtualBoard::bKing()
+{
+    return black_king;
+}
+
+const std::vector<halfmove>& VirtualBoard::story()
+{
+    return history;
 }
 
 void VirtualBoard::saveMoveNormally(scoord from, scoord to, vove& move)
@@ -214,6 +213,9 @@ void VirtualBoard::setTiles()
 // beggining of virtual methods
 void VirtualBoard::doCurrentMove()
 {
+    if (current_move < 0 || current_move >= history.size()) {
+        return;
+    }
     halfmove hmove = history[current_move];
     scoord from = hmove.move.first.coord;
     scoord to = hmove.move.second.coord;
@@ -224,13 +226,11 @@ void VirtualBoard::doCurrentMove()
 
 void VirtualBoard::revertCurrentMove()
 {
+    if (current_move < 0 || current_move >= history.size()) {
+        return;
+    }
     revertHalfmove(history[current_move]);
     current_move--;
-}
-
-VirtualTile* VirtualBoard::theTile(scoord coord)
-{
-    return VirtualBoard::tiles[coord.x][coord.y];
 }
 
 string VirtualBoard::toStr(bool stat)
@@ -261,3 +261,4 @@ void VirtualBoard::promotePawn(scoord from, char& into, bool virtually)
     pawn_tile->setPiece(into, pawn_tile->piece_color, virtually);
     valid->reactOnMove(from, from);
 }
+

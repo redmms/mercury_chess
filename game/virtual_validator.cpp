@@ -2,20 +2,17 @@
 #include "virtual_validator.h"
 #include "virtual_board.h"
 #include "virtual_tile.h"
-#include <QDebug>
-#include <windows.h>  // Äëÿ AllocConsole()
-#include <cstdio>  
 #include <iostream>
 using namespace std;
 using lambda = function<bool(scoord)>;
 using checker = function<bool(scoord, bool&)>;
 
 VirtualValidator::VirtualValidator(VirtualBoard* mother_board) :
-    vboard(mother_board),
+    board(mother_board),
     valid_moves{},
     check(false),
     last_state{ false },
-    has_moved{ false }, // FIX: {} or {{}}?
+    has_moved{ false },
     rooks_kings{ {0,0}, {4, 0}, {7, 0}, {0, 7}, {4, 7}, {7, 7} },
     castling_destination{ {2, 0}, {-1, -1}, {6, 0}, {2, 7}, {-1, -1}, {6, 7} },
     should_be_free{
@@ -79,58 +76,58 @@ VirtualValidator::VirtualValidator(VirtualBoard* mother_board) :
     })
 {}
 
-// beginning of virtual methods
 VirtualTile* VirtualValidator::theTile(scoord coord)
 {
-    return vboard->theTile(coord);
+    return board->theTile(coord);
 }
 
 bool VirtualValidator::theTurn()
 {
-    return vboard->turn;
+    return board->theTurn();
 }
 
-scoord VirtualValidator::theWKing()
+scoord VirtualValidator::wKing()
 {
-    return vboard->white_king;
+    return board->wKing();
 }
 
-scoord VirtualValidator::theBKing()
+scoord VirtualValidator::bKing()
 {
-    return vboard->black_king;
+    return board->bKing();
 }
 
-void VirtualValidator::moveVirtually(scoord from, scoord to, char promo, halfmove& saved_move, bool check_saved)
+const std::vector<halfmove>& VirtualValidator::story()
+{
+    return board->story();
+}
+
+void VirtualValidator::moveVirtually(scoord from, scoord to, char promo, halfmove& saved_move, bool& check_saved)
 {
     check_saved = check;
-    vboard->halfMove(from, to, promo, saved_move, true);
-    vboard->turn = !vboard->turn;
+    board->halfMove(from, to, promo, saved_move, true);
+    board->turn = !board->turn;
 }
 
 void VirtualValidator::revertVirtualMove(halfmove saved_move, bool check_saved)
 {
-    vboard->turn = !vboard->turn;
-    vboard->revertHalfmove(saved_move, true);
+    board->turn = !board->turn;
+    board->revertHalfmove(saved_move, true);
     check = check_saved;
+    cout << check << endl;
 }
 
-const std::vector<halfmove>& VirtualValidator::theStory()
-{
-    return vboard->history;
-}
-void VirtualValidator::printHasMoved()
-{    
-    cout << '\n';
-    for (int i = 0; i < 3; i++) {
-        cout << has_moved[i] << ' ';
-    }
-    cout << '\n';
-    for (int i = 3; i < 6; i++) {
-        cout << has_moved[i] << ' ';
-    }
-    cout << '\n';
-}
-// end of virtual methods
+//void VirtualValidator::printHasMoved()
+//{    
+//    cout << '\n';
+//    for (int i = 0; i < 3; i++) {
+//        cout << has_moved[i] << ' ';
+//    }
+//    cout << '\n';
+//    for (int i = 3; i < 6; i++) {
+//        cout << has_moved[i] << ' ';
+//    }
+//    cout << '\n';
+//}
 
 void VirtualValidator::kingPotential(scoord coord, list<scoord>& coords)
 {
@@ -199,7 +196,7 @@ void VirtualValidator::findValid(scoord from)
 
 void VirtualValidator::findValid(scoord from, set<scoord>& container)
 {
-    // NOTE: for the use of this code, we consider that vboard goes [x][y]
+    // NOTE: for the use of this code, we consider that board goes [x][y]
     // instead of [i][j] that is equal to [y][x];
     // and we also consider that white pieces are on the 0 line and black on the 
     // 7 line
@@ -207,7 +204,7 @@ void VirtualValidator::findValid(scoord from, set<scoord>& container)
     auto from_tile = theTile(from);
     const bool turn = theTurn();
     const char piece = from_tile->piece_name;
-    const scoord king = turn ? theWKing() : theBKing();
+    const scoord king = turn ? wKing() : bKing();
     int X, Y;
     bool first_evaluation = true, may_exposure = false;
     scoord add;
@@ -431,13 +428,15 @@ bool VirtualValidator::empty()
 
 bool VirtualValidator::inCheck(bool color)
 {
-    auto king = color ? theWKing() : theBKing(); // FIX: how auto will behave here with white_king type Tile*
+    auto king = color ? wKing() : bKing(); // FIX: how auto will behave here with white_king type Tile*
+    cout << check << endl;
     return (check = underAttack(king));
 }
 
 bool VirtualValidator::inCheckmate(bool color)
 {
-    auto king = color ? theWKing() : theBKing();
+    auto king = color ? wKing() : bKing();
+    cout << check << endl;
     return (check = underAttack(king)) && inStalemate(color);
 }
 
@@ -503,9 +502,9 @@ bool VirtualValidator::canCastle(scoord from, scoord to, scoord& rook)
 
 bool VirtualValidator::canPass(scoord from, scoord to)
 {
-    if (theStory().empty())
+    if (story().empty())
         return false;
-    vove last_move = theStory().back().move;
+    vove last_move = story().back().move;
     VirtualTile opp_from_tile = last_move.first;
     VirtualTile opp_to_tile = last_move.second;
     scoord opp_from = opp_from_tile.coord;
@@ -525,19 +524,12 @@ bool VirtualValidator::canPromote(scoord pawn, scoord destination)
 
 void VirtualValidator::reactOnMove(scoord from, scoord to)
 {    
-    if (is_base_of_v<VirtualValidator, decltype(*this)>) {
-        cout << "VirtualValidator\n";
-    }
-    else {
-        cout << "Validator\n";
-    }
     for (int i = 0; i < 6; i++) {
         if (from == rooks_kings[i] || to == rooks_kings[i]) {
             last_state[i] = has_moved[i];
             has_moved[i] = true;
         }
     }
-    printHasMoved();
 }
 
 void VirtualValidator::bringBack(scoord from, scoord to)
@@ -547,21 +539,20 @@ void VirtualValidator::bringBack(scoord from, scoord to)
             has_moved[i] = last_state[i];
         }
     }
-    printHasMoved(); // FIX: don't forget to delete
 }
 
 //qint64 VirtualValidator::countMovesTest(int depth, int i)
 //{
-//    static bool initial_turn_copy = theTurn();
+//    static bool initial_turn_copy = board->turn();
 //    static VirtualTile tiles_copy[8][8];
 //    qint64 particular_move_count = 0;
 //    if (i == 0)
 //    {
-//        initial_turn_copy = theTurn();
+//        initial_turn_copy = board->turn();
 //        particular_move_count = 0;
 //        for (int x = 0; x < 8; x++)
 //            for (int y = 0; y < 8; y++)
-//                tiles_copy[x][y] = vboard[x][y]->toVirtu();
+//                tiles_copy[x][y] = board[x][y]->toVirtu();
 //    }
 //    if (i < depth)
 //    {
