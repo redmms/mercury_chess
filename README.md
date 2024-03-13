@@ -1,5 +1,5 @@
 This is a ready to be released in production app. 
-Actually, it consists of 3 different projects: gui chess, which uses archiver, which uses finestream.
+Actually, it consists of several different projects: server, gui chess, which uses archiver, which uses finestream.
 Archiver will be a closed project, I hope to make it commercial.
 Finestream is available here: https://github.com/redmms/finestream.git
 So, what is special about these chess? You've probably seen hundreds of different chess applications.

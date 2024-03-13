@@ -18,7 +18,7 @@ public:
     int writeGame(endnum end_type, const std::vector<bitmove>& history, QString filename);
     int writeMove(bitmove move, fsm::ofinestream& ofs);
     int readGame(endnum& end_type, std::vector<halfmove>& history, QString filename);
-    int readMove(bitmove& bmove, fsm::ifinestream& ifs, VirtualBoard& board);
+    int readMove(halfmove& hmove, fsm::ifinestream& ifs, VirtualBoard& board);
     static bitmove toBitmove(halfmove hmove, Validator* valid);
     static bitremedy toPieceIdx(scoord from, Validator* valid);
     static bitremedy toMoveIdx(scoord to, Validator* valid);

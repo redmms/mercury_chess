@@ -3,15 +3,15 @@
 #include <QApplication>
 #include "app/mainwindow.h"
 #include "app/debug_message_handler.hpp"
-#include <windows.h>  // Äëÿ AllocConsole()
-#include <cstdio>  
+//#include <windows.h>  // Äëÿ AllocConsole()
+//#include <cstdio>  
 int main(int argc, char *argv[])
 {
-    //LogHandler handler("log.txt");
-    //qInstallMessageHandler(&LogHandler::messageHandler);
-    AllocConsole();
-    freopen("CONOUT$", "w", stdout);
-    freopen("CONOUT$", "w", stderr);
+    LogHandler handler("log.txt");
+    qInstallMessageHandler(&LogHandler::messageHandler);
+    //AllocConsole();
+    //freopen("CONOUT$", "w", stdout);
+    //freopen("CONOUT$", "w", stderr);
 
     QApplication app(argc, argv);
     app.setOrganizationName("MMD18 soft");

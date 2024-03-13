@@ -96,13 +96,6 @@ void VirtualBoard::halfMove(scoord from, scoord to, char promo)
 
 void VirtualBoard::halfMove(scoord from, scoord to, char promo, halfmove& saved, bool virtually)
 {    
-    //cout << "NEW:\n";
-    //cout << "Board before:\n"; // FIX: don't forget to delete
-    //cout << toStr(false);
-    //cout << "\nVirtualBoard before:\n"; // FIX: don't forget to delete
-    //cout << toStr(true);
-    //cout << endl;
-
     saveMoveNormally(from, to, saved.move); // FIX: could cause problems in call of moveVirtually()
     scoord rook;
     if (valid->canCastle(from, to, rook)) {
@@ -122,6 +115,10 @@ void VirtualBoard::halfMove(scoord from, scoord to, char promo, halfmove& saved,
     }
     saved.turn = turn;
     turn = !turn;
+
+    cout << "Board\n\n"; // FIX: don't forget to delete
+    cout << toStr(false);
+    cout << "\n";
 }
 
 void VirtualBoard::restoreTile(const VirtualTile& saved, bool virtually)
