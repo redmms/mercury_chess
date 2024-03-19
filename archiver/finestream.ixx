@@ -400,7 +400,6 @@ constexpr int CHB1 = CHAR_BIT - 1,
             //TemplateGetByte<BRBYTE.BITSN>(BRBYTE);
             //return 0;
             uchar UCREAD_BYTE;
-            bool MOVED_LEFT = BRBYTE.MOVED_LEFT;
             if (LAST.BITSN) {
                 if (LAST.BITSN >= BRBYTE.BITSN) {
                 
@@ -440,8 +439,6 @@ constexpr int CHB1 = CHAR_BIT - 1,
                 //BRBYTE = { UCREAD_BYTE, LEFT_SIZE, true };
                 //LAST = { UCREAD_BYTE, RIGHT_SIZE, false };
             }
-            if (!MOVED_LEFT)
-                BRBYTE.MoveToRight();
             return 0;
         }
         template <typename T>

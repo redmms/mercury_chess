@@ -21,4 +21,6 @@ struct halfmove {
     bool castling = false;
     bool pass = false;
     bool turn = false;
+    bool check = false;
+    unsigned char moved = 0;
 };

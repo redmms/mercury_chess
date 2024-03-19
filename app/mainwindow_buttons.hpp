@@ -257,12 +257,12 @@ void MainWindow::my_offline_back_button_clicked()
 
 void MainWindow::my_history_next_button_clicked()
 {
-    board->doCurrentMove();
+    board->moveForward();
 }
 
 void MainWindow::my_history_previous_button_clicked()
 {
-    board->revertCurrentMove();
+    board->moveBack();
 }
 
 void MainWindow::on_actionAbout_triggered()
@@ -439,4 +439,18 @@ void MainWindow::on_actionLoad_game_triggered()
             "Something went wrong. Error code: " + QString::number(error),
             QMessageBox::Warning);
     }
+}
+
+#include <iostream>
+void MainWindow::on_test_button_clicked() {
+
+    // cout << endl << "Current position:" << board->toFen() << endl;
+    VirtualBoard vb = *board;
+    int i = 0, depth = 6 - board->story().size();
+    if (depth <= 0) {
+        cout << endl << "Depth is incorrect" << endl;
+        return;
+    }
+    auto moves_count = vb.valid->countMovesTest(depth, i);
+    cout << endl << "Counted moves: " << moves_count << endl;
 }

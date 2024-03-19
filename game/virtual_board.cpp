@@ -45,34 +45,34 @@ const std::vector<halfmove>& VirtualBoard::story()
     return history;
 }
 
-void VirtualBoard::saveMoveNormally(scoord from, scoord to, vove& move)
+void VirtualBoard::saveMoveSimply(scoord from, scoord to, vove& move)
 {
     move = {*theTile(from), *theTile(to)};
 }
 
-void VirtualBoard::moveNormally(scoord from, scoord to, bool virtually)
+void VirtualBoard::moveSimply(scoord from, scoord to, bool virtually)
 {    
     auto from_tile = theTile(from);
     auto to_tile = theTile(to);
     to_tile->setPiece(from_tile->piece_name, from_tile->piece_color, virtually);
     from_tile->setPiece('e', 0, virtually);
-    valid->reactOnMove(from, to);
+    valid->updateHasMoved(from, to);
 }
 
 void VirtualBoard::castleKing(scoord king, scoord destination, scoord rook, bool virtually)
 {
-    moveNormally(king, destination, virtually);
+    moveSimply(king, destination, virtually);
     int k = destination.x - king.x > 0 ? -1 : 1;
     int x = destination.x + k;
     int y = destination.y;
     scoord rook_destination{x, y};
-    moveNormally(rook, rook_destination, virtually);
+    moveSimply(rook, rook_destination, virtually);
 }
 
 void VirtualBoard::passPawn(scoord from, scoord to, bool virtually)
 {
     auto opp_to_tile = theTile({ to.x, from.y });
-    moveNormally(from, to, virtually);
+    moveSimply(from, to, virtually);
     opp_to_tile->setPiece('e', 0, virtually);
 }
 
@@ -86,7 +86,7 @@ void VirtualBoard::halfMove(scoord from, scoord to, char promo)
         passPawn(from, to);
     }
     else {
-        moveNormally(from, to);
+        moveSimply(from, to);
     }
     if (valid->canPromote(to, to)) {
         promotePawn(to, promo);
@@ -96,7 +96,7 @@ void VirtualBoard::halfMove(scoord from, scoord to, char promo)
 
 void VirtualBoard::halfMove(scoord from, scoord to, char promo, halfmove& saved, bool virtually)
 {    
-    saveMoveNormally(from, to, saved.move); // FIX: could cause problems in call of moveVirtually()
+    saveMoveSimply(from, to, saved.move);
     scoord rook;
     if (valid->canCastle(from, to, rook)) {
         castleKing(from, to, rook, virtually);
@@ -107,18 +107,29 @@ void VirtualBoard::halfMove(scoord from, scoord to, char promo, halfmove& saved,
         saved.pass = true;
     }
     else {
-        moveNormally(from, to, virtually);
+        moveSimply(from, to, virtually);
     }
     if (valid->canPromote(to, to)) {
-        promotePawn(to, promo, virtually); // FIX: could cause problems in call of moveVirtually()
+        promotePawn(to, promo, virtually);
         saved.promo = promo;
     }
     saved.turn = turn;
-    turn = !turn;
+    saved.moved = arrToChar(valid->has_moved);
+    saved.check = valid->check; 
+    history.push_back(saved);
+    
+    if (!virtually) {
+        turn = !turn;
+        if (valid->inCheck(turn))
+            if (valid->inStalemate(turn))  // check + stalemate == checkmate
+                end_type = turn == side ? opponent_wins : user_wins;
+            else if (valid->inStalemate(turn))
+                end_type = draw_by_stalemate;
+    }
 
-    cout << "Board\n\n"; // FIX: don't forget to delete
-    cout << toStr(false);
-    cout << "\n";
+    //cout << "\n";
+    //cout << toStr(false);
+    //cout << "\n";
 }
 
 void VirtualBoard::restoreTile(const VirtualTile& saved, bool virtually)
@@ -127,11 +138,10 @@ void VirtualBoard::restoreTile(const VirtualTile& saved, bool virtually)
     tile->setPiece(saved.piece_name, saved.piece_color, virtually);
 }
 
-void VirtualBoard::revertMoveNormally(vove move, bool virtually)
+void VirtualBoard::revertMoveSimply(vove move, bool virtually)
 {
     restoreTile(move.first, virtually);
     restoreTile(move.second, virtually);
-    valid->bringBack(move.first.coord, move.second.coord);
 }
 
 void VirtualBoard::revertCastling(vove move, bool virtually)
@@ -143,17 +153,16 @@ void VirtualBoard::revertCastling(vove move, bool virtually)
     int y = to.y;
     scoord rook{x, y};
     scoord rook_corner{x + k*3, y};
-    revertMoveNormally(move, virtually);
+    revertMoveSimply(move, virtually);
     auto corner_tile = theTile(rook_corner);
     auto rook_tile = theTile(rook);
     corner_tile->setPiece('R', rook_tile->piece_color, virtually);
     rook_tile->setPiece('e', 0, virtually);
-    valid->bringBack(rook_corner, rook);
 }
 
 void VirtualBoard::revertPass(vove move, bool virtually)
 {
-    revertMoveNormally(move, virtually);
+    revertMoveSimply(move, virtually);
     scoord from = move.first.coord;
     scoord to = move.second.coord;
     auto opp_to_tile = theTile({ to.x, from.y });
@@ -164,7 +173,7 @@ void VirtualBoard::revertPromotion(vove move, bool virtually)
 {
     //char piece_name = move.first.piece_name;
     //bool piece_color = move.first.piece_color;
-    revertMoveNormally(move, virtually);
+    revertMoveSimply(move, virtually);
     //theTile(move.first).setPiece(piece_name, piece_color);
 }
 
@@ -180,10 +189,14 @@ void VirtualBoard::revertHalfmove(halfmove hmove, bool virtually)
         revertPromotion(hmove.move, virtually);
     }
     else {
-        revertMoveNormally(hmove.move, virtually);
+        revertMoveSimply(hmove.move, virtually);
     }
-    turn = !turn;
-    end_type = endnum::interrupt;
+    valid->check = hmove.check
+    charToArr(hmove.moved, valid->hasMoved);
+    if (!virtually) {
+        turn = !turn;
+        end_type = endnum::interrupt;
+    }
 }
 
 void VirtualBoard::setTiles()
@@ -208,26 +221,24 @@ void VirtualBoard::setTiles()
 }
 
 // beggining of virtual methods
-void VirtualBoard::doCurrentMove()
+void VirtualBoard::moveForward()
 {
-    if (current_move < 0 || current_move >= history.size()) {
-        return;
+    if (0 <= current_move && current_move < history.size()) {
+        halfmove hmove = history[current_move];
+        scoord from = hmove.move.first.coord;
+        scoord to = hmove.move.second.coord;
+        char promo = hmove.promo;
+        halfMove(from, to, promo);
+        current_move++;    
     }
-    halfmove hmove = history[current_move];
-    scoord from = hmove.move.first.coord;
-    scoord to = hmove.move.second.coord;
-    char promo = hmove.promo;
-    halfMove(from, to, promo);
-    current_move++;
 }
 
-void VirtualBoard::revertCurrentMove()
-{
-    if (current_move < 0 || current_move >= history.size()) {
-        return;
+void VirtualBoard::moveBack()
+{   
+    if (0 < current_move && current_move < history.size()) {
+        current_move--;
+        revertHalfmove(history[current_move]);
     }
-    revertHalfmove(history[current_move]);
-    current_move--;
 }
 
 string VirtualBoard::toStr(bool stat)
@@ -256,6 +267,5 @@ void VirtualBoard::promotePawn(scoord from, char& into, bool virtually)
 {    
     auto pawn_tile = theTile(from);
     pawn_tile->setPiece(into, pawn_tile->piece_color, virtually);
-    valid->reactOnMove(from, from);
+    valid->updateHasMoved(from, from);
 }
-

@@ -198,7 +198,6 @@ void Board::savingHalfMove(scoord from, scoord to, char promo)
     saveBitmove(from, to, bmove); // order matters here
     VirtualBoard::halfMove(from, to, promo, hmove);
     bmove.promo = promo_by_char[hmove.promo]; // known after openPromotion() only
-    history.push_back(hmove);
     bistory.push_back(bmove);
     emitCurrentStatus(hmove);
 }
@@ -226,21 +225,18 @@ void Board::emitCurrentStatus(const halfmove& saved)
     if (saved.turn == side)
         emit moveMade(from, to, saved.promo);
 
-    if (valid->inCheck(turn))
-        if (valid->inStalemate(turn))  // check + stalemate == checkmate
-            emit theEnd(turn == side ? opponent_wins : user_wins);
-        else
-            emit newStatus(turn == side ? check_to_user : check_to_opponent);
-    else if (valid->inStalemate(turn))
-        emit theEnd(draw_by_stalemate);
+    if (end_type != interrupt)
+        emit theEnd(end_type);
+    else if (valid->check)
+        emit newStatus(turn == side ? check_to_user : check_to_opponent);
     else if (saved.castling)
         emit newStatus(castling);
     else if (saved.promo != 'e')
         emit newStatus(promotion);
-    else if (from_tile.piece_name != 'e' &&
+    else if (saved.pass || 
+            from_tile.piece_name != 'e' &&
             to_tile.piece_name != 'e' &&
-            from_tile.piece_color != to_tile.piece_color ||
-            saved.pass)
+            from_tile.piece_color != to_tile.piece_color)
         emit newStatus(saved.turn == side ? opponent_piece_eaten : user_piece_eaten);
     else
         emit newStatus(just_new_turn);

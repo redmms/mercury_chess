@@ -16,7 +16,6 @@ protected:
     std::set<scoord> movable_pieces;
     std::set<scoord> valid_moves;
     bool check;
-    bool last_state[6];
     bool has_moved[6];
     scoord rooks_kings[6];
     scoord castling_destination[6];
@@ -36,8 +35,8 @@ protected:
     //bool fastValid(scoord from);
     void findValid(scoord from);
     void findValid(scoord from, std::set<scoord>& container);
-    void moveVirtually(scoord from, scoord to, char promo, halfmove& saved_move, bool& check_saved);
-    void revertVirtualMove(halfmove saved_move, bool check_saved);
+    void moveVirtually(scoord from, scoord to, char promo, halfmove& saved_move);
+    void revertVirtualMove(halfmove saved_move);
 
 public:
     VirtualValidator(VirtualBoard* mother_board = 0);
@@ -62,8 +61,8 @@ public:
     bool canCastle(scoord from, scoord to, scoord& rook);
     bool canPass(scoord from, scoord to);
     bool canPromote(scoord pawn, scoord destination);
-    void reactOnMove(scoord from, scoord to);
-    void bringBack(scoord from, scoord to);
-    //qint64 countMovesTest(int depth = 5, int i = 0);
+    void updateHasMoved(scoord from, scoord to);
+    qint64 countMovesTest(int depth = 5, int i = 0);
+    qint64 countMoves(int depth = 5, int i = 0);
     //void printHasMoved();
 };

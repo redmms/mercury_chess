@@ -55,7 +55,8 @@ public:
     void openStopGameBox();
     void openInDevBox();
     void writeStory(int order, halfmove hmove);
-    QString coordToString(scoord coord);
+    static QString halfmoveToString(halfmove hmove);
+    static QString coordToString(scoord coord);
     int changeLocalName(QString name);
     //int changeOnlineName(QString name);
 
@@ -114,6 +115,8 @@ private slots:
     void my_offline_back_button_clicked();
     void my_history_next_button_clicked();
     void my_history_previous_button_clicked();
+
+    void on_test_button_clicked();
 
 protected slots:
     void endSlot(endnum end_type);

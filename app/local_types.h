@@ -170,3 +170,21 @@ inline void setBMap(QString par, const QBitmap& bmap) {
 inline QBitmap getBMap(QString par) {
     return qvariant_cast<QBitmap>(settings[par]);
 }
+
+inline unsigned char arrToChar(const bool(&arr)[6])
+{
+    unsigned char c = 0;
+    for (int i = 5; i >= 0; i--) {
+        c <<= 1;
+        c |= arr[i];
+    }
+    return c;
+}
+
+inline void charToArr(unsigned char c, bool(&arr)[6])
+{
+    for (int i = 0; i < 6; i++) {
+        arr[i] = c & true;
+        c >>= 1;
+    }
+}

@@ -263,25 +263,7 @@ int MainWindow::changeLocalName(QString name)
 
 void MainWindow::writeStory(int order, halfmove hmove)
 {
-    VirtualTile vf = hmove.move.first;
-    VirtualTile vt = hmove.move.second;
-    scoord f = vf.coord;
-    scoord t = vt.coord;
-    char piece = vf.piece_name;
-    char promo = hmove.promo;
-
-    QString out;
-    if (hmove.castling){
-        out = "O-O";
-    }
-    else{
-        if (piece != 'P')
-            out += piece;
-        out += coordToString(f) + coordToString(t);
-        if (promo != 'e')
-            out += "=" + QString(promo);
-    }
-
+    QString out = MainWindow::halfmoveToString(hmove);
     if (order % 2)
         history_label->setText(history_label->text() + QString::number((order-1) / 2 + 1) + ". " + out + " ");
     else
@@ -292,6 +274,29 @@ void MainWindow::writeStory(int order, halfmove hmove)
         auto scroller = history_area->horizontalScrollBar();
         scroller->setValue(scroller->maximum());
 //        });
+}
+
+QString MainWindow::halfmoveToString(halfmove hmove)
+{
+    VirtualTile vf = hmove.move.first;
+    VirtualTile vt = hmove.move.second;
+    scoord f = vf.coord;
+    scoord t = vt.coord;
+    char piece = vf.piece_name;
+    char promo = hmove.promo;
+
+    QString out;
+    if (hmove.castling) {
+        out = "O-O";
+    }
+    else {
+        if (piece != 'P')
+            out += piece;
+        out += coordToString(f) + coordToString(t);
+        if (promo != 'e')
+            out += "=" + QString(promo);
+    }
+    return out;
 }
 
 void MainWindow::startGame(QString game_regime) // side true for user - white
@@ -332,12 +337,12 @@ void MainWindow::startGame(QString game_regime) // side true for user - white
         connect(ui->draw_button, &QPushButton::clicked, this, &MainWindow::my_offline_stop_button_clicked);
     }
     else if (game_regime == "history") {
-        setPic("opp_pic", getPic("default_pic"));
+        setPic("opp_pic", getPic("def_pic"));
         ui->message_edit->setPlainText("Chat is off. But you can chat with yourself if you are a hikikomori."); 
         ui->user_timer->setText("");
         ui->opponent_timer->setText("");
-        ui->resign_button->setText("Next move");
-        ui->draw_button->setText("Previous move");
+        ui->resign_button->setText("Forward");
+        ui->draw_button->setText("Back");
         ui->resign_button->disconnect();
         ui->draw_button->disconnect();
         connect(ui->resign_button, &QPushButton::clicked, this, &MainWindow::my_history_next_button_clicked);
@@ -487,6 +492,8 @@ void MainWindow::statusSlot(tatus status)
 //    int i = 3;
 ////    for (int i = 1; i <= 5; i++)
 //        qDebug() << "Counted moves:" << board->valid->countMovesTest(i);
+    QString user = "Your turn";
+    QString opp = settings["opp_name"].toString() + "'s turn";
     switch (status) {
     case tatus::check_to_user:
         sounds["check to user"]->play();
@@ -498,15 +505,15 @@ void MainWindow::statusSlot(tatus status)
         break;
     case tatus::user_piece_eaten:
         sounds["user's piece eaten"]->play();
-        showStatus(board->turn ? "White's turn" : "Black's turn");
+        showStatus(board->turn ? user : opp);
         break;
     case tatus::opponent_piece_eaten:
         sounds["opponent's piece eaten"]->play();
-        showStatus(board->turn ? "White's turn" : "Black's turn");
+        showStatus(board->turn ? user : opp);
         break;
     case tatus::just_new_turn:
         sounds["move"]->play();
-        showStatus(board->turn ? "White's turn" : "Black's turn");
+        showStatus(board->turn ? user : opp);
         break;
     case tatus::invalid_move:
         sounds["invalid move"]->play();
@@ -514,11 +521,11 @@ void MainWindow::statusSlot(tatus status)
         return; // will not switch glow effect
     case tatus::castling:
         sounds["castling"]->play();
-        showStatus(board->turn ? "White's turn" : "Black's turn");
+        showStatus(board->turn ? user : opp);
         break;
     case tatus::promotion:
         sounds["promotion"]->play();
-        showStatus(board->turn ? "White's turn" : "Black's turn");
+        showStatus(board->turn ? user : opp);
         break;
     }
     switchGlow();

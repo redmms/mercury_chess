@@ -5,6 +5,7 @@
 #include "../game/validator.h"
 #include "../game/virtual_tile.h"
 #include "../game/board.h"
+#include "../app/mainwindow.h" // FIX:
 #include <QDebug>
 #include <sstream>
 #include <iostream>
@@ -101,7 +102,7 @@ int Archiver::readGame(endnum& end_type, std::vector<halfmove>& history, QString
     
     sout << " side: " << user_side
          << " moves: " << bitset<8>(moves_num)
-         << " end: " << end.toStr();
+         << " end: " << end.toStr() << endl;
 
     VirtualBoard board;
     VirtualValidator* valid = board.valid;
@@ -118,6 +119,7 @@ int Archiver::readGame(endnum& end_type, std::vector<halfmove>& history, QString
         }
         history.push_back(hmove);
         valid->valid_moves.clear();
+        cout << "\n" <<  order << ". " << MainWindow::halfmoveToString(hmove).toStdString() << " \n";
     }
     cout << sout.str();
     return 0;

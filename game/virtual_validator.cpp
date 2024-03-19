@@ -2,6 +2,7 @@
 #include "virtual_validator.h"
 #include "virtual_board.h"
 #include "virtual_tile.h"
+#include "../app/mainwindow.h"
 #include <iostream>
 using namespace std;
 using lambda = function<bool(scoord)>;
@@ -101,19 +102,14 @@ const std::vector<halfmove>& VirtualValidator::story()
     return board->story();
 }
 
-void VirtualValidator::moveVirtually(scoord from, scoord to, char promo, halfmove& saved_move, bool& check_saved)
+void VirtualValidator::moveVirtually(scoord from, scoord to, char promo, halfmove& saved_move)
 {
-    check_saved = check;
     board->halfMove(from, to, promo, saved_move, true);
-    board->turn = !board->turn;
 }
 
-void VirtualValidator::revertVirtualMove(halfmove saved_move, bool check_saved)
+void VirtualValidator::revertVirtualMove(halfmove saved_move)
 {
-    board->turn = !board->turn;
     board->revertHalfmove(saved_move, true);
-    check = check_saved;
-    cout << check << endl;
 }
 
 //void VirtualValidator::printHasMoved()
@@ -191,6 +187,7 @@ bool VirtualValidator::underAttack(scoord coord)
 
 void VirtualValidator::findValid(scoord from)
 {
+    valid_moves.clear();
     findValid(from, valid_moves);
 }
 
@@ -300,11 +297,10 @@ void VirtualValidator::findValid(scoord from, set<scoord>& container)
         // but it will cause an exact copy of this function in eposureKing()
         if (check || canPass(from, coord)) {
             halfmove virtual_move;
-            bool check_saved;
-            moveVirtually(from, coord, 'e', virtual_move, check_saved);
-            bool check_remains =
+            moveVirtually(from, coord, 'e', virtual_move);
+            bool check_remains = 
                 pieceName(coord) == 'K' ? underAttack(coord) : underAttack(king);
-            revertVirtualMove(virtual_move, check_saved);
+            revertVirtualMove(virtual_move);
             return check_remains;
         }
         return false;
@@ -365,7 +361,6 @@ void VirtualValidator::findValid(scoord from, set<scoord>& container)
         int k = turn ? 1 : -1;
         move = { x, y + 1 * k };
         if (pawnCanMove(move)) {
-            if (!letKingDie(move))
                 addValid(move, container);
             move = { x, y + 2 * k };
             if ((turn ? from.y == 1 : from.y == 6) &&
@@ -429,7 +424,7 @@ bool VirtualValidator::empty()
 bool VirtualValidator::inCheck(bool color)
 {
     auto king = color ? wKing() : bKing(); // FIX: how auto will behave here with white_king type Tile*
-    cout << check << endl;
+    //cout << check << endl;
     return (check = underAttack(king));
 }
 
@@ -449,7 +444,7 @@ bool VirtualValidator::inStalemate(bool color)
         for (int y = 0; y < 8; y++) {
             scoord coord{ x, y };
             if (occupied(coord) && !differentColor(coord)) {
-                findValid(coord, temp_valid_moves);
+                findValid(coord, temp_valid_moves); // should fastFindValid without temp_moves parameter
                 if (!temp_valid_moves.empty()) {
                     temp_valid_moves.clear();
                     movable_pieces.insert(coord);
@@ -468,7 +463,7 @@ bool VirtualValidator::fastInStalemate(bool color)
             scoord coord{ x, y };
             if (occupied(coord) && !differentColor(coord)) {
                 set<scoord> temp_valid_moves;
-                findValid(coord, temp_valid_moves);
+                findValid(coord, temp_valid_moves); // should fastFindValid without temp_moves parameter
                 if (!temp_valid_moves.empty()) {
                     return false;
                 }
@@ -510,11 +505,16 @@ bool VirtualValidator::canPass(scoord from, scoord to)
     scoord opp_from = opp_from_tile.coord;
     scoord opp_to = opp_to_tile.coord;
     auto from_tile = theTile(from);
-    return (opp_from_tile.piece_name == 'P' &&
+    return opp_from_tile.piece_name == 'P' &&
         opp_from_tile.piece_color != from_tile->piece_color &&
         abs(opp_to.y - opp_from.y) == 2 &&
-        opp_from.x == to.x &&
-        from.y == opp_to.y);
+        // it was pawn of opp color moved by 2 tiles
+        from_tile->piece_name == 'P' &&
+        // we are moving a pawn
+        to.x == opp_from.x && // on the same column
+        to.y == (opp_from.y + opp_to.y) / 2 && // on the raw between 2 enemy positions
+        abs(from.x - opp_to.x) == 1 && // eating from the adjust column
+        from.y == opp_to.y; // eating from the same raw
 }
 
 bool VirtualValidator::canPromote(scoord pawn, scoord destination)
@@ -522,33 +522,23 @@ bool VirtualValidator::canPromote(scoord pawn, scoord destination)
     return theTile(pawn)->piece_name == 'P' && destination.y == (theTurn() ? 7 : 0);
 }
 
-void VirtualValidator::reactOnMove(scoord from, scoord to)
+void VirtualValidator::updateHasMoved(scoord from, scoord to)
 {    
     for (int i = 0; i < 6; i++) {
         if (from == rooks_kings[i] || to == rooks_kings[i]) {
-            last_state[i] = has_moved[i];
             has_moved[i] = true;
-        }
-    }
-}
-
-void VirtualValidator::bringBack(scoord from, scoord to)
-{
-    for (int i = 0; i < 6; i++) {
-        if (from == rooks_kings[i] || to == rooks_kings[i]) {
-            has_moved[i] = last_state[i];
         }
     }
 }
 
 //qint64 VirtualValidator::countMovesTest(int depth, int i)
 //{
-//    static bool initial_turn_copy = board->turn();
+//    static bool initial_turn_copy = board->theTurn();
 //    static VirtualTile tiles_copy[8][8];
 //    qint64 particular_move_count = 0;
 //    if (i == 0)
 //    {
-//        initial_turn_copy = board->turn();
+//        initial_turn_copy = board->theTurn();
 //        particular_move_count = 0;
 //        for (int x = 0; x < 8; x++)
 //            for (int y = 0; y < 8; y++)
@@ -577,7 +567,7 @@ void VirtualValidator::bringBack(scoord from, scoord to)
 //                            board.moveVirtually(tile, move, last_move);
 //                            board.turn = !board.turn;
 //                            inCheck(board.turn);
-//                            reactOnMove(tile.coord, move.coord);
+//                            updateHasMoved(tile.coord, move.coord);
 //                            auto mc = countMovesTest(depth, i + 1);
 //                            if (i == 0)
 //                            {
@@ -614,3 +604,68 @@ void VirtualValidator::bringBack(scoord from, scoord to)
 //    }
 //    return particular_move_count;
 //}
+
+qint64 VirtualValidator::countMoves(int depth, int i)
+{
+    qint64 particular_move_count = 0;
+    for (int x = 0; x < 8; x++) {
+        for (int y = 0; y < 8; y++) {
+            scoord from = { x, y };
+            if (occupied(from) && !differentColor(from)) {
+                set<scoord> saved_moves;
+                findValid(from, saved_moves);
+                if (i == depth - 1) {
+                    particular_move_count += saved_moves.size();
+                    saved_moves.clear();
+                }
+                else {
+                    for (auto to : saved_moves) {
+                        halfmove last_move;
+                        board->halfMove(from, to, 'e', last_move);
+                        auto mc = countMovesTest(depth, i + 1);
+                        particular_move_count += mc;
+                        board->revertHalfmove(last_move);
+                        if (i == 0) {
+                            cout/* << "Move: "*/
+                                << MainWindow::halfmoveToString(last_move).toStdString()
+                                /*<< ", variants: "*/
+                                << ": "
+                                << mc
+                                << endl;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return particular_move_count;
+}
+
+qint64 VirtualValidator::countMovesTest(int depth, int i)
+{
+    VirtualBoard board_copy = *board;
+    qint64 total_moves_n = countMoves(depth, i);
+    for (int x = 0; x < 8; x++)
+        for (int y = 0; y < 8; y++)
+            if (board_copy[x][y] != (*board)[x][y])
+                cout << "Board is not the same after tests." << endl
+                    << "Board before:" << endl
+                    << board_copy.toStr() << endl
+                    << "Board after:" << endl
+                    << board->toStr() << endl << endl;
+    return total_moves_n;
+}
+
+//<< "From"
+//<< char('a' + x) + QString::number(y + 1)
+//<< "to"
+//<< char('a' + move.coord.x) + QString::number(move.coord.y + 1)
+//<< "-"
+//<< mc;
+
+//qDebug() << char('a' + x) +
+//QString::number(y + 1) +
+//char('a' + move.coord.x) +
+//QString::number(move.coord.y + 1)
+//<< "-"
+//<< mc;
