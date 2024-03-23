@@ -6,7 +6,8 @@
 class VirtualTile;
 class Tile;
 class MainWindow;
-class Board : public QLabel, public VirtualBoard {
+class Board : public QLabel, public VirtualBoard 
+{
     Q_OBJECT
 
 public:

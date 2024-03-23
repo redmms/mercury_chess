@@ -40,7 +40,7 @@ Board::Board(MainWindow* parent_, QLabel* background_) :
     drawLetters();
     drawNumbers();
     initTiles();
-    setTiles();
+    setTiles("rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8");
 
     VirtualBoard::valid = Board::valid;
     for (int x = 0; x < 8; x++) {
@@ -96,22 +96,20 @@ void Board::drawNumbers() {
 void Board::reactOnClick(Tile* tile) {
     scoord coord = tile->coord;
     QString game_regime = settings["game_regime"].toString();
-    if (game_regime == "history") {
+    if (game_regime == "history" || game_regime == "friend_online" && turn != side) {
         return;
     }
     else if (from_coord == scoord{-1, -1} &&
             turn == tile->piece_color &&
-            (side == tile->piece_color ||
-            game_regime != "friend_online") &&
             tile->piece_name != 'e') {
             // if it's first click then pick the piece and
             // show valid moves
                 from_coord = coord;
                 valid->showValid(coord);
     }
-    else if (coord != from_coord 
-            && turn == tile->piece_color 
-            && tile->piece_name != 'e') {
+    else if (coord != from_coord && 
+            turn == tile->piece_color && 
+            tile->piece_name != 'e') {
             // if the second click
             // is on the piece of same color then pick it instead
                 valid->hideValid();
@@ -206,11 +204,11 @@ void Board::saveBitmove(scoord from, scoord to, bitmove& bmove)
 {
     QString game_regime = settings["game_regime"].toString();
     if (game_regime == "friend_online" && turn != side) {
-        valid->findValid(from);
+        valid->findValid(from); // updates valid_moves for move index
     }
     bmove.move = Archiver::toMoveIdx(to, valid);
     if (history.empty()) { // first move
-        valid->inStalemate(true);
+        valid->inStalemate(true); // updates movable_pieces for piece index
     }
     bmove.piece = Archiver::toPieceIdx(from, valid);
 }

@@ -2,6 +2,7 @@
 #include "virtual_board.h"
 #include "virtual_tile.h"
 #include <QDebug>
+#include <QStringList>
 #include <cctype>
 #include <iostream>
 using namespace std;
@@ -79,7 +80,7 @@ void VirtualBoard::passPawn(scoord from, scoord to, bool virtually)
 void VirtualBoard::halfMove(scoord from, scoord to, char promo)
 {
     scoord rook;
-    if (valid->canCastle(from, to, rook)) {
+    if (valid->canCastle(from, to, &rook)) {
         castleKing(from, to, rook);
     }
     else if (valid->canPass(from, to)) {
@@ -98,7 +99,7 @@ void VirtualBoard::halfMove(scoord from, scoord to, char promo, halfmove& saved,
 {    
     saveMoveSimply(from, to, saved.move);
     scoord rook;
-    if (valid->canCastle(from, to, rook)) {
+    if (valid->canCastle(from, to, &rook)) {
         castleKing(from, to, rook, virtually);
         saved.castling = true;
     }
@@ -118,14 +119,21 @@ void VirtualBoard::halfMove(scoord from, scoord to, char promo, halfmove& saved,
     saved.check = valid->check; 
     history.push_back(saved);
     
-    if (!virtually) {
+    if (!virtually) { // use this version for faster testing
         turn = !turn;
-        if (valid->inCheck(turn))
-            if (valid->inStalemate(turn))  // check + stalemate == checkmate
-                end_type = turn == side ? opponent_wins : user_wins;
-            else if (valid->inStalemate(turn))
-                end_type = draw_by_stalemate;
+        valid->inCheck(turn);
     }
+
+    ////if (!virtually) {
+    //    turn = !turn;
+    //    //if (valid->inCheck(turn)) {
+    //    //    if (valid->inStalemate(turn))  // check + stalemate == checkmate
+    //    //        end_type = turn == side ? opponent_wins : user_wins;
+    //    //}
+    //    //else if (valid->inStalemate(turn)) {
+    //    //    end_type = draw_by_stalemate;
+    //    //}
+    ////}
 
     //cout << "\n";
     //cout << toStr(false);
@@ -191,8 +199,9 @@ void VirtualBoard::revertHalfmove(halfmove hmove, bool virtually)
     else {
         revertMoveSimply(hmove.move, virtually);
     }
-    valid->check = hmove.check
-    charToArr(hmove.moved, valid->hasMoved);
+    valid->check = hmove.check;
+    charToArr(hmove.moved, valid->has_moved);
+    history.pop_back();
     if (!virtually) {
         turn = !turn;
         end_type = endnum::interrupt;
@@ -217,6 +226,73 @@ void VirtualBoard::setTiles()
     // white pieces
     for (int x = 0; x < 8; x++) {
         theTile({x, 0})->setPiece(pieces[x], 1);
+    }
+}
+
+void VirtualBoard::setTiles(QString fen)
+{
+    QStringList parts = fen.split(' ', Qt::SkipEmptyParts);
+    QString tiles_fen = parts[0];
+    QStringList raws = tiles_fen.split('/');
+    scoord coord = { 0, 7 };
+    for (int i = 0; i < raws.size(); i++) {
+        for (int j = 0; j < raws[i].size(); j++) {
+            QChar qc = raws[i][j];
+            bool is_digit = qc.isDigit();
+            if (is_digit) {
+                int n = QString(qc).toInt();
+                for (int r = coord.x + n; coord.x < r; coord.x++) {
+                    theTile(coord)->setPiece('e', 0);
+                }
+                coord.x--;
+            }
+            else {
+                bool color = qc.isUpper();
+                char piece = qc.toUpper().toLatin1();
+                theTile(coord)->setPiece(piece, color);
+            }
+            coord.x++;
+        }
+        coord.y--;
+        coord.x = 0;
+    }
+    QString turn_fen = parts[1];
+    turn = turn_fen == "w";
+    QString castling_fen = parts[2];
+    for (int i = 0; i < 6; i++)
+        valid->has_moved[i] = true;
+    if (castling_fen.contains('Q')) {
+        valid->has_moved[0] = false;
+        valid->has_moved[1] = false;
+    }
+    if (castling_fen.contains('K')) {
+        valid->has_moved[2] = false;
+        valid->has_moved[1] = false;
+    }
+    if (castling_fen.contains('q')) {
+        valid->has_moved[3] = false;
+        valid->has_moved[4] = false;
+    }
+    if (castling_fen.contains('k')) {
+        valid->has_moved[5] = false;
+        valid->has_moved[4] = false;
+    }
+    QString fullmove_count = parts.last();
+    int halfmove_count = fullmove_count.toInt() * 2;
+    halfmove hmove;
+    history = vector<halfmove>(halfmove_count, hmove);
+    history.back().moved = arrToChar(valid->has_moved);
+    QString pass_fen = parts[3];
+    if (pass_fen == "-") {
+        history.back().pass = false;
+    }
+    else {
+        scoord pass_coord = stringToCoord(pass_fen);
+        int k = turn ? 1 : -1;
+        scoord from = { pass_coord.x, pass_coord.y + k };
+        scoord to = { pass_coord.x, pass_coord.y - k };
+        history.back().move = { {from, 'P', !turn}, {to, 'e', 0} };
+        history.back().turn = !turn;
     }
 }
 

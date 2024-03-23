@@ -1,11 +1,8 @@
 #pragma once
 #include "archiver.h"
-#include "../game/virtual_board.h"
-#include "../game/virtual_validator.h"
 #include "../game/validator.h"
 #include "../game/virtual_tile.h"
 #include "../game/board.h"
-#include "../app/mainwindow.h" // FIX:
 #include <QDebug>
 #include <sstream>
 #include <iostream>
@@ -119,7 +116,7 @@ int Archiver::readGame(endnum& end_type, std::vector<halfmove>& history, QString
         }
         history.push_back(hmove);
         valid->valid_moves.clear();
-        cout << "\n" <<  order << ". " << MainWindow::halfmoveToString(hmove).toStdString() << " \n";
+        cout << "\n" <<  order << ". " << halfmoveToString(hmove).toStdString() << " \n";
     }
     cout << sout.str();
     return 0;
@@ -184,8 +181,7 @@ halfmove Archiver::toHalfmove(bitmove bmove, VirtualValidator* valid) {
     halfmove hmove;
     hmove.move = { *valid->theTile(from), *valid->theTile(to) };
     hmove.promo = char_by_promo[bmove.promo];
-    scoord rook_stub;
-    hmove.castling = valid->canCastle(from, to, rook_stub);
+    hmove.castling = valid->canCastle(from, to);
     hmove.pass = valid->canPass(from, to);
     hmove.turn = valid->theTurn();
     return hmove;

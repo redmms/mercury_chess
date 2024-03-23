@@ -47,7 +47,9 @@ void OfflineDialog::on_choose_photo_button_clicked()
         QString("Choose a photo for opponent's avatar. Avatar picture will be scaled to 100x100 pixel image."),
         tr("Images (*.png *.jpg *.jpeg *.pgm)"));
     if (!avatar_address.isEmpty()){
-        ui->friend_avatar->setPixmap(QPixmap(avatar_address).scaled(100, 100));
+        int width = settings["pic_w"].toInt();
+        int height = settings["pic_h"].toInt();
+        ui->friend_avatar->setPixmap(QPixmap(avatar_address).scaled(width, height));
     }
 }
 

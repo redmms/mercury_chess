@@ -40,3 +40,24 @@ void Validator::hideValid()
     }
     valid_moves.clear();
 }
+
+bool Validator::inStalemate(bool color)
+{
+    movable_pieces.clear();
+    set<scoord> temp_valid_moves;
+    bool stalemate = true;
+    for (int x = 0; x < 8; x++) {
+        for (int y = 0; y < 8; y++) {
+            scoord coord{ x, y };
+            if (occupied(coord) && !differentColor(coord)) {
+                findValid(coord, temp_valid_moves); // should fastFindValid without temp_moves parameter
+                if (!temp_valid_moves.empty()) {
+                    temp_valid_moves.clear();
+                    movable_pieces.insert(coord);
+                    stalemate = false;
+                }
+            }
+        }
+    }
+    return stalemate;
+}

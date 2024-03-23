@@ -13,4 +13,5 @@ public:
     Tile* theTile(scoord) override;
     void showValid(scoord from);
     void hideValid();
+    bool inStalemate(bool color) override;
 };

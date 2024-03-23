@@ -1,6 +1,5 @@
 #pragma once
 #include "../app/local_types.h"
-#include <QPointer>
 
 class MainWindow;
 class QTcpSocket;
@@ -8,8 +7,8 @@ class WebClient : public QObject
 {
     Q_OBJECT
 
-    QPointer<MainWindow> mainwindow;
-    QPointer<QTcpSocket> socket;
+    MainWindow* mainwindow;
+    QTcpSocket* socket;
     QByteArray read_package;
     QByteArray send_package;
     QDataStream read_stream;

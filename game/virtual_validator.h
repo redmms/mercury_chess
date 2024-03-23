@@ -25,12 +25,18 @@ protected:
     std::list<scoord> diag_dir;
 
     std::function<void(scoord, std::set<scoord>&)> addValid;
+    std::function<bool(scoord, scoord, lambda, lambda)> runThrough;
+    std::function<bool(scoord, lambda, lambda, const std::list<scoord>&)> runLines;
     std::function<void(scoord, scoord, checker, bool&)> fastThrough;
-    std::function<bool(scoord, checker, const std::list<scoord>&)> fastLine;
+    std::function<bool(scoord, checker, const std::list<scoord>&)> fastLines;
     std::function<bool(scoord, lambda, lambda, bool&)> enemyFinder;
+    std::function <bool(scoord, lambda, lambda, std::set<scoord>&)> moveFinder;
 
     void kingPotential(scoord coord, std::list<scoord>& coords);
+    void castlingPotential(std::list<scoord>& coords);
     void knightPotential(scoord coord, std::list<scoord>& coords);
+    void pawnEatPotential(scoord coord, std::list<scoord>& coords);
+    void pawnMovePotential(scoord coord, std::list<scoord>& coords);
     bool underAttack(scoord coord);
     //bool fastValid(scoord from);
     void findValid(scoord from);
@@ -45,6 +51,9 @@ public:
     std::function<bool(scoord)> occupied;
     std::function<bool(scoord)> differentColor;
     std::function<char(scoord)> pieceName;
+    std::function<bool(scoord)> freeToEat;
+    std::function<bool(scoord)> freeToPlace;
+    std::function<bool(scoord)> pieceColor;
 
     virtual VirtualTile* theTile(scoord coord);
     bool theTurn();
@@ -56,9 +65,8 @@ public:
     bool empty();
     bool inCheck(bool color);
     bool inCheckmate(bool color);
-    bool inStalemate(bool color);
-    bool fastInStalemate(bool color);
-    bool canCastle(scoord from, scoord to, scoord& rook);
+    virtual bool inStalemate(bool color);
+    bool canCastle(scoord from, scoord to, scoord* rook = nullptr);
     bool canPass(scoord from, scoord to);
     bool canPromote(scoord pawn, scoord destination);
     void updateHasMoved(scoord from, scoord to);

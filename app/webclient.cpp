@@ -2,6 +2,7 @@
 #include "webclient.h"
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
+#include "chat.h"
 #include "../game/board.h"
 #include <QTcpSocket>
 #include <QBuffer>
@@ -34,7 +35,6 @@ WebClient::~WebClient() {
 void WebClient::initSocket()
 {
     socket = (new QTcpSocket(this)); //FIX: how to destruct previous socket?
-    // FIX: will note QPointer deleter mess with socket->deleteLater()?
     connect(socket, &QTcpSocket::errorOccurred, [&](QAbstractSocket::SocketError socketError){
         if (socket->state() == QAbstractSocket::UnconnectedState){
             qDebug() << "Couldn't connect to the server:";
@@ -288,7 +288,9 @@ void WebClient::readFromServer()
         msg_box.addButton("Reject invite", QMessageBox::RejectRole);
         connect(&msg_box, &QMessageBox::accepted, [&](){
             settings["opp_name"].setValue(opp_name);
-            if (!picture.isNull() && picture.size() == QSize{100, 100})
+            int width = settings["pic_w"].toInt();
+            int height = settings["pic_h"].toInt();
+            if (!picture.isNull() && picture.size() == QSize{width, height})
                 setPic("opp_pic", picture);
             else
                 setPic("opp_pic", getPic("def_pic"));
@@ -314,7 +316,9 @@ void WebClient::readFromServer()
         if (respond){
             QPixmap picture;
             readPack(picture);
-            if (!picture.isNull() && picture.size() == QSize{100, 100})
+            int width = settings["pic_w"].toInt();
+            int height = settings["pic_h"].toInt();
+            if (!picture.isNull() && picture.size() == QSize{width, height})
                 setPic("opp_pic", picture);
             else
                 setPic("opp_pic", getPic("def_pic"));
@@ -347,7 +351,7 @@ void WebClient::readFromServer()
         QString message;
         readPack(message);
         QString name = settings["opp_name"].toString();
-        mainwindow->printMessage(name, false, message);
+        mainwindow->chat->printMessage(name, false, message);
         break;
     }
     case packnum::draw_suggestion: //show message box with opponent's name and draw suggestion

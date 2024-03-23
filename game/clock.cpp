@@ -1,5 +1,6 @@
 #pragma once
 #include "clock.h"
+#include <QLabel>
 #include <QTimer>
 #include <QDebug>
 using namespace std;

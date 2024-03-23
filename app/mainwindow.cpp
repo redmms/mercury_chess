@@ -4,8 +4,8 @@
 #include "webclient.h"
 #include "offline_dialog.h"
 #include "rules_dialog.h"
-#include "rounded_scrollarea.hpp"
-#include "rounded_scrollarea_horizontal.hpp"
+#include "history_area.h"
+#include "chat.h"
 #include "../game/board.h"
 #include "../game/tile.h"
 #include "../game/clock.h"
@@ -19,6 +19,7 @@
 #include <QTimer>
 #include <QDebug>
 #include <QString>
+#include <QPainter>
 using namespace std;
 
 MainWindow::MainWindow(QString app_dir_) :
@@ -30,20 +31,14 @@ MainWindow::MainWindow(QString app_dir_) :
     sounds{},
     avatar_effect(new QGraphicsDropShadowEffect(this)),
     last_tab{},
-    message_layout(new QVBoxLayout()),
-    message_box(new QWidget(this)),
-    message_font{ "Segoe Print", 12 },
-    message_metrics{ message_font },
-    max_message_width{},
-    rounded_area(new RoundedScrollArea(this, QColor(0, 102, 51))),
     game_active(false),
     login_regime(0),
-    ui(new Ui::MainWindow),
-    history_area(new HorizontalScrollArea(this, QColor(111, 196, 81))),
-    history_label(new QLabel(this))
+    ui(new Ui::MainWindow)
 {
     // .ui file finish strokes
     ui->setupUi(this);
+    history_area = (new HistoryArea(this, ui->match_history, QColor(111, 196, 81)));
+    chat = (new Chat(this, ui->chat_area, QColor(0, 102, 51)));
     last_tab = ui->pre_tab;
     ui->mainToolBar->hide();
     ui->tabWidget->tabBar()->hide();
@@ -120,8 +115,10 @@ MainWindow::MainWindow(QString app_dir_) :
     settings["def_port"].setValue(49001);
     settings["port_address"].setValue(49001);
     settings["def_address"].setValue(/*"127.0.0.1"*/(QString)"40.113.33.140");
-    settings["ip_address"].setValue(/*"127.0.0.1"*/(QString)"40.113.33.140");
+    settings["ip_address"].setValue((QString)"127.0.0.1"/*(QString)"40.113.33.140"*/);
     settings["max_nick"].setValue(12);
+    settings["pic_w"].setValue(100);
+    settings["pic_h"].setValue(100);
     setPic("def_pic", QPixmap(":images/profile"));
     setPic("user_pic", QPixmap(":images/profile"));
     setPic("opp_pic", QPixmap(":images/profile"));
@@ -145,44 +142,6 @@ MainWindow::MainWindow(QString app_dir_) :
                 settings["time_setup"].setValue(minutes_n);
             });
     }
-
-    // prepare scroll_area before making a chat
-    rounded_area->setStyleSheet("QAbstractScrollArea{background: transparent; border: none;}");
-    rounded_area->setGeometry(ui->chat_area->geometry());
-    rounded_area->setSizePolicy(ui->chat_area->sizePolicy());
-    rounded_area->setMinimumSize(ui->chat_area->minimumSize());
-    rounded_area->setMaximumSize(ui->chat_area->maximumSize());
-    rounded_area->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    rounded_area->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    ui->game_grid->replaceWidget(ui->chat_area, rounded_area);
-    ui->chat_area->~QScrollArea();
-
-    // chat
-    max_message_width = rounded_area->minimumWidth() - 20;
-    message_layout->setContentsMargins(10, 5, 10, 5);
-    message_box->setLayout(message_layout);
-    message_box->resize(rounded_area->width() - 28, 0);
-    message_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-    message_box->setStyleSheet("background-color: transparent;"); //#1B1C1F
-    rounded_area->setWidget(message_box);
-    rounded_area->setWidgetResizable(true);
-
-    // match history
-    history_area->setStyleSheet("QAbstractScrollArea{background: transparent; border: none;}");
-    history_area->setGeometry(ui->match_history->geometry());
-    history_area->setSizePolicy(ui->match_history->sizePolicy());
-    history_area->setMinimumSize(ui->match_history->minimumSize());
-    history_area->setMaximumSize(ui->match_history->maximumSize());
-    history_area->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    history_area->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    ui->game_grid->replaceWidget(ui->match_history, history_area);
-    ui->match_history->~QLabel();
-    history_label->setStyleSheet("background-color: transparent;");
-    history_label->setFont({ "Segoe UI", 12 });
-    history_label->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
-    history_area->setWidget(history_label);
-    history_area->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
-    history_area->setWidgetResizable(true);
 }
 
 MainWindow::~MainWindow() {
@@ -218,11 +177,11 @@ void MainWindow::openStopGameBox()
             QMessageBox::Warning);
 }
 
-void MainWindow::openInDevBox()
-{
-    showBox("Not available yet",
-            "This function hasn't been developed yet, but you can donate money to speed up the process.");
-}
+//void MainWindow::openInDevBox()
+//{
+//    showBox("Not available yet",
+//            "This function hasn't been developed yet, but you can donate money to speed up the process.");
+//}
 
 void MainWindow::showStatus(const QString& status) 
 {
@@ -237,11 +196,6 @@ void MainWindow::switchGlow()
     else
         ui->opponent_avatar->setGraphicsEffect(avatar_effect);
     this->update();
-}
-
-QString MainWindow::coordToString(scoord coord)
-{
-    return QString(char('a' + coord.x)) + QString::number(coord.y + 1);
 }
 
 int MainWindow::changeLocalName(QString name)
@@ -259,44 +213,6 @@ int MainWindow::changeLocalName(QString name)
         ui->profile_name->setText(name);
     }
     return 0;
-}
-
-void MainWindow::writeStory(int order, halfmove hmove)
-{
-    QString out = MainWindow::halfmoveToString(hmove);
-    if (order % 2)
-        history_label->setText(history_label->text() + QString::number((order-1) / 2 + 1) + ". " + out + " ");
-    else
-        history_label->setText(history_label->text() + out + " ");
-
-    history_label->adjustSize();
-//    QTimer::singleShot(100, [&]() {
-        auto scroller = history_area->horizontalScrollBar();
-        scroller->setValue(scroller->maximum());
-//        });
-}
-
-QString MainWindow::halfmoveToString(halfmove hmove)
-{
-    VirtualTile vf = hmove.move.first;
-    VirtualTile vt = hmove.move.second;
-    scoord f = vf.coord;
-    scoord t = vt.coord;
-    char piece = vf.piece_name;
-    char promo = hmove.promo;
-
-    QString out;
-    if (hmove.castling) {
-        out = "O-O";
-    }
-    else {
-        if (piece != 'P')
-            out += piece;
-        out += coordToString(f) + coordToString(t);
-        if (promo != 'e')
-            out += "=" + QString(promo);
-    }
-    return out;
 }
 
 void MainWindow::startGame(QString game_regime) // side true for user - white
@@ -356,11 +272,9 @@ void MainWindow::startGame(QString game_regime) // side true for user - white
     ui->opponent_name->setText(settings["opp_name"].toString());
     bool match_side = settings["match_side"].toBool();
     (match_side ? ui->user_avatar : ui->opponent_avatar)->setGraphicsEffect(avatar_effect);
-    for (QLayoutItem* child; (child = message_layout->takeAt(0)) != nullptr; child->widget()->~QWidget()) {}
-    message_box->resize(rounded_area->width(), 0);
+    chat->clearMessages();
     ui->statusBar->show();
-    history_label->clear();
-    history_label->adjustSize();
+    history_area->clearStory();
 
     if (board){
         Board* old_board = board;
@@ -534,52 +448,6 @@ void MainWindow::statusSlot(tatus status)
     halfmove last_move = board->history.back();
     QString game_regime = settings["game_regime"].toString();
     if (game_regime != "history") {
-        writeStory(order, last_move);
+        history_area->writeStory(order, last_move);
     }
-}
-
-void MainWindow::printMessage(QString name, bool own, QString text)
-{
-    if (text.isEmpty())
-        return;
-
-    QChar ch;
-    for (int cur_len = 0, pos = 0; pos < text.size(); pos++) {
-        ch = text[pos];
-        if (ch == ' ' || ch == '\n')
-            cur_len = 0;
-        else {
-            cur_len += message_metrics.size(0, ch).width();
-            if (cur_len > (max_message_width - 10)) {
-                text.insert(pos, "\n");
-                cur_len = 0;
-            }
-        }
-    }
-
-    QPointer<QLabel> message(new QLabel(this));
-    if (own)
-        message->setStyleSheet("background-color: rgb(0,179,60); border-radius: 14;");
-    else
-        message->setStyleSheet("background-color: rgb(0,128,21); border-radius: 14;");
-    message->setIndent(5);
-    message->setMargin(5);
-    message->setMaximumWidth(max_message_width);
-    message->setFont(message_font);
-    message->setWordWrap(true);
-    message->setText(name + "\n" + text);
-    message->adjustSize();
-    message->setMinimumSize(message->size());
-    message->setMaximumSize(message->size());
-    if (own)
-        message_layout->addWidget(message, 0, Qt::AlignTop | Qt::AlignRight);
-    else
-        message_layout->addWidget(message, 0, Qt::AlignTop | Qt::AlignLeft);
-    message_box->resize(message_box->width(), message_box->height() + message->height() + 10);
-    // 10 is layout margin here, for shortness
-
-    QTimer::singleShot(100, [&]() {
-        auto scroller = rounded_area->verticalScrollBar();
-        scroller->setValue(scroller->maximum());
-        });
 }

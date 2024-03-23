@@ -9,9 +9,10 @@ namespace Ui
     class MainWindow;
 }
 
+class Chat;
 class WebClient;
 class RoundedScrollArea;
-class HorizontalScrollArea;
+class HistoryArea;
 class Board;
 class ChessClock;
 class OfflineDialog;
@@ -30,41 +31,26 @@ friend class Board;
 public:
     Ui::MainWindow* ui;
     QString app_dir;
-    QPointer<Board> board;
+    QPointer<HistoryArea> history_area;
     QPointer<ChessClock> clock;
+    QPointer<Board> board;
+    QPointer<Chat> chat;
     QPointer<WebClient> net;
-    QPointer<RoundedScrollArea> rounded_area;
-    QPointer<HorizontalScrollArea> history_area;
-    QPointer<QLabel> history_label;
     std::map<std::string, QPointer<QSoundEffect>> sounds;
     QPointer<QGraphicsDropShadowEffect> avatar_effect;
     QPointer<QWidget> last_tab;
-
-    QPointer<QVBoxLayout> message_layout;
-    QPointer<QWidget> message_box;
-    QFont message_font;
-    QFontMetrics message_metrics;
-    int max_message_width;
-
     bool game_active;
     int login_regime;
+
+    MainWindow(QString app_dir_);
+    ~MainWindow();
 
     void showStatus(const QString& status);  // FIX: will const& cause problems or not?
     void switchGlow();
     bool eventFilter(QObject* object, QEvent* event);
     void openStopGameBox();
-    void openInDevBox();
-    void writeStory(int order, halfmove hmove);
-    static QString halfmoveToString(halfmove hmove);
-    static QString coordToString(scoord coord);
     int changeLocalName(QString name);
-    //int changeOnlineName(QString name);
-
-    MainWindow(QString app_dir_);
-    ~MainWindow();
-
     void startGame(QString game_regime);
-    void printMessage(QString name, bool own, QString text);
     void openTab(QWidget* page);
 
 signals:
@@ -103,9 +89,6 @@ private slots:
     void on_actionLoad_game_triggered();
 
     // menu's actions in development
-    void on_actionWith_AI_triggered();
-    void on_actionTraining_triggered();
-    void on_actionRandomly_triggered();
     void on_actionRules_triggered();
     void on_actionSend_suggestion_triggered();
     void on_actionReport_a_bug_triggered();
@@ -121,3 +104,7 @@ private slots:
 protected slots:
     void endSlot(endnum end_type);
 };
+
+//void on_actionWith_AI_triggered();
+//void on_actionTraining_triggered();
+//void on_actionRandomly_triggered();

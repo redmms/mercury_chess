@@ -24,3 +24,26 @@ struct halfmove {
     bool check = false;
     unsigned char moved = 0;
 };
+
+inline QString halfmoveToString(halfmove hmove)
+{
+    VirtualTile vf = hmove.move.first;
+    VirtualTile vt = hmove.move.second;
+    scoord f = vf.coord;
+    scoord t = vt.coord;
+    char piece = vf.piece_name;
+    char promo = hmove.promo;
+
+    QString out;
+    if (hmove.castling) {
+        out = "O-O";
+    }
+    else {
+        if (piece != 'P')
+            out += piece;
+        out += coordToString(f) + coordToString(t);
+        if (promo != 'e')
+            out += "=" + QString(promo);
+    }
+    return out;
+}

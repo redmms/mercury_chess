@@ -117,7 +117,7 @@ struct scoord {
     bool operator != (const scoord& r) const {
         return x != r.x || y != r.y;
     }
-    bool operator<(const scoord& r) const {
+    bool operator < (const scoord& r) const {
         return (y != r.y ? y < r.y : x < r.x); // necessary for placing 
         // piece idxs on board in archiver
     }
@@ -187,4 +187,17 @@ inline void charToArr(unsigned char c, bool(&arr)[6])
         arr[i] = c & true;
         c >>= 1;
     }
+}
+
+#include <QString>
+inline QString coordToString(scoord coord)
+{
+    return QString(char('a' + coord.x)) + QString::number(coord.y + 1);
+}
+
+#include <string>
+inline scoord stringToCoord(QString str)
+{
+    std::string s = str.toStdString();
+    return { s[0] - 'a', s[1] - '0' - 1};
 }

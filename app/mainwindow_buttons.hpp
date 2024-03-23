@@ -171,7 +171,7 @@ void MainWindow::on_send_invite_button_clicked() // FIX: here - packnum::invite,
 void MainWindow::editReturnSlot()
 {
     QString message_text = ui->message_edit->toPlainText();
-    printMessage(settings["user_name"].toString(), true, message_text);
+    chat->printMessage(settings["user_name"].toString(), true, message_text);
     ui->message_edit->clear();
     if (settings["game_regime"].toString() == "friend_online")
         net->sendToServer(chat_message, false, message_text); // FIX: works even after the end of the game
@@ -291,22 +291,22 @@ void MainWindow::on_actionAbout_Qt_triggered()
     QMessageBox::aboutQt(this, "About Qt");
 }
 
-void MainWindow::on_actionWith_AI_triggered()
-{
-    openInDevBox();
-}
-
-
-void MainWindow::on_actionTraining_triggered()
-{
-    openInDevBox();
-}
-
-
-void MainWindow::on_actionRandomly_triggered()
-{
-    openInDevBox();
-}
+//void MainWindow::on_actionWith_AI_triggered()
+//{
+//    openInDevBox();
+//}
+//
+//
+//void MainWindow::on_actionTraining_triggered()
+//{
+//    openInDevBox();
+//}
+//
+//
+//void MainWindow::on_actionRandomly_triggered()
+//{
+//    openInDevBox();
+//}
 
 
 void MainWindow::on_actionRules_triggered()
@@ -430,7 +430,7 @@ void MainWindow::on_actionLoad_game_triggered()
     if (!error) {
         startGame("history");
         for (int i = 0, size = history.size(); i < size; i++)
-            writeStory(i + 1, history[i]);
+            history_area->writeStory(i + 1, history[i]);
         board->end_type = end_type;
         board->history = history;
     }
@@ -446,8 +446,8 @@ void MainWindow::on_test_button_clicked() {
 
     // cout << endl << "Current position:" << board->toFen() << endl;
     VirtualBoard vb = *board;
-    int i = 0, depth = 6 - board->story().size();
-    if (depth <= 0) {
+    int i = 0, depth = 2 /*- board->story().size()*/;
+    if (depth < 0) {
         cout << endl << "Depth is incorrect" << endl;
         return;
     }

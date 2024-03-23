@@ -49,6 +49,7 @@ public:
     // tile initialization:
     virtual void initTiles();
     void setTiles();
+    void setTiles(QString fen);
     // other:
     std::string toStr(bool stat = false);
     auto operator [](int i) {

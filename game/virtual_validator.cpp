@@ -11,8 +11,7 @@ using checker = function<bool(scoord, bool&)>;
 VirtualValidator::VirtualValidator(VirtualBoard* mother_board) :
     board(mother_board),
     valid_moves{},
-    check(false),
-    last_state{ false },
+    check{ false },
     has_moved{ false },
     rooks_kings{ {0,0}, {4, 0}, {7, 0}, {0, 7}, {4, 7}, {7, 7} },
     castling_destination{ {2, 0}, {-1, -1}, {6, 0}, {2, 7}, {-1, -1}, {6, 7} },
@@ -35,29 +34,54 @@ VirtualValidator::VirtualValidator(VirtualBoard* mother_board) :
     perp_dir{ { 0,  1 }, { 0,  -1 }, { 1,  0 },  { -1, 0 } },
     diag_dir{ { 1,  1 }, { 1, -1 },  { -1,  1 }, { -1, -1 } },
     inBoard([](scoord coord) -> bool {
-        return coord.x >= 0 && coord.x < 8 && coord.y >= 0 && coord.y < 8;
+        return 0 <= coord.x && coord.x < 8 && 0 <= coord.y && coord.y < 8;
     }),
     occupied([&](scoord coord) -> bool {
         return theTile(coord)->piece_name != 'e';
     }),
-    differentColor([&](scoord coord) -> bool {
-    // may be realized differently, with either turn or piece color
-        return occupied(coord) && theTile(coord)->piece_color != theTurn();
-    }),
     pieceName([&](scoord coord) -> char {
         return theTile(coord)->piece_name;
+    }),
+    pieceColor([&](scoord coord) -> bool {
+        return theTile(coord)->piece_color;
+        }),
+    differentColor([&](scoord coord) -> bool {
+        // may be realized differently, with either turn or piece color
+        return occupied(coord) && pieceColor(coord) != theTurn();
+        }),
+    freeToEat([&](scoord coord) -> bool {
+        return differentColor(coord) && pieceName(coord) != 'K';
+    }),
+    freeToPlace([&](scoord coord) -> bool {
+        return !occupied(coord) || freeToEat(coord);
     }),
     addValid([&](scoord coord, set<scoord>& container) -> void {
         container.emplace(coord);
     }),
+    runThrough([&](scoord coord, scoord add, lambda stop_cond, lambda borders_cond) -> bool {
+        // here range is (from, to] or (from, to), depending on stop_cond
+        coord.x += add.x, coord.y += add.y;
+        while (inBoard(coord) && borders_cond(coord)) {
+            if (stop_cond(coord))
+                return true;
+            coord.x += add.x, coord.y += add.y;
+        }
+        return false;
+    }),
+    runLines([&](scoord from, lambda stop_cond, lambda borders_cond, const list<scoord>& direction) -> bool {
+        bool res = false;
+        for (scoord add : direction)
+            res |= runThrough(from, add, stop_cond, borders_cond);
+        return res;
+    }),
     fastThrough([&](scoord coord, scoord add, checker stop_cond, bool& result) -> void {
     // here range is (from, to] or (from, to), depending on stop_cond
-        do { coord.x += add.x, coord.y += add.y; } while (!stop_cond(coord, result));
+        do { coord.x += add.x, coord.y += add.y; } while (inBoard(coord) && !stop_cond(coord, result));
     }),
-    fastLine([&](scoord coord, checker stop_cond, const list<scoord>& adds) -> bool {
+    fastLines([&](scoord coord, checker stop_cond, const list<scoord>& direction) -> bool {
         bool result = false;
-        for (auto dir : adds) {
-            fastThrough(coord, dir, stop_cond, result);
+        for (auto add : direction) {
+            fastThrough(coord, add, stop_cond, result);
             if (result)
                 return true;
         }
@@ -65,15 +89,28 @@ VirtualValidator::VirtualValidator(VirtualBoard* mother_board) :
     }),
     enemyFinder([&](scoord coord, lambda comparison, lambda borders, bool& result) -> bool {
         if (!borders(coord)) { // borders checking should always go first
-            result = false; // then it's the end of a cycle
-            return true;
+            result = false; 
+            return true; // stop
         }
         else if (differentColor(coord)) {
             result = comparison(coord);
-            return true; // then stop
+            return true; // stop
         }
         else
-            return false; // then continue
+            return false; // continue
+    }),
+    moveFinder([&](scoord coord, lambda can_move_checker, lambda let_king_die_checker, set<scoord>& container) -> bool {
+        if (can_move_checker(coord)) {
+            if (!let_king_die_checker(coord))
+                addValid(coord, container);
+            if (occupied(coord))
+                return true; // stop cycle
+            else
+                return false; // continue
+        }
+        else {
+            return true; // stop 
+        }
     })
 {}
 
@@ -133,11 +170,31 @@ void VirtualValidator::kingPotential(scoord coord, list<scoord>& coords)
                { x - 1, y - 1 }, { x, y - 1 }, { x + 1, y - 1 } };
 }
 
+void VirtualValidator::castlingPotential(std::list<scoord>& coords)
+{
+    if (theTurn())
+        coords = { {2, 0}, {6, 0} };
+    else
+        coords = { {2, 7}, {6, 7} };
+}
+
 void VirtualValidator::knightPotential(scoord coord, list<scoord>& coords)
 {
     int x = coord.x, y = coord.y;
     coords = { { x - 2, y + 1 }, { x - 1, y + 2 }, { x + 1, y + 2 }, { x + 2, y + 1 },
                { x - 2, y - 1 }, { x - 1, y - 2 }, { x + 1, y - 2 }, { x + 2, y - 1 } };
+}
+
+void VirtualValidator::pawnEatPotential(scoord coord, std::list<scoord>& coords)
+{
+    int x = coord.x, y = coord.y, k = theTurn() ? 1 : -1;
+    coords = { {x - 1, y + k}, {x + 1, y + k} };
+}
+
+void VirtualValidator::pawnMovePotential(scoord coord, std::list<scoord>& coords)
+{
+    int x = coord.x, y = coord.y, k = theTurn() ? 1 : -1;
+    coords = { {x, y + k}, {x, y + 2 * k } };
 }
 
 bool VirtualValidator::underAttack(scoord coord)
@@ -157,32 +214,27 @@ bool VirtualValidator::underAttack(scoord coord)
         if (inBoard(move) && differentColor(move) && pieceName(move) == 'N')
             return true;
 
-    int x = coord.x, y = coord.y;
-    int k = theTurn() ? 1 : -1;
-    need_check = { {x - 1, y + k}, {x + 1, y + k} };
+    pawnEatPotential(coord, need_check);
     for (auto move : need_check)
         if (inBoard(move) && differentColor(move) && pieceName(move) == 'P')
             return true;
 
-    auto bordersPerp = [&](scoord coord) {
-        return inBoard(coord) && (!occupied(coord) || differentColor(coord));
-        };
     auto comparePerp = [&](scoord coord) {
         return pieceName(coord) == 'R' || pieceName(coord) == 'Q';
         };
     auto checkPerp = [&](scoord coord, bool& result) -> bool {
-        return enemyFinder(coord, comparePerp, bordersPerp, result);
+        return enemyFinder(coord, comparePerp, freeToPlace, result);
         };
-    if (fastLine(coord, checkPerp, perp_dir))
+    if (fastLines(coord, checkPerp, perp_dir))
         return true;
 
     auto compareDiag = [&](scoord coord) {
         return pieceName(coord) == 'B' || pieceName(coord) == 'Q';
         };
     auto checkDiag = [&](scoord coord, bool& result) -> bool {
-        return enemyFinder(coord, compareDiag, bordersPerp, result);
+        return enemyFinder(coord, compareDiag, freeToPlace, result);
         };
-    return fastLine(coord, checkDiag, diag_dir);
+    return fastLines(coord, checkDiag, diag_dir);
 }
 
 void VirtualValidator::findValid(scoord from)
@@ -206,39 +258,12 @@ void VirtualValidator::findValid(scoord from, set<scoord>& container)
     bool first_evaluation = true, may_exposure = false;
     scoord add;
     list <scoord> potenial_moves;
-
-
-    // Direction cycles:
-    auto runThrough = [&](scoord coord, scoord add, lambda stop_cond, lambda borders_cond)
-        {
-            // here range is (from, to] or (from, to), depending on stop_cond
-            coord.x += add.x, coord.y += add.y;
-            while (borders_cond(coord)) {
-                if (stop_cond(coord))
-                    return true;
-                coord.x += add.x, coord.y += add.y;
-            }
-            return false;
-        };
-    auto onDiagonals = [&](scoord coord, lambda stop_cond, lambda borders_cond)
-        {
-            bool res = false;
-            for (scoord dir : diag_dir)
-                res |= runThrough(coord, dir, stop_cond, borders_cond);
-            return res;
-        };
-    auto onPerp = [&](scoord coord, lambda stop_cond, lambda borders_cond)
-        {
-            bool res = false;
-            for (scoord dir : perp_dir)
-                res |= runThrough(coord, dir, stop_cond, borders_cond);
-            return res;
-        };
+    const int k = theTurn() ? 1 : -1;
 
     // Usefull formulas:
-    auto findDirection = [](scoord beg, scoord end) -> scoord {
+    static auto findDirection = [](scoord beg, scoord end) {
         // if two tiles are on the same diagonal or perpendicular
-        // it will return unit vector, which can be used as increments for cycles, 
+        // it will return unit vector, which can be used as an increment for cycles, 
         // otherwise it's undefined behavior
         int X = end.x - beg.x;
         int Y = end.y - beg.y;
@@ -255,14 +280,14 @@ void VirtualValidator::findValid(scoord from, set<scoord>& container)
         };
 
     // Lambdas about king:
-    auto exposureKing = [&](scoord coord) -> bool {
+    auto exposureKing = [&](scoord coord) {
         if (first_evaluation) {
             X = from.x - king.x,
                 Y = from.y - king.y;
             bool from_aligns_king = abs(X) == abs(Y) || !X || !Y;
             if (from_aligns_king) {
                 add = findDirection(king, from);
-                auto bordersBetween = [king, from](scoord coord) -> bool {
+                auto bordersBetween = [king, from](scoord coord) {
                     return coord != king && coord != from;
                     // whithout "if(from_align_king)"
                     // checking this will lead to borders violation sometimess (only if "from" tile
@@ -271,19 +296,16 @@ void VirtualValidator::findValid(scoord from, set<scoord>& container)
                     // (the moving piece is king)
                     };
                 bool nothing_between = !runThrough(king, add, occupied, bordersBetween);
-                auto threatensToKing = [&](scoord coord) -> bool {
+                auto threatensToKing = [&](scoord coord) {
                     char name = pieceName(coord);
                     return (abs(X) == abs(Y)
                         ? differentColor(coord) && (name == 'B' || name == 'Q')
                         : differentColor(coord) && (name == 'R' || name == 'Q'));
                     };
-                auto bordersAfter = [&](scoord coord) {
-                    return inBoard(coord) && (!occupied(coord) || differentColor(coord));
+                auto checkerAfter = [&](scoord coord, bool& result) {
+                    return enemyFinder(coord, threatensToKing, freeToPlace, result);
                     };
-                auto checkerAfter = [&](scoord coord, bool& result) -> bool {
-                    return enemyFinder(coord, threatensToKing, bordersAfter, result);
-                    };
-                bool occurs_threat;
+                bool occurs_threat = false;
                 fastThrough(from, add, checkerAfter, occurs_threat);
                 may_exposure = from_aligns_king && nothing_between && occurs_threat;
             }
@@ -305,110 +327,67 @@ void VirtualValidator::findValid(scoord from, set<scoord>& container)
         }
         return false;
         };
-    auto castlingPotential = [&](list<scoord>& coords) {
-        // adds coords of potential castling destination for king to the list
-        if (turn)
-            coords = { {2, 0}, {6, 0} };
-        else
-            coords = { {2, 7}, {6, 7} };
-        };
 
-    // Checker conditions:
-    // For knight, rook, bishop and queen
-    auto canMoveTo = [&](scoord coord) -> bool {
-        return inBoard(coord) && (!occupied(coord) || differentColor(coord)) &&
-            pieceName(coord) != 'K' && !exposureKing(coord);
+    // moveFinder() checker conditions for knight, rook, bishop and queen
+    auto canMoveToSimply = [&](scoord coord) {
+        return freeToPlace(coord) && !exposureKing(coord);
         };
-    // For knight
     auto canMoveKnightTo = [&](scoord coord) {
-        return inBoard(coord) && (!occupied(coord) || differentColor(coord)) &&
-            pieceName(coord) != 'K' && !exposureKing(coord) && !letKingDie(coord);
+        return freeToPlace(coord) && !exposureKing(coord) && !letKingDie(coord);
         };
     // For king
-    auto canMoveKingTo = [&](scoord coord) -> bool {
-        return inBoard(coord) && (!occupied(coord) || differentColor(coord)) &&
-            pieceName(coord) != 'K' && !underAttack(coord) && !letKingDie(coord);
+    auto canMoveKingTo = [&](scoord coord) {
+        return freeToPlace(coord) && !underAttack(coord) && !letKingDie(coord);
         };
     // For pawn
-    auto pawnCanEat = [&](scoord coord) -> bool {
-        return inBoard(coord) && !exposureKing(coord) && !letKingDie(coord) &&
-            (!occupied(coord) && canPass(from, coord) || differentColor(coord) &&
-                pieceName(coord) != 'K');
+    auto pawnCanEat = [&](scoord coord) {
+        return (freeToEat(coord) || canPass(from, coord)) && !exposureKing(coord) && !letKingDie(coord);
         };
-    auto pawnCanMove = [&](scoord coord) -> bool {
-        return inBoard(coord) && !occupied(coord) && !exposureKing(coord);
+    auto pawnCanMove = [&](scoord coord) {
+        bool hop = abs(coord.y - from.y) == 2;
+        scoord middle = { coord.x, int(4 - 1.5 * k) };
+        bool start_line = turn ? from.y == 1 : from.y == 6;
+        return !occupied(coord) && !exposureKing(coord) && !letKingDie(coord) && (!hop || !occupied(middle) && start_line);
         };
 
-    // Adding coords to this->valid_moves;
-    auto addMove = [&](scoord coord) -> bool {  // FIX: should be reread
-        bool let_die;
-        if (canMoveTo(coord)) {
-            let_die = letKingDie(coord);
-            if (!let_die)
-                addValid(coord, container);
-            // don't add to valid_moves, but continue the cycle,
-            // threat may be somewhere next on the line
-            if (occupied(coord))
-                return true; // add move but stop, we can eat but cannot go next
-            return false; // continue
-        }
-        else
-            return true; // break cycle
+    // Adding final coords to container:
+    auto moveAdder = [&](scoord coord) {
+        return moveFinder(coord, canMoveToSimply, letKingDie, container); // FIX: will [&] work here, or need to use [=]?
         };
-    auto addPawnMoves = [&](scoord coord) -> void {
-        int x = coord.x, y = coord.y;
-        scoord move;
-        int k = turn ? 1 : -1;
-        move = { x, y + 1 * k };
-        if (pawnCanMove(move)) {
-                addValid(move, container);
-            move = { x, y + 2 * k };
-            if ((turn ? from.y == 1 : from.y == 6) &&
-                pawnCanMove(move) && !letKingDie(move))
-                addValid(move, container);
-        }
-        move = { x - 1, y + 1 * k };
-        if (pawnCanEat(move) && !letKingDie(move))
-            addValid(move, container);
-        move = { x + 1, y + 1 * k };
-        if (pawnCanEat(move) && !letKingDie(move))
-            addValid(move, container);
+    auto simpleMoveAdder = [&](lambda move_checker) {
+        for (auto coord : potenial_moves)
+            if (inBoard(coord) && move_checker(coord))
+                addValid(coord, container);
         };
 
     switch (piece)
     {
     case 'P':  // pawn
-        addPawnMoves(from);
+        pawnMovePotential(from, potenial_moves);
+        simpleMoveAdder(pawnCanMove);
+        pawnEatPotential(from, potenial_moves);
+        simpleMoveAdder(pawnCanEat);
         break;
     case 'N':  // knight
         knightPotential(from, potenial_moves);
-        for (auto coord : potenial_moves)
-            if (canMoveKnightTo(coord))
-                addValid(coord, container);
+        simpleMoveAdder(canMoveKnightTo);
         break;
     case 'K':  // king
-    {
         kingPotential(from, potenial_moves);
-        for (auto coord : potenial_moves)
-            if (canMoveKingTo(coord))
-                addValid(coord, container);
+        simpleMoveAdder(canMoveKingTo);
         castlingPotential(potenial_moves);
-        scoord rook_stub;
-        for (auto coord : potenial_moves)
-            if (canCastle(from, coord, rook_stub))
-                addValid(coord, container);
+        simpleMoveAdder([&](scoord coord) {return canCastle(from, coord); });
         break;
-    }
     case 'B':  // bishop
-        onDiagonals(from, addMove, inBoard);
+        runLines(from, moveAdder, inBoard, diag_dir);
         break;
     case 'R':  // rook
-        onPerp(from, addMove, inBoard);
+        runLines(from, moveAdder, inBoard, perp_dir);
         break;
     case 'Q':  // queen
-        onPerp(from, addMove, inBoard);
-        onDiagonals(from, addMove, inBoard);
-    };
+        runLines(from, moveAdder, inBoard, perp_dir);
+        runLines(from, moveAdder, inBoard, diag_dir);
+    }
 }
 
 bool VirtualValidator::isValid(scoord coord)
@@ -437,27 +416,6 @@ bool VirtualValidator::inCheckmate(bool color)
 
 bool VirtualValidator::inStalemate(bool color)
 {
-    movable_pieces.clear();
-    set<scoord> temp_valid_moves;
-    bool stalemate = true;
-    for (int x = 0; x < 8; x++) {
-        for (int y = 0; y < 8; y++) {
-            scoord coord{ x, y };
-            if (occupied(coord) && !differentColor(coord)) {
-                findValid(coord, temp_valid_moves); // should fastFindValid without temp_moves parameter
-                if (!temp_valid_moves.empty()) {
-                    temp_valid_moves.clear();
-                    movable_pieces.insert(coord);
-                    stalemate = false;
-                }
-            }
-        }
-    }
-    return stalemate;
-}
-
-bool VirtualValidator::fastInStalemate(bool color)
-{
     for (int x = 0; x < 8; x++) {
         for (int y = 0; y < 8; y++) {
             scoord coord{ x, y };
@@ -473,22 +431,23 @@ bool VirtualValidator::fastInStalemate(bool color)
     return true;
 }
 
-bool VirtualValidator::canCastle(scoord from, scoord to, scoord& rook)
+bool VirtualValidator::canCastle(scoord from, scoord to, scoord* rook)
 {
     list<int> castling_side;
-    if (theTurn() && theTile(from)->piece_name == 'K' && !has_moved[1])
+    if (theTurn() && pieceName(from) == 'K' && !has_moved[1])
         castling_side = { 0, 2 };
-    else if (!theTurn() && theTile(from)->piece_name == 'K' && !has_moved[4])
+    else if (!theTurn() && pieceName(from) == 'K' && !has_moved[4])
         castling_side = { 3, 5 };
     for (int i : castling_side) {
         if (to == castling_destination[i] && !has_moved[i]) {
             for (auto coord : should_be_free[i])
-                if (theTile(coord)->piece_name != 'e')
+                if (occupied(coord))
                     return false;
             for (auto coord : should_be_safe[i])
                 if (underAttack(coord))
                     return false;
-            rook = rooks_kings[i];
+            if (rook)
+                *rook = rooks_kings[i];
             return true;
         }
     }
@@ -502,24 +461,23 @@ bool VirtualValidator::canPass(scoord from, scoord to)
     vove last_move = story().back().move;
     VirtualTile opp_from_tile = last_move.first;
     VirtualTile opp_to_tile = last_move.second;
-    scoord opp_from = opp_from_tile.coord;
-    scoord opp_to = opp_to_tile.coord;
-    auto from_tile = theTile(from);
+    scoord opp_from = last_move.first.coord;
+    scoord opp_to = last_move.second.coord;
     return opp_from_tile.piece_name == 'P' &&
-        opp_from_tile.piece_color != from_tile->piece_color &&
-        abs(opp_to.y - opp_from.y) == 2 &&
-        // it was pawn of opp color moved by 2 tiles
-        from_tile->piece_name == 'P' &&
-        // we are moving a pawn
-        to.x == opp_from.x && // on the same column
-        to.y == (opp_from.y + opp_to.y) / 2 && // on the raw between 2 enemy positions
-        abs(from.x - opp_to.x) == 1 && // eating from the adjust column
-        from.y == opp_to.y; // eating from the same raw
+            opp_from_tile.piece_color != pieceColor(from) &&
+            abs(opp_to.y - opp_from.y) == 2 &&
+            // it was pawn of opp color moved by 2 tiles
+            pieceName(from) == 'P' &&
+            // we are moving a pawn
+            to.x == opp_from.x && // on the same column
+            to.y == (opp_from.y + opp_to.y) / 2 && // on the raw between 2 enemy positions
+            abs(from.x - opp_to.x) == 1 && // eating from the adjust column
+            from.y == opp_to.y; // eating from the same raw
 }
 
 bool VirtualValidator::canPromote(scoord pawn, scoord destination)
 {
-    return theTile(pawn)->piece_name == 'P' && destination.y == (theTurn() ? 7 : 0);
+    return pieceName(pawn) == 'P' && destination.y == (theTurn() ? 7 : 0);
 }
 
 void VirtualValidator::updateHasMoved(scoord from, scoord to)
@@ -530,80 +488,6 @@ void VirtualValidator::updateHasMoved(scoord from, scoord to)
         }
     }
 }
-
-//qint64 VirtualValidator::countMovesTest(int depth, int i)
-//{
-//    static bool initial_turn_copy = board->theTurn();
-//    static VirtualTile tiles_copy[8][8];
-//    qint64 particular_move_count = 0;
-//    if (i == 0)
-//    {
-//        initial_turn_copy = board->theTurn();
-//        particular_move_count = 0;
-//        for (int x = 0; x < 8; x++)
-//            for (int y = 0; y < 8; y++)
-//                tiles_copy[x][y] = board[x][y]->toVirtu();
-//    }
-//    if (i < depth)
-//    {
-//        for (int x = 0; x < 8; x++)
-//        {
-//            for (int y = 0; y < 8; y++)
-//            {
-//                scoord coord = { x, y };
-//                auto tile = theTile({ x, y });
-//                if (occupied(coord) && !differentColor(coord))
-//                {
-//                    findValid(tile);
-//                    if (i == depth - 1)
-//                        particular_move_count += valid_moves.size();
-//                    auto valid_moves_copy = valid_moves;
-//                    valid_moves.clear();
-//                    if (i != depth - 1)
-//                    {
-//                        for (auto move : valid_moves_copy)
-//                        {
-//                            vove last_move;
-//                            board.moveVirtually(tile, move, last_move);
-//                            board.turn = !board.turn;
-//                            inCheck(board.turn);
-//                            updateHasMoved(tile.coord, move.coord);
-//                            auto mc = countMovesTest(depth, i + 1);
-//                            if (i == 0)
-//                            {
-//                                //                                qDebug() << char('a' + x) +
-//                                //                                            QString::number(y + 1) +
-//                                //                                            char('a' + move.coord.x) +
-//                                //                                            QString::number(move.coord.y + 1)
-//                                //                                         << "-"
-//                                //                                         << mc;
-//                                //                                qDebug()
-//                                //                                         << "From"
-//                                //                                         << char('a' + x) + QString::number(y + 1)
-//                                //                                         << "to"
-//                                //                                         << char('a' + move.coord.x) + QString::number(move.coord.y + 1)
-//                                //                                         << "-"
-//                                //                                         << mc;
-//                            }
-//                            particular_move_count += mc;
-//                            board.revertVirtualMove(last_move);
-//                            board.turn = !board.turn;
-//                        }
-//                    }
-//                }
-//            }
-//        }
-//    }
-//    if (i == 0) {
-//        for (int x = 0; x < 8; x++) {
-//            for (int y = 0; y < 8; y++) {
-//                board.restoreTile(tiles_copy[x][y]);
-//            }
-//        }
-//        board.turn = initial_turn_copy;
-//    }
-//    return particular_move_count;
-//}
 
 qint64 VirtualValidator::countMoves(int depth, int i)
 {
@@ -624,11 +508,13 @@ qint64 VirtualValidator::countMoves(int depth, int i)
                         board->halfMove(from, to, 'e', last_move);
                         auto mc = countMovesTest(depth, i + 1);
                         particular_move_count += mc;
+                        //particular_move_count += countMovesTest(depth, i + 1);
                         board->revertHalfmove(last_move);
                         if (i == 0) {
                             cout/* << "Move: "*/
-                                << MainWindow::halfmoveToString(last_move).toStdString()
+                                //<< MainWindow::halfmoveToString(last_move).toStdString()
                                 /*<< ", variants: "*/
+                                << coordToString(from).toStdString() + coordToString(to).toStdString()
                                 << ": "
                                 << mc
                                 << endl;
@@ -643,29 +529,31 @@ qint64 VirtualValidator::countMoves(int depth, int i)
 
 qint64 VirtualValidator::countMovesTest(int depth, int i)
 {
-    VirtualBoard board_copy = *board;
+    //VirtualBoard board_copy = *board;
     qint64 total_moves_n = countMoves(depth, i);
-    for (int x = 0; x < 8; x++)
-        for (int y = 0; y < 8; y++)
-            if (board_copy[x][y] != (*board)[x][y])
-                cout << "Board is not the same after tests." << endl
-                    << "Board before:" << endl
-                    << board_copy.toStr() << endl
-                    << "Board after:" << endl
-                    << board->toStr() << endl << endl;
+    //for (int x = 0; x < 8; x++)
+    //    for (int y = 0; y < 8; y++)
+    //        if (board_copy[x][y] != (*board)[x][y])
+    //            cout << "WARNING: Board is not the same after tests." << endl
+    //                << "Board before:" << endl
+    //                << board_copy.toStr() << endl
+    //                << "Board after:" << endl
+    //                << board->toStr() << endl << endl;
     return total_moves_n;
 }
 
-//<< "From"
-//<< char('a' + x) + QString::number(y + 1)
-//<< "to"
-//<< char('a' + move.coord.x) + QString::number(move.coord.y + 1)
-//<< "-"
-//<< mc;
 
-//qDebug() << char('a' + x) +
-//QString::number(y + 1) +
-//char('a' + move.coord.x) +
-//QString::number(move.coord.y + 1)
-//<< "-"
-//<< mc;
+//// should go as fastMoveFinder():
+//moveFinder([&](scoord coord, lambda can_move_checker, set<scoord>& container) -> bool {
+//    if (can_move_checker(coord)) {
+//        addValid(coord, container);
+//        if (occupied(coord))
+//            return true;
+//        // add move but stop, we can eat but cannot go next
+//        return false;
+//        // add to valid_moves, but continue the cycle,
+//        // threat may be somewhere next on the line
+//    }
+//    else
+//        return true; // break cycle
+//    })

@@ -1,15 +1,15 @@
 #pragma once
 #include "../app/local_types.h"
+
 namespace fsm {
     class ofinestream;
     class ifinestream;
 }
-
 class Validator;
 class VirtualValidator;
 class VirtualBoard;
-class Archiver : public QObject {
-
+class Archiver 
+{
     const uint8_t archiver_version = 0;
 
 public:
