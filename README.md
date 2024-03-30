@@ -1,7 +1,8 @@
 This is a ready for production app. 
 Actually, it consists of several different projects: server, gui chess, which uses archiver, which uses finestream.
 Archiver will be a closed project, I hope to make it commercial.  
-Finestream is available here: https://github.com/redmms/finestream.git  
+Finestream is available here:   
+https://github.com/redmms/finestream.git  
 So, what is special about these chess? You've probably seen hundreds of different chess applications.
 This app is not only written fully in C++, not only cross-platform due to Qt framework, not only uses various stylesheets and sound effects, 
 it is also connected to a server and you can play online with a friend (or an enemy, if you will make him play with you), you may chat, set 
