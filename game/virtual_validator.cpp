@@ -605,8 +605,8 @@ unsigned VirtualValidator::countParticular(int depth, int i, scoord from) // есл
                 //bool pause = from == h2 && to == h3;
                 auto copy_count = tryMove(depth, i + 1, from, to, promo);
                 particular_count += copy_count;
-                //if (!i /*|| debugPause(to)*/)
-                //    printMoveCount(from, to, promo, copy_count);
+                if (!i /*|| debugPause(to)*/)
+                    printMoveCount(from, to, promo, copy_count);
             }
         }
     }
