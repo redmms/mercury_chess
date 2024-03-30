@@ -6,6 +6,7 @@
 #include "rules_dialog.h"
 #include "history_area.h"
 #include "chat.h"
+#include "fen_dialog.h"
 #include "../game/board.h"
 #include "../game/clock.h"
 #include "../archiver/archiver.h"
@@ -448,4 +449,12 @@ void MainWindow::statusSlot(tatus status)
     if (game_regime != "history") {
         history_area->writeStory(order, last_move);
     }
+}
+
+void MainWindow::on_actionTraining_triggered()
+{
+    startGame("friend_offline");
+    FenDialog dialog(this);
+    connect(&dialog, &FenDialog::newFen, board, &Board::setTilesSlot);
+    dialog.exec();
 }

@@ -300,11 +300,6 @@ void MainWindow::on_actionAbout_Qt_triggered()
 //}
 //
 //
-//void MainWindow::on_actionTraining_triggered()
-//{
-//    openInDevBox();
-//}
-//
 //
 //void MainWindow::on_actionRandomly_triggered()
 //{
@@ -317,7 +312,6 @@ void MainWindow::on_actionRules_triggered()
     RulesDialog* dialog = new RulesDialog(this);
     dialog->show();
 }
-
 
 void MainWindow::on_actionSend_suggestion_triggered()
 {
@@ -332,7 +326,6 @@ void MainWindow::on_actionReport_a_bug_triggered()
     log_ofstream.flush();
     QDesktopServices::openUrl(QUrl("mailto:mmd18cury@yandex.ru?subject=MercuryChess:Bug report&body=Please attach the log file. Choose to attach a file and enter next path, then choose log.txt file: " + app_dir, QUrl::TolerantMode));
 }
-
 
 void MainWindow::on_actionSave_game_triggered()
 {

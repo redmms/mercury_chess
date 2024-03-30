@@ -11,6 +11,6 @@ class RulesDialog : public QDialog{
     Ui::RulesDialog* ui;
 
 public:
-    explicit RulesDialog(QWidget *parent = nullptr);
+    explicit RulesDialog(QWidget *parent);
     ~RulesDialog();
 };

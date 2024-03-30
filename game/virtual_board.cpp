@@ -250,7 +250,7 @@ void VirtualBoard::setTiles()
 
 void VirtualBoard::setTiles(QString fen)
 {
-    QStringList parts = fen.split(' ', Qt::SkipEmptyParts);
+    QStringList parts = fen.simplified().split(' ', Qt::SkipEmptyParts);
     QString tiles_fen = parts[0];
     QStringList raws = tiles_fen.split('/');
     scoord coord = { 0, 7 };
@@ -296,11 +296,10 @@ void VirtualBoard::setTiles(QString fen)
         valid->has_moved[4] = false;
         valid->has_moved[5] = false;
     }
-    QString fullmove_count = parts.last();
+    QString fullmove_count = parts.size() > 4 ? parts.last() : "1";
     int halfmove_count = fullmove_count.toInt() * 2;
     halfmove hmove;
     history = vector<halfmove>(halfmove_count, hmove);
-    history.back().moved = arrToChar(valid->has_moved);
     QString pass_fen = parts[3];
     if (pass_fen == "-") {
         history.back().pass = false;
@@ -313,6 +312,7 @@ void VirtualBoard::setTiles(QString fen)
         history.back().move = { {from, 'P', !turn}, {to, 'e', 0} };
         history.back().turn = !turn;
     }
+    valid->inCheck(turn);
 }
 
 // beggining of virtual methods

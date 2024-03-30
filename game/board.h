@@ -42,4 +42,5 @@ signals:
 
 public slots:
     void reactOnClick(Tile* tile);
+    void setTilesSlot(QString fen);
 };

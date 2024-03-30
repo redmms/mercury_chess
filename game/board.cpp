@@ -243,3 +243,8 @@ void Board::emitCurrentStatus(const halfmove& saved)
     else
         emit newStatus(just_new_turn);
 }
+
+void Board::setTilesSlot(QString fen)
+{
+    setTiles(fen);
+}

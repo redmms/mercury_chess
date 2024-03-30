@@ -101,6 +101,8 @@ private slots:
 
     void on_test_button_clicked();
 
+    void on_actionTraining_triggered();
+
 protected slots:
     void endSlot(endnum end_type);
 };

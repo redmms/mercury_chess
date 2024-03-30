@@ -19,5 +19,5 @@ public:
 private slots:
     void on_choose_photo_button_clicked();
     void on_save_button_clicked();
-    void on_dismiss_button_clicked();
+    void on_skip_button_clicked();
 };

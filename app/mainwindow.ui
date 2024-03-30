@@ -7536,7 +7536,7 @@ border-radius: 14;
   </action>
   <action name="actionEnter">
    <property name="text">
-    <string>Enter</string>
+    <string>Enter account</string>
    </property>
   </action>
   <action name="actionAbout_Qt">

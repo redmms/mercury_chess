@@ -12,7 +12,6 @@ OfflineDialog::OfflineDialog(QWidget *parent_) :
     ui->setupUi(this);
     ui->friend_avatar->setPixmap(getPic("def_pic"));
     ui->friend_avatar->setMask(getBMap("pic_mask"));
-    setWindowTitle("Choose your opponent's name");
 }
 
 OfflineDialog::~OfflineDialog() {
@@ -63,7 +62,7 @@ void OfflineDialog::on_save_button_clicked()
     } 
 }
 
-void OfflineDialog::on_dismiss_button_clicked()
+void OfflineDialog::on_skip_button_clicked()
 {
     reject();
 }
