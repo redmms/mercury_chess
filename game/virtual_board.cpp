@@ -1,6 +1,8 @@
 #pragma once
 #include "virtual_board.h"
 #include "virtual_tile.h"
+#include "tile.h"
+#include "board.h"
 #include <QDebug>
 #include <QStringList>
 #include <cctype>
@@ -19,6 +21,19 @@ VirtualBoard::VirtualBoard() :
 {    
     initTiles();
     setTiles();
+    //setTiles("rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8");
+}
+
+VirtualBoard::VirtualBoard(Board* copy_)
+{
+    *this = *copy_;
+    initTiles();
+    importTiles(copy_->tiles);
+    valid = new VirtualValidator(this);
+    valid->check = copy_->valid->check;
+    for (int i = 0; i < 6; i++) {
+        valid->has_moved[i] = copy_->valid->has_moved[i];
+    }
 }
 
 VirtualTile* VirtualBoard::theTile(scoord coord)
@@ -95,9 +110,12 @@ void VirtualBoard::halfMove(scoord from, scoord to, char promo)
     turn = !turn;
 }
 
-void VirtualBoard::halfMove(scoord from, scoord to, char promo, halfmove& saved, bool virtually)
+void VirtualBoard::halfMove(scoord from, scoord to, char promo, halfmove& saved, bool virtually, bool historically)
 {    
     saveMoveSimply(from, to, saved.move);
+    saved.check = valid->check;
+    saved.turn = turn;
+    saved.moved = arrToChar(valid->has_moved);
     scoord rook;
     if (valid->canCastle(from, to, &rook)) {
         castleKing(from, to, rook, virtually);
@@ -111,29 +129,29 @@ void VirtualBoard::halfMove(scoord from, scoord to, char promo, halfmove& saved,
         moveSimply(from, to, virtually);
     }
     if (valid->canPromote(to, to)) {
-        promotePawn(to, promo, virtually);
+        virtually ? 
+            VirtualBoard::promotePawn(to, promo, virtually) : 
+                          promotePawn(to, promo, virtually);
         saved.promo = promo;
     }
-    saved.turn = turn;
-    saved.moved = arrToChar(valid->has_moved);
-    saved.check = valid->check; 
-    history.push_back(saved);
-    
+    if (historically) {
+        history.push_back(saved);
+    }
     if (!virtually) { // use this version for faster testing
         turn = !turn;
         valid->inCheck(turn);
     }
 
-    ////if (!virtually) {
+    //if (!virtually) {
     //    turn = !turn;
-    //    //if (valid->inCheck(turn)) {
-    //    //    if (valid->inStalemate(turn))  // check + stalemate == checkmate
-    //    //        end_type = turn == side ? opponent_wins : user_wins;
-    //    //}
-    //    //else if (valid->inStalemate(turn)) {
-    //    //    end_type = draw_by_stalemate;
-    //    //}
-    ////}
+    //    if (valid->inCheck(turn)) {
+    //        if (valid->inStalemate(turn))  // check + stalemate == checkmate
+    //            end_type = turn == side ? opponent_wins : user_wins;
+    //    }
+    //    else if (valid->inStalemate(turn)) {
+    //        end_type = draw_by_stalemate;
+    //    }
+    //}
 
     //cout << "\n";
     //cout << toStr(false);
@@ -154,13 +172,11 @@ void VirtualBoard::revertMoveSimply(vove move, bool virtually)
 
 void VirtualBoard::revertCastling(vove move, bool virtually)
 {    
-    scoord from = move.first.coord;
-    scoord to = move.second.coord;
-    int k = to.x - from.x > 0 ? -1 : 1;
-    int x = to.x + k;
-    int y = to.y;
-    scoord rook{x, y};
-    scoord rook_corner{x + k*3, y};
+    scoord king = move.first.coord;
+    scoord destination = move.second.coord;
+    int add = destination.x - king.x > 0 ? 1 : -1;
+    scoord rook{ destination.x - add, destination.y};
+    scoord rook_corner{ add ? 7 : 0, destination.y};
     revertMoveSimply(move, virtually);
     auto corner_tile = theTile(rook_corner);
     auto rook_tile = theTile(rook);
@@ -174,7 +190,8 @@ void VirtualBoard::revertPass(vove move, bool virtually)
     scoord from = move.first.coord;
     scoord to = move.second.coord;
     auto opp_to_tile = theTile({ to.x, from.y });
-    opp_to_tile->setPiece('P', !move.first.piece_color, virtually);
+    opp_to_tile->setPiece('P', !move.first.piece_color, virtually); // FIX: will not delete pawn from the 6 line
+
 }
 
 void VirtualBoard::revertPromotion(vove move, bool virtually)
@@ -185,7 +202,7 @@ void VirtualBoard::revertPromotion(vove move, bool virtually)
     //theTile(move.first).setPiece(piece_name, piece_color);
 }
 
-void VirtualBoard::revertHalfmove(halfmove hmove, bool virtually)
+void VirtualBoard::revertHalfmove(halfmove hmove, bool virtually, bool historically)
 {
     if (hmove.castling) {
         revertCastling(hmove.move, virtually);
@@ -201,7 +218,9 @@ void VirtualBoard::revertHalfmove(halfmove hmove, bool virtually)
     }
     valid->check = hmove.check;
     charToArr(hmove.moved, valid->has_moved);
-    history.pop_back();
+    if (historically) {
+        history.pop_back();
+    }
     if (!virtually) {
         turn = !turn;
         end_type = endnum::interrupt;
@@ -266,16 +285,16 @@ void VirtualBoard::setTiles(QString fen)
         valid->has_moved[1] = false;
     }
     if (castling_fen.contains('K')) {
-        valid->has_moved[2] = false;
         valid->has_moved[1] = false;
+        valid->has_moved[2] = false;
     }
     if (castling_fen.contains('q')) {
         valid->has_moved[3] = false;
         valid->has_moved[4] = false;
     }
     if (castling_fen.contains('k')) {
-        valid->has_moved[5] = false;
         valid->has_moved[4] = false;
+        valid->has_moved[5] = false;
     }
     QString fullmove_count = parts.last();
     int halfmove_count = fullmove_count.toInt() * 2;
@@ -305,15 +324,17 @@ void VirtualBoard::moveForward()
         scoord to = hmove.move.second.coord;
         char promo = hmove.promo;
         halfMove(from, to, promo);
-        current_move++;    
+        current_move++;
     }
 }
 
 void VirtualBoard::moveBack()
 {   
-    if (0 < current_move && current_move < history.size()) {
+    if (0 < current_move) {
         current_move--;
-        revertHalfmove(history[current_move]);
+        if (current_move < history.size()) {
+            revertHalfmove(history[current_move], false, false);
+        }
     }
 }
 
@@ -329,6 +350,18 @@ string VirtualBoard::toStr(bool stat)
     }
     return view;
 }
+
+
+void VirtualBoard::importTiles(Tile* (&arr)[8][8])
+{
+    for (int x = 0; x < 8; x++) {
+        for (int y = 0; y < 8; y++) {
+            tiles[x][y]->setPiece(arr[x][y]->piece_name, arr[x][y]->piece_color);
+        }
+    }
+}
+
+
 
 void VirtualBoard::initTiles()
 {

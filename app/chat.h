@@ -2,7 +2,6 @@
 
 class QVBoxLayout;
 class QWidget;
-class QScrollArea;
 class Chat : public QScrollArea 
 {
     Q_OBJECT

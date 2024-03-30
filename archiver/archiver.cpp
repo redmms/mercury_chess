@@ -103,7 +103,7 @@ int Archiver::readGame(endnum& end_type, std::vector<halfmove>& history, QString
 
     VirtualBoard board;
     VirtualValidator* valid = board.valid;
-    valid->inStalemate(true);
+    valid->searchingInStalemate(true);
     for (int i = 0; i < moves_num; i++) {
         int order = i + 1;
         if ( order % 2)
@@ -125,7 +125,7 @@ int Archiver::readGame(endnum& end_type, std::vector<halfmove>& history, QString
 inline int Archiver::readMove(halfmove& hmove, fsm::ifinestream& ifs, VirtualBoard& board) 
 {
     VirtualValidator* valid = board.valid;
-    valid->inStalemate(valid->theTurn());
+    valid->searchingInStalemate(valid->theTurn());
     bitmove bmove;
     bmove.piece.BITSN = fsm::MinBits(valid->movable_pieces.size() - 1);
     ifs >> bmove.piece;

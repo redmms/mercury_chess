@@ -18,12 +18,15 @@ void MainWindow::on_actionProfile_triggered()
 void MainWindow::on_change_photo_button_clicked()
 {
     // open dialog window to choose a photo
+    int width = settings["pic_w"].toInt();
+    int height = settings["pic_h"].toInt();
+    QString w = QString::number(width);
+    QString h = QString::number(height);
     QString avatar_address = QFileDialog::getOpenFileName(this, "Open File",
-        QString("Choose a photo for avatar. Avatar picture will be scaled to 100x100 pixel image."),
+        QString("Choose a photo for avatar. Avatar picture will be scaled to " + w + "x" + h + " pixel image."),
         tr("Images (*.png *.jpg *.jpeg *.pgm)"));
-    QSize user_size = ui->user_avatar->size();
     if (!avatar_address.isEmpty()){
-        QPixmap user_pic = QPixmap(avatar_address).scaled(user_size);
+        QPixmap user_pic = QPixmap(avatar_address).scaled(width, height);
         setPic("user_pic", user_pic);
         ui->profile_avatar->setPixmap(user_pic);
         if (game_active)
@@ -445,12 +448,20 @@ void MainWindow::on_actionLoad_game_triggered()
 void MainWindow::on_test_button_clicked() {
 
     // cout << endl << "Current position:" << board->toFen() << endl;
-    VirtualBoard vb = *board;
-    int i = 0, depth = 2 /*- board->story().size()*/;
+    VirtualBoard vb(board);
+    //vb.turn = board->turn;
+    //vb.history = board->history;
+    //vb.importTiles(board->tiles);
+    //for (int i = 0; i < 6; i++) {
+    //    vb.valid->has_moved[i] = board->valid->has_moved[i];
+    //}
+
+    int i = 0, depth = ui->message_edit->toPlainText().toInt(); /*5 - board->story().size()*/
     if (depth < 0) {
         cout << endl << "Depth is incorrect" << endl;
         return;
     }
-    auto moves_count = vb.valid->countMovesTest(depth, i);
-    cout << endl << "Counted moves: " << moves_count << endl;
+    //auto moves_count = vb.valid->countMovesTest(depth, i);
+    auto moves_count = vb.valid->VirtualValidator::countMovesTest(depth, i);
+    cout << endl << "Depth: " << depth << ", counted moves : " << moves_count << endl;
 }

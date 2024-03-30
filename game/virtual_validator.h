@@ -7,7 +7,8 @@ using checker = std::function<bool(scoord, bool&)>;
 
 class VirtualTile;
 class VirtualBoard;
-class VirtualValidator {
+class VirtualValidator 
+{
     friend class Archiver;
     friend class Board;
     friend class VirtualBoard;
@@ -16,7 +17,6 @@ protected:
     std::set<scoord> movable_pieces;
     std::set<scoord> valid_moves;
     bool check;
-    bool has_moved[6];
     scoord rooks_kings[6];
     scoord castling_destination[6];
     std::list<scoord> should_be_free[6];
@@ -45,11 +45,14 @@ protected:
     void revertVirtualMove(halfmove saved_move);
 
 public:
+    bool has_moved[6];
+
     VirtualValidator(VirtualBoard* mother_board = 0);
 
     std::function<bool(scoord)> inBoard;
     std::function<bool(scoord)> occupied;
     std::function<bool(scoord)> differentColor;
+    std::function<bool(scoord)> sameColor;
     std::function<char(scoord)> pieceName;
     std::function<bool(scoord)> freeToEat;
     std::function<bool(scoord)> freeToPlace;
@@ -66,11 +69,16 @@ public:
     bool inCheck(bool color);
     bool inCheckmate(bool color);
     virtual bool inStalemate(bool color);
+    bool searchingInStalemate(bool color);
     bool canCastle(scoord from, scoord to, scoord* rook = nullptr);
     bool canPass(scoord from, scoord to);
     bool canPromote(scoord pawn, scoord destination);
     void updateHasMoved(scoord from, scoord to);
-    qint64 countMovesTest(int depth = 5, int i = 0);
-    qint64 countMoves(int depth = 5, int i = 0);
-    //void printHasMoved();
+    // testing:
+    unsigned countMovesTest(int depth = 5, int i = 0);
+    unsigned countMoves(int depth = 5, int i = 0);
+    inline void printMoveCount(scoord from, scoord to, char promo, unsigned mc);
+    inline unsigned tryMove(int depth, int i, scoord from, scoord to, char promo);
+    inline unsigned countParticular(int depth, int i, scoord from);
+    void printHasMoved();
 };

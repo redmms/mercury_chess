@@ -20,7 +20,7 @@ class ChessClock : public QObject
     QTime zero_time;
 
 public:
-    ChessClock(QObject* parent, QLabel* opponent_label, QLabel* user_label, bool side_, int max_minutes);
+    ChessClock(QObject* parent_, QLabel* opponent_label_, QLabel* user_label_, bool side_, int max_minutes_);
 
     void stopTimer();
 

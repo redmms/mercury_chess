@@ -4,7 +4,8 @@
 
 class Board;
 class QMouseEvent;
-class Tile : public QLabel, public VirtualTile {
+class Tile : public QLabel, public VirtualTile 
+{
     Q_OBJECT
 
     QColor black;

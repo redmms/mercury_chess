@@ -1,7 +1,6 @@
 #pragma once
 #include "tile.h"
 #include "board.h"
-#include <QDebug>
 using namespace std;
 
 Tile::Tile(scoord tile_coord_, char piece_name_, bool piece_color_, bool side_, Board* parent_) :

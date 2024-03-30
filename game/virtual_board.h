@@ -5,8 +5,10 @@
 #include <vector>
 
 class VirtualTile;
+class Tile;
 class Board;
-class VirtualBoard {
+class VirtualBoard 
+{
 public:
     VirtualValidator* valid;
     VirtualTile* tiles[8][8];
@@ -20,6 +22,7 @@ public:
     std::vector<halfmove> history;
 
     VirtualBoard();
+    VirtualBoard(Board* copy_);
     virtual ~VirtualBoard() {};
 
     // member access:
@@ -35,14 +38,14 @@ public:
     void passPawn(scoord from, scoord to, bool virtually = false);
     virtual void promotePawn(scoord from, char& into, bool virtually = true);
     virtual void halfMove(scoord from, scoord to, char promo);
-    void halfMove(scoord from, scoord to, char promo, halfmove& saved, bool virtually = false);
+    void halfMove(scoord from, scoord to, char promo, halfmove& saved, bool virtually = false, bool historically = true);
     // move backward (undo):
     void restoreTile(const VirtualTile& saved, bool virtually = false);
     void revertMoveSimply(vove move, bool virtually = false);
     void revertCastling(vove move, bool virtually = false);
     void revertPass(vove move, bool virtually = false);
     void revertPromotion(vove move, bool virtually = false);
-    void revertHalfmove(halfmove saved, bool virtually = false);
+    void revertHalfmove(halfmove saved, bool virtually = false, bool historically = true);
     // methods for watching history:
     void moveForward();
     void moveBack();
@@ -55,4 +58,6 @@ public:
     auto operator [](int i) {
         return tiles[i];
     }
+    void importTiles(Tile* (&arr)[8][8]);
+    //void copyState(Board* orig);
 };

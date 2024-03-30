@@ -177,7 +177,6 @@ void WebClient::sendToServer(packnum type, bool respond, QString message, scoord
         writePack(packnum::registration);
         writePack(settings["user_name"].toString());
         writePack(settings["user_pass"].toByteArray());
-        // FIX: add check of "user_name" setting exist. P.S. no need
         break;
     case packnum::login:
         writePack(packnum::login);
@@ -240,13 +239,13 @@ void WebClient::sendToServer(packnum type, bool respond, QString message, scoord
 //            little_copy.push_back(send_package[r]);
 //        }
 //        auto bytes_written = socket->write(little_copy);
-//        if (!socket->waitForBytesWritten()) // FIX: it may cause the problem with pictures
+//        if (!socket->waitForBytesWritten())
 //            qDebug() << "Couldn't wait for bytes to be written";
 //        little_copy.clear();
 //    }
 
     auto bytes_written = socket->write(send_package);
-    if (!socket->waitForBytesWritten(10000)) // FIX: it may cause the problem with pictures
+    if (!socket->waitForBytesWritten(10000))
         qDebug() << "Couldn't wait for bytes to be written";
     if (bytes_written == -1)
         qDebug() << "Couldn't write send_package to server";

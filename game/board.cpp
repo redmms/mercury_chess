@@ -40,9 +40,13 @@ Board::Board(MainWindow* parent_, QLabel* background_) :
     drawLetters();
     drawNumbers();
     initTiles();
-    setTiles("rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8");
 
     VirtualBoard::valid = Board::valid;
+
+    //setTiles("rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8");
+    //setTiles("r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10");
+    setTiles();
+
     for (int x = 0; x < 8; x++) {
         for (int y = 0; y < 8; y++) {
             VirtualBoard::tiles[x][y] = Board::tiles[x][y];
@@ -185,18 +189,18 @@ void Board::promotePawn(scoord from, char& into, bool virtually)
 void Board::halfMove(scoord from, scoord to, char promo)
 {
     halfmove saved;
-    VirtualBoard::halfMove(from, to, promo, saved);
+    VirtualBoard::halfMove(from, to, promo, saved, false, false);
     emitCurrentStatus(saved);
 }
 
 void Board::savingHalfMove(scoord from, scoord to, char promo)
 {
     halfmove hmove;
-    bitmove bmove;
-    saveBitmove(from, to, bmove); // order matters here
-    VirtualBoard::halfMove(from, to, promo, hmove);
-    bmove.promo = promo_by_char[hmove.promo]; // known after openPromotion() only
-    bistory.push_back(bmove);
+    //bitmove bmove;
+    //saveBitmove(from, to, bmove); // order matters here
+    VirtualBoard::halfMove(from, to, promo, hmove, false, true);
+    //bmove.promo = promo_by_char[hmove.promo]; // known after openPromotion() only
+    //bistory.push_back(bmove);
     emitCurrentStatus(hmove);
 }
 

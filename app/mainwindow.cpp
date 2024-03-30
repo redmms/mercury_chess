@@ -7,7 +7,6 @@
 #include "history_area.h"
 #include "chat.h"
 #include "../game/board.h"
-#include "../game/tile.h"
 #include "../game/clock.h"
 #include "../archiver/archiver.h"
 #include <QGraphicsDropShadowEffect>
@@ -18,7 +17,6 @@
 #include <QFile>
 #include <QTimer>
 #include <QDebug>
-#include <QString>
 #include <QPainter>
 using namespace std;
 
@@ -51,7 +49,7 @@ MainWindow::MainWindow(QString app_dir_) :
     ui->resign_button->disconnect();
     ui->menuOnline->setEnabled(false);
     ui->actionWith_AI->setEnabled(false);
-    ui->actionTraining->setEnabled(false);
+    //ui->actionTraining->setEnabled(false);
     ui->actionRandomly->setEnabled(false);
     //ui->actionProfile->setEnabled(false);
     this->setWindowIcon(QIcon(":/images/app_icon"));

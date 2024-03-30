@@ -8,8 +8,8 @@ using namespace std;
 using lambda = function<bool(scoord)>;
 using checker = function<bool(scoord, bool&)>;
 
-VirtualValidator::VirtualValidator(VirtualBoard* mother_board) :
-    board(mother_board),
+VirtualValidator::VirtualValidator(VirtualBoard* mother_board_) :
+    board(mother_board_),
     valid_moves{},
     check{ false },
     has_moved{ false },
@@ -48,6 +48,10 @@ VirtualValidator::VirtualValidator(VirtualBoard* mother_board) :
     differentColor([&](scoord coord) -> bool {
         // may be realized differently, with either turn or piece color
         return occupied(coord) && pieceColor(coord) != theTurn();
+        }),
+    sameColor([&](scoord coord) -> bool {
+        // may be realized differently, with either turn or piece color
+        return occupied(coord) && pieceColor(coord) == theTurn();
         }),
     freeToEat([&](scoord coord) -> bool {
         return differentColor(coord) && pieceName(coord) != 'K';
@@ -141,12 +145,12 @@ const std::vector<halfmove>& VirtualValidator::story()
 
 void VirtualValidator::moveVirtually(scoord from, scoord to, char promo, halfmove& saved_move)
 {
-    board->halfMove(from, to, promo, saved_move, true);
+    board->halfMove(from, to, promo, saved_move, true, true);
 }
 
 void VirtualValidator::revertVirtualMove(halfmove saved_move)
 {
-    board->revertHalfmove(saved_move, true);
+    board->revertHalfmove(saved_move, true, true);
 }
 
 //void VirtualValidator::printHasMoved()
@@ -431,14 +435,35 @@ bool VirtualValidator::inStalemate(bool color)
     return true;
 }
 
+bool VirtualValidator::searchingInStalemate(bool color)
+{
+    movable_pieces.clear();
+    set<scoord> temp_valid_moves;
+    bool stalemate = true;
+    for (int x = 0; x < 8; x++) {
+        for (int y = 0; y < 8; y++) {
+            scoord coord{ x, y };
+            if (occupied(coord) && !differentColor(coord)) {
+                findValid(coord, temp_valid_moves); // should fastFindValid without temp_moves parameter
+                if (!temp_valid_moves.empty()) {
+                    temp_valid_moves.clear();
+                    movable_pieces.insert(coord);
+                    stalemate = false;
+                }
+            }
+        }
+    }
+    return stalemate;
+}
+
 bool VirtualValidator::canCastle(scoord from, scoord to, scoord* rook)
 {
-    list<int> castling_side;
+    list<int> castling_sides;
     if (theTurn() && pieceName(from) == 'K' && !has_moved[1])
-        castling_side = { 0, 2 };
+        castling_sides = { 0, 2 };
     else if (!theTurn() && pieceName(from) == 'K' && !has_moved[4])
-        castling_side = { 3, 5 };
-    for (int i : castling_side) {
+        castling_sides = { 3, 5 };
+    for (int i : castling_sides) {
         if (to == castling_destination[i] && !has_moved[i]) {
             for (auto coord : should_be_free[i])
                 if (occupied(coord))
@@ -477,7 +502,8 @@ bool VirtualValidator::canPass(scoord from, scoord to)
 
 bool VirtualValidator::canPromote(scoord pawn, scoord destination)
 {
-    return pieceName(pawn) == 'P' && destination.y == (theTurn() ? 7 : 0);
+    bool cp = pieceName(pawn) == 'P' && destination.y == (theTurn() ? 7 : 0);
+    return cp;
 }
 
 void VirtualValidator::updateHasMoved(scoord from, scoord to)
@@ -489,48 +515,10 @@ void VirtualValidator::updateHasMoved(scoord from, scoord to)
     }
 }
 
-qint64 VirtualValidator::countMoves(int depth, int i)
-{
-    qint64 particular_move_count = 0;
-    for (int x = 0; x < 8; x++) {
-        for (int y = 0; y < 8; y++) {
-            scoord from = { x, y };
-            if (occupied(from) && !differentColor(from)) {
-                set<scoord> saved_moves;
-                findValid(from, saved_moves);
-                if (i == depth - 1) {
-                    particular_move_count += saved_moves.size();
-                    saved_moves.clear();
-                }
-                else {
-                    for (auto to : saved_moves) {
-                        halfmove last_move;
-                        board->halfMove(from, to, 'e', last_move);
-                        auto mc = countMovesTest(depth, i + 1);
-                        particular_move_count += mc;
-                        //particular_move_count += countMovesTest(depth, i + 1);
-                        board->revertHalfmove(last_move);
-                        if (i == 0) {
-                            cout/* << "Move: "*/
-                                //<< MainWindow::halfmoveToString(last_move).toStdString()
-                                /*<< ", variants: "*/
-                                << coordToString(from).toStdString() + coordToString(to).toStdString()
-                                << ": "
-                                << mc
-                                << endl;
-                        }
-                    }
-                }
-            }
-        }
-    }
-    return particular_move_count;
-}
-
-qint64 VirtualValidator::countMovesTest(int depth, int i)
+unsigned VirtualValidator::countMovesTest(int depth, int i)
 {
     //VirtualBoard board_copy = *board;
-    qint64 total_moves_n = countMoves(depth, i);
+    unsigned total_moves_n = countMoves(depth, i);
     //for (int x = 0; x < 8; x++)
     //    for (int y = 0; y < 8; y++)
     //        if (board_copy[x][y] != (*board)[x][y])
@@ -542,6 +530,211 @@ qint64 VirtualValidator::countMovesTest(int depth, int i)
     return total_moves_n;
 }
 
+unsigned VirtualValidator::countMoves(int depth, int i)
+{
+    unsigned total_count = 0;
+    for (int x = 0; x < 8; x++){
+        for (int y = 0; y < 8; y++){
+            scoord from = { x, y };
+            if (sameColor(from)) 
+                total_count += countParticular(depth, i, from);
+        }
+    }
+    return total_count;
+}
+
+#include <iostream>
+#include <string_view>
+unsigned VirtualValidator::countParticular(int depth, int i, scoord from) // если первый ход был h2h3
+// last_from == {7, 1} && last_to == {7, 2} и i == 1 (2)
+{
+    //auto size = board->history.size();
+    //scoord last_from;
+    //scoord last_to;
+    //if (board->history.size() > 16) {
+    //    last_from = board->history[16].move.first.coord;
+    //    last_to = board->history[16].move.second.coord;
+    //}
+    //scoord next_from_last;
+    //scoord next_to_last;
+    //if (board->history.size() > 17) {
+    //    next_from_last = board->history[17].move.first.coord;
+    //    next_to_last = board->history[17].move.second.coord;
+    //}
+    //scoord h2 = stringToCoord("h2");
+    //scoord h3 = stringToCoord("h3");
+    //scoord a7 = stringToCoord("a7");
+    //scoord a5 = stringToCoord("a5");
+    //scoord c1 = stringToCoord("c1");
+    //auto debugPause = [&](scoord to) {
+    //    return last_from == h2 &&
+    //           last_to == h3 &&
+    //           from == a7 &&
+    //           to == a5;
+    //    };
+    //auto debugBottomPause = [&]() {
+    //    return last_from == h2 &&
+    //        last_to == h3 &&
+    //        next_from_last == a7 &&
+    //        next_to_last == a5;
+    //    };
+
+
+    unsigned particular_count = 0;
+    set<scoord> saved_moves;
+    //bool pause = debugBottomPause() && from == c1;
+    findValid(from, saved_moves);
+    if (i == depth - 1) {
+        particular_count = saved_moves.size();
+        for (scoord to : saved_moves) {
+            bool can_promote = canPromote(from, to);
+            particular_count += 3 * can_promote;
+            //if (!i /*|| debugBottomPause()*/) {
+            //    string str = can_promote ? "QRNB" : "e";
+            //    for (char promo : str) {
+            //        //cout << "    depth: " << depth;
+            //        printMoveCount(from, to, promo, 1);
+            //    }
+            //}
+        }
+    }
+    else {
+        for (scoord to : saved_moves) {
+            string str = canPromote(from, to) ? "QRNB" : "e";
+            for (char promo : str) {
+                //bool pause = from == h2 && to == h3;
+                auto copy_count = tryMove(depth, i + 1, from, to, promo);
+                particular_count += copy_count;
+                //if (!i /*|| debugPause(to)*/)
+                //    printMoveCount(from, to, promo, copy_count);
+            }
+        }
+    }
+    saved_moves.clear();
+    return particular_count;
+}
+
+unsigned VirtualValidator::tryMove(int depth, int i, scoord from, scoord to, char promo)
+{
+    halfmove last_move;
+    //VirtualBoard board_copy = *board;
+    board->VirtualBoard::halfMove(from, to, promo, last_move);
+    //scoord last_from = board->history[16].move.first.coord;
+    //scoord last_to = board->history[16].move.second.coord;
+    unsigned move_count = countMoves(depth, i);
+    board->VirtualBoard::revertHalfmove(last_move);
+    //for (int x = 0; x < 8; x++) {
+    //    for (int y = 0; y < 8; y++) {
+    //        if (*board_copy[x][y] != *(*board)[x][y])
+    //            cout << "WARNING: Board is not the same after tests." << endl
+    //            << "Board before:" << endl
+    //            << board_copy.toStr() << endl
+    //            << "Board after:" << endl
+    //            << board->toStr() << endl << endl;
+    //    }
+    //}
+    //        if (board_copy.black_king != board->black_king) {
+    //            cout << "REVERT ERROR" << endl;
+
+    //        }
+    //        if (board_copy.white_king != board->white_king) {
+    //            cout << "REVERT ERROR" << endl;
+
+    //        }
+    //        if (board_copy.turn != board->turn) {
+    //            cout << "REVERT ERROR" << endl;
+
+    //        }
+    //        if (board_copy.side != board->side) {
+    //            cout << "REVERT ERROR" << endl;
+
+    //        }
+    //        for (int i = 0; i < 6; i++) {
+    //            if (board_copy.valid->has_moved[i] != board->valid->has_moved[i])
+    //                cout << "REVERT ERROR" << endl;
+
+    //        }
+    //        if (board_copy.history.size() != board->history.size()) {
+    //            cout << "REVERT ERROR" << endl;
+    //        }
+    //        //if (board_copy.history.back() != board->history.back()) {
+    //        //    cout << "REVERT ERROR" << endl;
+    //        //}
+            
+    return move_count;
+}
+
+void VirtualValidator::printMoveCount(scoord from, scoord to, char promo, unsigned move_count)
+{
+    cout << coordToString(from).toStdString() + coordToString(to).toStdString();
+    if (promo != 'e')
+        cout << char(tolower(promo));
+    cout << ": "
+        << move_count
+        << endl;
+}
+
+
+
+
+
+
+
+
+
+//
+//qint64 VirtualValidator::countMoves(int depth, int i)
+//{
+//    qint64 particular_move_count = 0;
+//    for (int x = 0; x < 8; x++) {
+//        for (int y = 0; y < 8; y++) {
+//            scoord from = { x, y };
+//            if (occupied(from) && !differentColor(from)) {
+//                set<scoord> saved_moves;
+//                findValid(from, saved_moves);
+//                if (i == depth - 1) {
+//                    particular_move_count += saved_moves.size();
+//                    saved_moves.clear();
+//                }
+//                else {
+//                    for (auto to : saved_moves) {
+//                        halfmove last_move;
+//                        board->halfMove(from, to, 'e', last_move);
+//                        auto mc = countMoves(depth, i + 1);
+//                        particular_move_count += mc;
+//                        //particular_move_count += countMovesTest(depth, i + 1);
+//                        board->revertHalfmove(last_move);
+//                        if (i == 0) {
+//                            cout/* << "Move: "*/
+//                                //<< MainWindow::halfmoveToString(last_move).toStdString()
+//                                /*<< ", variants: "*/
+//                                << coordToString(from).toStdString() + coordToString(to).toStdString()
+//                                << ": "
+//                                << mc
+//                                << endl;
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//    }
+//    return particular_move_count;
+//}
+//
+//qint64 VirtualValidator::countMovesTest(int depth, int i)
+//{
+//    //VirtualBoard board_copy = *board;
+//    qint64 total_moves_n = countMoves(depth, i);
+//    //for (int x = 0; x < 8; x++)
+//    //    for (int y = 0; y < 8; y++)
+//    //        if (board_copy[x][y] != (*board)[x][y])
+//    //            cout << "WARNING: Board is not the same after tests." << endl
+//    //                << "Board before:" << endl
+//    //                << board_copy.toStr() << endl
+//    //                << "Board after:" << endl
+//    //                << board->toStr() << endl << endl;
+//    return total_moves_n;
+//}
 
 //// should go as fastMoveFinder():
 //moveFinder([&](scoord coord, lambda can_move_checker, set<scoord>& container) -> bool {

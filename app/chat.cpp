@@ -4,6 +4,7 @@
 #include <QTimer>
 #include <QWidget>
 #include <QLabel>
+#include <QPainter>
 using namespace std;
 
 Chat::Chat(QWidget* parent_, QScrollArea* chat_area_, QColor background_color_) :

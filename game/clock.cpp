@@ -5,13 +5,13 @@
 #include <QDebug>
 using namespace std;
 
-ChessClock::ChessClock(QObject* parent, QLabel* opponent_label, QLabel* user_label,
-    bool side_, int max_minutes)
-    : QObject(parent),
+ChessClock::ChessClock(QObject* parent_, QLabel* opponent_label_, QLabel* user_label_,
+    bool side_, int max_minutes_)
+    : QObject(parent_),
     side(side_),
-    black_label(side ? opponent_label : user_label),
-    white_label(side ? user_label : opponent_label),
-    max_time(max_minutes * 60000),
+    black_label(side ? opponent_label_ : user_label_),
+    white_label(side ? user_label_ : opponent_label_),
+    max_time(max_minutes_ * 60000),
     black_remains(max_time),
     white_remains(max_time),
     black_timer(new QTimer(this)),
@@ -34,20 +34,13 @@ ChessClock::ChessClock(QObject* parent, QLabel* opponent_label, QLabel* user_lab
 
 void ChessClock::stopTimer()
 {
-    if (black_timer)
+    if (!black_timer || !white_timer || !sec_counter)
+        qDebug() << "ERROR: tried to stop deleted timer";
+    else {
         black_timer->stop();
-    else
-        qDebug() << "ERROR: tried to stop deleted timer";
-
-    if (white_timer)
         white_timer->stop();
-    else
-        qDebug() << "ERROR: tried to stop deleted timer";
-
-    if (sec_counter)
         sec_counter->stop();
-    else
-        qDebug() << "ERROR: tried to stop deleted timer";
+    }
 }
 
 void ChessClock::updateTimer()
