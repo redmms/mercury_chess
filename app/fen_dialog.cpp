@@ -20,7 +20,10 @@ void FenDialog::on_skip_button_clicked()
 
 void FenDialog::on_save_button_clicked()
 {
-    emit newFen(ui->fen_edit->text());
+    QString fen = ui->fen_edit->text();
+    if (fen.isEmpty())
+        fen = "rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8";
+    emit newFen(fen);
     accept();
 }
 

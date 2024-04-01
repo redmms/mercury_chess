@@ -76,10 +76,12 @@ private slots:
     void on_back_from_login_button_clicked();
     void on_change_ip_button_clicked();
     void on_restore_default_button_clicked();
+    void on_copy_fen_button_clicked();
 
     // menu's actions
     void on_actionWith_friend_triggered();
     void on_actionWith_friend_offline_triggered();
+    void on_actionTraining_triggered();
     void on_actionProfile_triggered();
     void on_actionToggle_fullscreen_triggered();
     void on_actionEnter_triggered();
@@ -99,9 +101,7 @@ private slots:
     void my_history_next_button_clicked();
     void my_history_previous_button_clicked();
 
-    void on_test_button_clicked();
-
-    void on_actionTraining_triggered();
+    //void on_test_button_clicked();
 
 protected slots:
     void endSlot(endnum end_type);

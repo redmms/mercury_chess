@@ -20,6 +20,7 @@ public:
     int current_move;
     endnum end_type;
     std::vector<halfmove> history;
+    int no_change_n;
 
     VirtualBoard();
     VirtualBoard(Board* copy_);
@@ -53,6 +54,7 @@ public:
     virtual void initTiles();
     void setTiles();
     void setTiles(QString fen);
+    QString getFen();
     // other:
     std::string toStr(bool stat = false);
     auto operator [](int i) {

@@ -17,11 +17,11 @@ VirtualBoard::VirtualBoard() :
     turn(true),  // true for white turn;
     side(settings["match_side"].toBool()),
     current_move(0),
-    end_type(endnum::interrupt)
+    end_type(endnum::interrupt),
+    no_change_n(0)
 {    
     initTiles();
     setTiles();
-    //setTiles("rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8");
 }
 
 VirtualBoard::VirtualBoard(Board* copy_)
@@ -112,6 +112,12 @@ void VirtualBoard::halfMove(scoord from, scoord to, char promo)
 
 void VirtualBoard::halfMove(scoord from, scoord to, char promo, halfmove& saved, bool virtually, bool historically)
 {    
+    if (historically) {
+        if (theTile(to)->piece_name == 'e' && theTile(from)->piece_name != 'P')
+            no_change_n++;
+        else
+            no_change_n = 0;
+    }
     saveMoveSimply(from, to, saved.move);
     saved.check = valid->check;
     saved.turn = turn;
@@ -138,21 +144,21 @@ void VirtualBoard::halfMove(scoord from, scoord to, char promo, halfmove& saved,
     if (historically) {
         history.push_back(saved);
     }
-    if (!virtually) { // use this version for faster testing
-        turn = !turn;
-        valid->inCheck(turn);
-    }
-
-    //if (!virtually) {
+    //if (!virtually) { // use this version for faster testing
     //    turn = !turn;
-    //    if (valid->inCheck(turn)) {
-    //        if (valid->inStalemate(turn))  // check + stalemate == checkmate
-    //            end_type = turn == side ? opponent_wins : user_wins;
-    //    }
-    //    else if (valid->inStalemate(turn)) {
-    //        end_type = draw_by_stalemate;
-    //    }
+    //    valid->inCheck(turn);
     //}
+
+    if (!virtually) {
+        turn = !turn;
+        if (valid->inCheck(turn)) {
+            if (valid->inStalemate(turn))  // check + stalemate == checkmate
+                end_type = turn == side ? opponent_wins : user_wins;
+        }
+        else if (valid->inStalemate(turn)) {
+            end_type = draw_by_stalemate;
+        }
+    }
 
     //cout << "\n";
     //cout << toStr(false);
@@ -278,26 +284,28 @@ void VirtualBoard::setTiles(QString fen)
     }
     QString turn_fen = parts[1];
     turn = turn_fen == "w";
-    QString castling_fen = parts[2];
+    QString castle_fen = parts[2];
     for (int i = 0; i < 6; i++)
         valid->has_moved[i] = true;
-    if (castling_fen.contains('Q')) {
+    if (castle_fen.contains('Q')) {
         valid->has_moved[0] = false;
         valid->has_moved[1] = false;
     }
-    if (castling_fen.contains('K')) {
+    if (castle_fen.contains('K')) {
         valid->has_moved[1] = false;
         valid->has_moved[2] = false;
     }
-    if (castling_fen.contains('q')) {
+    if (castle_fen.contains('q')) {
         valid->has_moved[3] = false;
         valid->has_moved[4] = false;
     }
-    if (castling_fen.contains('k')) {
+    if (castle_fen.contains('k')) {
         valid->has_moved[4] = false;
         valid->has_moved[5] = false;
     }
-    QString fullmove_count = parts.size() > 4 ? parts.last() : "1";
+    QString no_change_fen = parts.size() > 4 ? parts[4] : "0";
+    no_change_n = no_change_fen.toInt();
+    QString fullmove_count = parts.size() > 5 ? parts[5] : "1";
     int halfmove_count = fullmove_count.toInt() * 2;
     halfmove hmove;
     history = vector<halfmove>(halfmove_count, hmove);
@@ -314,6 +322,95 @@ void VirtualBoard::setTiles(QString fen)
         history.back().turn = !turn;
     }
     valid->inCheck(turn);
+}
+
+QString VirtualBoard::getFen()
+{
+    QString tiles_fen = "";
+    scoord coord = { 0, 7 };
+    int empty_count = 0;
+    for (int y = 7; y >= 0; y--) {
+        for (int x = 0; x <= 7; x++) {
+            char c = theTile({ x, y })->piece_name;
+            if (c != 'e') {
+                if (empty_count) {
+                    tiles_fen.push_back('0' + empty_count);
+                    empty_count = 0;
+                }
+                bool color = theTile({ x, y })->piece_color;
+                QChar qc = c;
+                if (!color) {
+                    qc = qc.toLower();
+                }
+                tiles_fen.push_back(qc);
+            }
+            else {
+                empty_count++;
+            }
+        }
+        if (empty_count) {
+            tiles_fen.push_back('0' + empty_count);
+            empty_count = 0;
+        }
+        tiles_fen.push_back('/');
+    }
+    tiles_fen.chop(1);
+    QString turn_fen = turn ? "w" : "b";
+    QString castle_fen = "KQkq";
+    if (valid->has_moved[0]) {
+        castle_fen.remove('Q');
+    }
+    if (valid->has_moved[1]) {
+        castle_fen.remove('Q');
+        castle_fen.remove('K');
+    }
+    if (valid->has_moved[2]) {
+        castle_fen.remove('K');
+    }
+    if (valid->has_moved[3]) {
+        castle_fen.remove('q');
+    }
+    if (valid->has_moved[4]) {
+        castle_fen.remove('q');
+        castle_fen.remove('k');
+    }
+    if (valid->has_moved[5]) {
+        castle_fen.remove('k');
+    }
+    QString pass_fen;
+    if (!history.empty()) {
+        vove last = history.back().move;
+        scoord from = last.first.coord;
+        scoord to = last.second.coord;
+        bool could_be_pass = abs(to.y - from.y) == 2;
+        if (could_be_pass) {
+            int k = last.first.piece_color ? 1 : -1;
+            scoord middle = { to.x, int(4 - 1.5 * k) };
+            pass_fen = coordToString(middle);
+        }
+        else {
+            pass_fen = "-";
+        }
+    }
+    else {
+        pass_fen = "-";
+    }
+    QString no_change_fen = QString::number(no_change_n);
+    float halfmove_n = history.size();
+    int i_next_fullmove = ceil((halfmove_n + 1) / 2);
+    QString fullmove_fen = QString::number(i_next_fullmove);
+    QString fen = tiles_fen + 
+                  " " +
+                  turn_fen +
+                  " " +
+                  castle_fen +
+                  " " +
+                  pass_fen +
+                  " " +
+                  no_change_fen + 
+                  " " + 
+                  fullmove_fen;
+    return fen;
 }
 
 void VirtualBoard::moveForward()

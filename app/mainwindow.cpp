@@ -19,6 +19,8 @@
 #include <QTimer>
 #include <QDebug>
 #include <QPainter>
+#include <QApplication>
+#include <QClipboard>
 using namespace std;
 
 MainWindow::MainWindow(QString app_dir_) :
@@ -449,12 +451,4 @@ void MainWindow::statusSlot(tatus status)
     if (game_regime != "history") {
         history_area->writeStory(order, last_move);
     }
-}
-
-void MainWindow::on_actionTraining_triggered()
-{
-    startGame("friend_offline");
-    FenDialog dialog(this);
-    connect(&dialog, &FenDialog::newFen, board, &Board::setTilesSlot);
-    dialog.exec();
 }
