@@ -129,6 +129,7 @@ void VirtualBoard::halfMove(scoord from, scoord to, char promo, halfmove& saved,
         moveSimply(from, to, virtually);
     }
     if (valid->canPromote(to, to)) {
+        bool pause = promo == 'e';
         virtually ? 
             VirtualBoard::promotePawn(to, promo, virtually) : 
                           promotePawn(to, promo, virtually);
@@ -176,7 +177,7 @@ void VirtualBoard::revertCastling(vove move, bool virtually)
     scoord destination = move.second.coord;
     int add = destination.x - king.x > 0 ? 1 : -1;
     scoord rook{ destination.x - add, destination.y};
-    scoord rook_corner{ add ? 7 : 0, destination.y};
+    scoord rook_corner{ add > 0 ? 7 : 0, destination.y};
     revertMoveSimply(move, virtually);
     auto corner_tile = theTile(rook_corner);
     auto rook_tile = theTile(rook);
@@ -315,7 +316,6 @@ void VirtualBoard::setTiles(QString fen)
     valid->inCheck(turn);
 }
 
-// beggining of virtual methods
 void VirtualBoard::moveForward()
 {
     if (0 <= current_move && current_move < history.size()) {
@@ -351,7 +351,6 @@ string VirtualBoard::toStr(bool stat)
     return view;
 }
 
-
 void VirtualBoard::importTiles(Tile* (&arr)[8][8])
 {
     for (int x = 0; x < 8; x++) {
@@ -360,8 +359,6 @@ void VirtualBoard::importTiles(Tile* (&arr)[8][8])
         }
     }
 }
-
-
 
 void VirtualBoard::initTiles()
 {

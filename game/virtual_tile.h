@@ -13,6 +13,14 @@ public:
     VirtualTile(scoord tile_coord_ = {}, char piece_name_ = 'e', bool piece_color_ = false, VirtualBoard* parent_ = 0);
 
     virtual void setPiece(char elem, bool color, bool virtually = false);
+
+    bool operator == (VirtualTile& r) {
+        return coord == r.coord && piece_name == r.piece_name && piece_color == r.piece_color /*&& tile_color == r.tile_color && board == r.board*/;
+    }
+
+    bool operator != (VirtualTile& r) {
+        return coord != r.coord || piece_name != r.piece_name || piece_color != r.piece_color /*|| tile_color != r.tile_color || board != r.board*/;
+    }
 };
 
 struct halfmove {
