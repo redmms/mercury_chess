@@ -122,7 +122,7 @@ void Board::reactOnClick(Tile* tile) {
         // if it's the second click and move is valid
         // then move pieces
         savingHalfMove(from_coord, coord, 'e');
-        valid->hideValid(); // order matters here
+        valid->hideValid(); // order matters here, valid->valid_moves is used by saveBitmove()
         from_coord = {-1, -1};
     }
     else
