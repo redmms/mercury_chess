@@ -72,6 +72,7 @@ public:
     bool searchingInStalemate(bool color);
     bool canCastle(scoord from, scoord to, scoord* rook = nullptr);
     bool canPass(scoord from, scoord to);
+    bool canPass(scoord from, scoord to, const vove& last_move);
     bool canPromote(scoord pawn, scoord destination);
     void updateHasMoved(scoord from, scoord to);
     // testing:

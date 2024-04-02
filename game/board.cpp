@@ -43,8 +43,6 @@ Board::Board(MainWindow* parent_, QLabel* background_) :
 
     VirtualBoard::valid = Board::valid;
 
-    //setTiles("rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8");
-    //setTiles("r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10");
     setTiles();
 
     for (int x = 0; x < 8; x++) {
@@ -180,27 +178,29 @@ Tile* Board::theTile(scoord coord)
 void Board::promotePawn(scoord from, char& into, bool virtually)
 {    
     QString game_regime = settings["game_regime"].toString();
-    if (game_regime == "friend_offline" || game_regime == "friend_online" && turn == side) {
+    if (game_regime == "friend_offline" || game_regime == "training" || game_regime == "friend_online" && turn == side) {
         into = openPromotion(from);
     }
     theTile(from)->setPiece(into, theTile(from)->piece_color);
 }
 
-void Board::halfMove(scoord from, scoord to, char promo)
+void Board::halfMove(scoord from, scoord to, char promo, halfmove* saved, bool virtually, bool historically)
 {
-    halfmove saved;
-    VirtualBoard::halfMove(from, to, promo, saved, false, false);
-    emitCurrentStatus(saved);
+    halfmove hmove;
+    if (saved)
+        hmove = *saved;
+    VirtualBoard::halfMove(from, to, promo, &hmove, false, false);
+    emitCurrentStatus(hmove);
 }
 
 void Board::savingHalfMove(scoord from, scoord to, char promo)
 {
     halfmove hmove;
-    //bitmove bmove;
-    //saveBitmove(from, to, bmove); // order matters here
-    VirtualBoard::halfMove(from, to, promo, hmove, false, true);
-    //bmove.promo = promo_by_char[hmove.promo]; // known after openPromotion() only
-    //bistory.push_back(bmove);
+    bitmove bmove;
+    saveBitmove(from, to, bmove); // order matters here
+    VirtualBoard::halfMove(from, to, promo, &hmove, false, true);
+    bmove.promo = promo_by_char[hmove.promo]; // known after openPromotion() only
+    bistory.push_back(bmove);
     emitCurrentStatus(hmove);
 }
 
@@ -211,7 +211,7 @@ void Board::saveBitmove(scoord from, scoord to, bitmove& bmove)
         valid->findValid(from); // updates valid_moves for move index
     }
     bmove.move = Archiver::toMoveIdx(to, valid);
-    if (history.empty()) { // first move
+    if (history.empty() /*|| game_regime == "training"*/) { // first move
         valid->inStalemate(true); // updates movable_pieces for piece index
     }
     bmove.piece = Archiver::toPieceIdx(from, valid);

@@ -145,12 +145,12 @@ const std::vector<halfmove>& VirtualValidator::story()
 
 void VirtualValidator::moveVirtually(scoord from, scoord to, char promo, halfmove& saved_move)
 {
-    board->halfMove(from, to, promo, saved_move, true, true);
+    board->VirtualBoard::halfMove(from, to, promo, &saved_move, true, true);
 }
 
 void VirtualValidator::revertVirtualMove(halfmove saved_move)
 {
-    board->revertHalfmove(saved_move, true, true);
+    board->VirtualBoard::revertHalfmove(saved_move, true, true);
 }
 
 //void VirtualValidator::printHasMoved()
@@ -484,6 +484,11 @@ bool VirtualValidator::canPass(scoord from, scoord to)
     if (story().empty())
         return false;
     vove last_move = story().back().move;
+    return canPass(from, to, last_move);
+}
+
+bool VirtualValidator::canPass(scoord from, scoord to, const vove& last_move)
+{
     VirtualTile opp_from_tile = last_move.first;
     VirtualTile opp_to_tile = last_move.second;
     scoord opp_from = last_move.first.coord;
@@ -499,6 +504,7 @@ bool VirtualValidator::canPass(scoord from, scoord to)
         abs(from.x - opp_to.x) == 1 && // eating from the adjust column
         from.y == opp_to.y; // eating from the same raw
 }
+
 
 bool VirtualValidator::canPromote(scoord pawn, scoord destination)
 {
@@ -612,7 +618,7 @@ unsigned VirtualValidator::tryMove(int depth, int i, scoord from, scoord to, cha
 {
     halfmove last_move;
     VirtualBoard board_copy = *board;
-    board->VirtualBoard::halfMove(from, to, promo, last_move);
+    board->VirtualBoard::halfMove(from, to, promo, &last_move);
     unsigned move_count = countMoves(depth, i);
     board->VirtualBoard::revertHalfmove(last_move);
     for (int x = 0; x < 8; x++) {

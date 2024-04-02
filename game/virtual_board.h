@@ -38,8 +38,7 @@ public:
     void castleKing(scoord king, scoord destination, scoord rook, bool virtually = false);
     void passPawn(scoord from, scoord to, bool virtually = false);
     virtual void promotePawn(scoord from, char& into, bool virtually = true);
-    virtual void halfMove(scoord from, scoord to, char promo);
-    void halfMove(scoord from, scoord to, char promo, halfmove& saved, bool virtually = false, bool historically = true);
+    virtual void halfMove(scoord from, scoord to, char promo, halfmove* saved = nullptr, bool virtually = false, bool historically = true);
     // move backward (undo):
     void restoreTile(const VirtualTile& saved, bool virtually = false);
     void revertMoveSimply(vove move, bool virtually = false);

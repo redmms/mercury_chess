@@ -153,7 +153,7 @@ inline int Archiver::readMove(halfmove& hmove, fsm::ifinestream& ifs, VirtualBoa
         sout << " promo: " << promo;
     }
     sout << endl;
-    board.halfMove(from, to, char_by_promo[bmove.promo], hmove);
+    board.halfMove(from, to, char_by_promo[bmove.promo], &hmove);
     return 0;
 }
 
@@ -165,12 +165,12 @@ bitmove Archiver::toBitmove(halfmove hmove, Validator* valid)
 }
 
 bitremedy Archiver::toPieceIdx(scoord from, Validator* valid) {
-    unsigned char piece_idx = distance(valid->movable_pieces.begin(), valid->movable_pieces.find(from)) - 1;
+    unsigned char piece_idx = distance(valid->movable_pieces.begin(), valid->movable_pieces.find(from));
     return { piece_idx, fsm::MinBits(valid->movable_pieces.size() - 1), false };
 }
 
 bitremedy Archiver::toMoveIdx(scoord to, Validator* valid) {
-    unsigned char move_idx = distance(valid->valid_moves.begin(), valid->valid_moves.find(to)) - 1;
+    unsigned char move_idx = distance(valid->valid_moves.begin(), valid->valid_moves.find(to));
     return { move_idx, fsm::MinBits(valid->valid_moves.size() - 1), false };
 }
 

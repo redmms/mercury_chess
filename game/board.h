@@ -27,7 +27,7 @@ public:
     void drawNumbers();
     char openPromotion(scoord from);
     void promotePawn(scoord from, char& into, bool virtually = false) override;
-    void halfMove(scoord from, scoord to, char promo) override;
+    void halfMove(scoord from, scoord to, char promo, halfmove* saved = nullptr, bool virtually = false, bool historically = true) override;
     void savingHalfMove(scoord from, scoord to, char promo);
     void emitCurrentStatus(const halfmove& saved);
     Tile* theTile(scoord coord) override;

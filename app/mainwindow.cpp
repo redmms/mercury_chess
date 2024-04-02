@@ -241,12 +241,12 @@ void MainWindow::startGame(QString game_regime) // side true for user - white
         }
         qDebug() << "editReturnPressed receivers number is" << receivers(SIGNAL(editReturnPressed));
     }
-    else if (game_regime == "friend_offline"){
+    else if (game_regime == "friend_offline" || game_regime == "training") {
         settings["match_side"].setValue(true);
         ui->message_edit->setPlainText("Chat is off. But you can chat with yourself if you are a hikikomori.");
         ui->user_timer->setText("");
         ui->opponent_timer->setText("");
-        ui->resign_button->setText("Back");
+        ui->resign_button->setText("Previous menu");
         ui->draw_button->setText("Stop game");
         ui->resign_button->disconnect();
         ui->draw_button->disconnect();

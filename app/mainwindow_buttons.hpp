@@ -334,6 +334,11 @@ void MainWindow::on_actionSave_game_triggered()
             "You need to have an open game to save to use this option.");
         return;
     }
+    QString game_regime = settings["game_regime"].toString();
+    if (game_regime == "training") {
+        showBox("In development", "Not available for training mode yet.");
+        return;
+    }
 
     // Create directory
     QString archive_dir = app_dir + "/saved_games";
@@ -427,7 +432,7 @@ void MainWindow::on_actionLoad_game_triggered()
         startGame("history");
         for (int i = 0, size = history.size(); i < size; i++)
             history_area->writeStory(i + 1, history[i]);
-        board->end_type = end_type;
+        //board->end_type = end_type;
         board->history = history;
     }
     else {
@@ -439,7 +444,7 @@ void MainWindow::on_actionLoad_game_triggered()
 
 void MainWindow::on_actionTraining_triggered()
 {
-    startGame("friend_offline");
+    startGame("training");
     FenDialog dialog(this);
     connect(&dialog, &FenDialog::newFen, board, &Board::setTilesSlot);
     dialog.exec();

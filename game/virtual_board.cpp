@@ -92,62 +92,58 @@ void VirtualBoard::passPawn(scoord from, scoord to, bool virtually)
     opp_to_tile->setPiece('e', 0, virtually);
 }
 
-void VirtualBoard::halfMove(scoord from, scoord to, char promo)
-{
-    scoord rook;
-    if (valid->canCastle(from, to, &rook)) {
-        castleKing(from, to, rook);
-    }
-    else if (valid->canPass(from, to)) {
-        passPawn(from, to);
-    }
-    else {
-        moveSimply(from, to);
-    }
-    if (valid->canPromote(to, to)) {
-        promotePawn(to, promo);
-    }
-    turn = !turn;
-}
-
-void VirtualBoard::halfMove(scoord from, scoord to, char promo, halfmove& saved, bool virtually, bool historically)
+void VirtualBoard::halfMove(scoord from, scoord to, char promo, halfmove* hmove, bool virtually, bool historically)
 {    
-    if (historically) {
-        if (theTile(to)->piece_name == 'e' && theTile(from)->piece_name != 'P')
-            no_change_n++;
-        else
-            no_change_n = 0;
-    }
+    halfmove saved;
     saveMoveSimply(from, to, saved.move);
     saved.check = valid->check;
     saved.turn = turn;
     saved.moved = arrToChar(valid->has_moved);
+    saved.no_change_n = no_change_n;
+
+    if (theTile(to)->piece_name == 'e' && theTile(from)->piece_name != 'P') {
+        no_change_n++;
+    }
+    else {
+        no_change_n = 0;
+    }
+
+    int last_move;
+    if (historically) {
+        last_move = history.size() - 1;
+    }
+    else {
+        last_move = current_move - 1;
+    }
+
     scoord rook;
     if (valid->canCastle(from, to, &rook)) {
         castleKing(from, to, rook, virtually);
         saved.castling = true;
     }
-    else if (valid->canPass(from, to)) {
+    else if (0 <= last_move && last_move < history.size() && valid->canPass(from, to, history[last_move].move)) {
         passPawn(from, to, virtually);
         saved.pass = true;
     }
     else {
         moveSimply(from, to, virtually);
     }
+
     if (valid->canPromote(to, to)) {
-        bool pause = promo == 'e';
-        virtually ? 
-            VirtualBoard::promotePawn(to, promo, virtually) : 
-                          promotePawn(to, promo, virtually);
+        if (virtually)
+            VirtualBoard::promotePawn(to, promo, virtually);
+        else
+            promotePawn(to, promo, virtually); // promo will be changed by user
         saved.promo = promo;
     }
+
     if (historically) {
         history.push_back(saved);
     }
-    //if (!virtually) { // use this version for faster testing
-    //    turn = !turn;
-    //    valid->inCheck(turn);
-    //}
+
+    if (hmove) {
+        *hmove = saved;
+    }
 
     if (!virtually) {
         turn = !turn;
@@ -159,6 +155,11 @@ void VirtualBoard::halfMove(scoord from, scoord to, char promo, halfmove& saved,
             end_type = draw_by_stalemate;
         }
     }
+
+    //if (!virtually) { // use this version for faster testing
+    //    turn = !turn;
+    //    valid->inCheck(turn);
+    //}
 
     //cout << "\n";
     //cout << toStr(false);
@@ -225,6 +226,7 @@ void VirtualBoard::revertHalfmove(halfmove hmove, bool virtually, bool historica
     }
     valid->check = hmove.check;
     charToArr(hmove.moved, valid->has_moved);
+    no_change_n = hmove.no_change_n;
     if (historically) {
         history.pop_back();
     }
@@ -322,6 +324,7 @@ void VirtualBoard::setTiles(QString fen)
         history.back().turn = !turn;
     }
     valid->inCheck(turn);
+    valid->searchingInStalemate(turn);
 }
 
 QString VirtualBoard::getFen()
@@ -420,7 +423,7 @@ void VirtualBoard::moveForward()
         scoord from = hmove.move.first.coord;
         scoord to = hmove.move.second.coord;
         char promo = hmove.promo;
-        halfMove(from, to, promo);
+        halfMove(from, to, promo, nullptr, false, false);
         current_move++;
     }
 }

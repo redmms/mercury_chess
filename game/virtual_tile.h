@@ -31,6 +31,7 @@ struct halfmove {
     bool turn = false;
     bool check = false;
     unsigned char moved = 0;
+    unsigned char no_change_n = 0;
 };
 
 inline QString halfmoveToString(halfmove hmove)
