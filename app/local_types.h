@@ -39,8 +39,8 @@ enum endnum : uint8_t {
     opponent_resignation,
     user_out_of_time,
     opponent_out_of_time,
-    draw_by_repetition, // FIX: need to handle
-    draw_by_insufficient_material,  // FIX: need to handle
+    draw_by_repetition, // TODO: need to handle
+    draw_by_insufficient_material,  // TODO: need to handle
     opponent_disconnected_end,
     interrupt,
     server_disconnected,

@@ -116,7 +116,7 @@ MainWindow::MainWindow(QString app_dir_) :
     settings["def_port"].setValue(49001);
     settings["port_address"].setValue(49001);
     settings["def_address"].setValue(/*"127.0.0.1"*/(QString)"40.113.33.140");
-    settings["ip_address"].setValue((QString)"127.0.0.1"/*(QString)"40.113.33.140"*/);
+    settings["ip_address"].setValue(/*(QString)"127.0.0.1"*/(QString)"40.113.33.140");
     settings["max_nick"].setValue(12);
     settings["pic_w"].setValue(100);
     settings["pic_h"].setValue(100);
@@ -301,7 +301,7 @@ void MainWindow::startGame(QString game_regime) // side true for user - white
 
         int time = settings["time_setup"].toInt();
         clock=(new ChessClock(board, ui->opponent_timer, ui->user_timer, match_side, time));
-        // old clock will be destroyed inside Board constructor as a child // FIX: at least it should be
+        // old clock will be destroyed with an old board as a child
         connect(this, &MainWindow::timeToSwitchTime, clock, &ChessClock::switchTimer);
         connect(clock, &ChessClock::userOut, [this]() {
             endSlot(endnum::user_out_of_time);
@@ -342,8 +342,7 @@ void MainWindow::endSlot(endnum end_type)
     auto icon_type = QMessageBox::Information;
     switch (end_type) {
     case endnum::draw_by_agreement:
-        sounds["draw"]->play(); // FIX: this may cause server to keep game active (player1 and player2 initialized)
-        // because neither opponent neither user will send end_game signal to server
+        sounds["draw"]->play();
         info_message = "Draw by agreement";
         break;
     case endnum::draw_by_stalemate:

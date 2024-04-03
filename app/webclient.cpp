@@ -34,7 +34,7 @@ WebClient::~WebClient() {
 
 void WebClient::initSocket()
 {
-    socket = (new QTcpSocket(this)); //FIX: how to destruct previous socket?
+    socket = (new QTcpSocket(this));
     connect(socket, &QTcpSocket::errorOccurred, [&](QAbstractSocket::SocketError socketError){
         if (socket->state() == QAbstractSocket::UnconnectedState){
             qDebug() << "Couldn't connect to the server:";
@@ -341,7 +341,7 @@ void WebClient::readFromServer()
         }
         quint8 promo;
         readPack(promo);
-        mainwindow->board->halfMove(from, to, promo);
+        mainwindow->board->savingHalfMove(from, to, promo);
         break;
     }
     case packnum::chat_message:

@@ -45,7 +45,7 @@ public:
     MainWindow(QString app_dir_);
     ~MainWindow();
 
-    void showStatus(const QString& status);  // FIX: will const& cause problems or not?
+    void showStatus(const QString& status);
     void switchGlow();
     bool eventFilter(QObject* object, QEvent* event);
     void openStopGameBox();

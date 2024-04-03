@@ -1,15 +1,15 @@
 #pragma once
 #include "archiver.h"
 #include "../game/validator.h"
-#include "../game/virtual_tile.h"
+//#include "../game/virtual_tile.h"
 #include "../game/board.h"
-#include <QDebug>
-#include <sstream>
+//#include <QDebug>
+//#include <sstream>
 #include <iostream>
 import finestream;
 using namespace std;
 
-stringstream sout;
+//stringstream sout;
 
 Archiver::Archiver() {}
 
@@ -38,25 +38,25 @@ int Archiver::writeGame(endnum end_type, const std::vector<bitmove>& history, QS
         << user_side
         << moves_num
         << end;
-    sout << " side: " << user_side
-         << " moves: " << bitset<8>(moves_num)
-         << " end: " << end.toStr() << endl;
+    //sout << " side: " << user_side
+    //     << " moves: " << bitset<8>(moves_num)
+    //     << " end: " << end.toStr() << endl;
     for (auto bmove : history) {
         writeMove(bmove, ofs);
     }
-    cout << sout.str();
-    cout << "Ending bits number in the end of file is " << ofs.ExtraZerosN() << endl;
+    //cout << sout.str();
+    //cout << "Ending bits number in the end of file is " << ofs.ExtraZerosN() << endl;
     return 0;
 }
 
 int Archiver::writeMove(bitmove move, fsm::ofinestream& ofs) {
     ofs << move.piece
         << move.move;
-    sout << " piece: " << move.piece.toStr() << endl
-           << " move: " << move.move.toStr() << endl;
+    //sout << " piece: " << move.piece.toStr() << endl
+    //       << " move: " << move.move.toStr() << endl;
     if (move.promo != no_promotion) {
         ofs << bitset<2>(int(move.promo));
-        sout << " promo: " << bitset<2>(int(move.promo)) << endl;
+        //sout << " promo: " << bitset<2>(int(move.promo)) << endl;
     }
     return 0;
 }
@@ -97,28 +97,28 @@ int Archiver::readGame(endnum& end_type, std::vector<halfmove>& history, QString
     ifs >> end;
     end_type = endnum(int(end));
     
-    sout << " side: " << user_side
-         << " moves: " << bitset<8>(moves_num)
-         << " end: " << end.toStr() << endl;
+    //sout << " side: " << user_side
+    //     << " moves: " << bitset<8>(moves_num)
+    //     << " end: " << end.toStr() << endl;
 
     VirtualBoard board;
     VirtualValidator* valid = board.valid;
     valid->searchingInStalemate(true);
     for (int i = 0; i < moves_num; i++) {
-        int order = i + 1;
-        if ( order % 2)
-            sout << (order - 1) / 2 + 1 << "." << endl;
+        //int order = i + 1;
+        //if ( order % 2)
+        //    sout << (order - 1) / 2 + 1 << "." << endl;
         halfmove hmove;
         int err = readMove(hmove, ifs, board);
         if (err) {
-            cout << sout.str();
+            //cout << sout.str();
             return err + 2;
         }
         history.push_back(hmove);
         valid->valid_moves.clear();
-        cout << "\n" <<  order << ". " << halfmoveToString(hmove).toStdString() << " \n";
+        //cout << "\n" <<  order << ". " << halfmoveToString(hmove).toStdString() << " \n";
     }
-    cout << sout.str();
+    //cout << sout.str();
     return 0;
 }
 
@@ -143,16 +143,16 @@ inline int Archiver::readMove(halfmove& hmove, fsm::ifinestream& ifs, VirtualBoa
         return 2;
     }
     scoord to = *next(valid->valid_moves.begin(), int(bmove.move));
-    sout << " piece: " << bmove.piece.toStr()
-        << " move: " << bmove.move.toStr();
+    //sout << " piece: " << bmove.piece.toStr()
+    //    << " move: " << bmove.move.toStr();
 
     if (valid->canPromote(from, to)) {
         bitset<2> promo;
         ifs >> promo;
         bmove.promo = promnum(promo.to_ulong());
-        sout << " promo: " << promo;
+        //sout << " promo: " << promo;
     }
-    sout << endl;
+    //sout << endl;
     board.halfMove(from, to, char_by_promo[bmove.promo], &hmove);
     return 0;
 }

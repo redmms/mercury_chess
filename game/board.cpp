@@ -101,32 +101,30 @@ void Board::reactOnClick(Tile* tile) {
     if (game_regime == "history" || game_regime == "friend_online" && turn != side) {
         return;
     }
-    else if (from_coord == scoord{-1, -1} &&
-            turn == tile->piece_color &&
-            tile->piece_name != 'e') {
-            // if it's first click then pick the piece and
-            // show valid moves
-                from_coord = coord;
-                valid->showValid(coord);
+    else if (from_coord == scoord{ -1, -1 }) { // 1st click
+        if (valid->sameColor(coord)) {
+            from_coord = coord;
+            valid->showValid(coord);
+        }
+        else {
+            emit newStatus(tatus::invalid_move);
+        }
     }
-    else if (coord != from_coord && 
-            turn == tile->piece_color && 
-            tile->piece_name != 'e') {
-            // if the second click
-            // is on the piece of same color then pick it instead
-                valid->hideValid();
-                from_coord = coord;
-                valid->showValid(coord);
+    else { // 2d click
+        if (valid->sameColor(coord)) {
+            valid->hideValid();
+            from_coord = coord;
+            valid->showValid(coord);
+        }
+        else if (valid->isValid(coord)) {
+            savingHalfMove(from_coord, coord, 'e');
+            valid->hideValid(); // order matters here, valid->valid_moves is used by saveBitmove()
+            from_coord = { -1, -1 };
+        }
+        else {
+            emit newStatus(tatus::invalid_move);
+        }
     }
-    else if (valid->isValid(coord)) {
-        // if it's the second click and move is valid
-        // then move pieces
-        savingHalfMove(from_coord, coord, 'e');
-        valid->hideValid(); // order matters here, valid->valid_moves is used by saveBitmove()
-        from_coord = {-1, -1};
-    }
-    else
-        emit newStatus(tatus::invalid_move);
 }
 
 char Board::openPromotion(scoord from)
@@ -187,10 +185,10 @@ void Board::promotePawn(scoord from, char& into, bool virtually)
 void Board::halfMove(scoord from, scoord to, char promo, halfmove* saved, bool virtually, bool historically)
 {
     halfmove hmove;
-    if (saved)
-        hmove = *saved;
-    VirtualBoard::halfMove(from, to, promo, &hmove, false, false);
-    emitCurrentStatus(hmove);
+    if (!saved)
+        saved = &hmove;
+    VirtualBoard::halfMove(from, to, promo, saved, virtually, historically);
+    emitCurrentStatus(*saved);
 }
 
 void Board::savingHalfMove(scoord from, scoord to, char promo)

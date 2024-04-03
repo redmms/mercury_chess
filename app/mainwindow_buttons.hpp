@@ -143,7 +143,7 @@ void MainWindow::on_guest_button_clicked()
     net->sendToServer(packnum::login);
 }
 
-void MainWindow::on_send_invite_button_clicked() // FIX: here - packnum::invite, user's name, user's image,
+void MainWindow::on_send_invite_button_clicked()
 {
     int chosen_time = settings["time_setup"].toInt();
     QString opp_name = ui->friend_name_edit->text();
@@ -177,7 +177,7 @@ void MainWindow::editReturnSlot()
     chat->printMessage(settings["user_name"].toString(), true, message_text);
     ui->message_edit->clear();
     if (settings["game_regime"].toString() == "friend_online")
-        net->sendToServer(chat_message, false, message_text); // FIX: works even after the end of the game
+        net->sendToServer(chat_message, false, message_text);
 }
 
 bool MainWindow::eventFilter(QObject* object, QEvent* event)

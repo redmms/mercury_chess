@@ -198,7 +198,7 @@ void VirtualBoard::revertPass(vove move, bool virtually)
     scoord from = move.first.coord;
     scoord to = move.second.coord;
     auto opp_to_tile = theTile({ to.x, from.y });
-    opp_to_tile->setPiece('P', !move.first.piece_color, virtually); // FIX: will not delete pawn from the 6 line
+    opp_to_tile->setPiece('P', !move.first.piece_color, virtually);
 
 }
 
@@ -307,8 +307,12 @@ void VirtualBoard::setTiles(QString fen)
     }
     QString no_change_fen = parts.size() > 4 ? parts[4] : "0";
     no_change_n = no_change_fen.toInt();
-    QString fullmove_count = parts.size() > 5 ? parts[5] : "1";
-    int halfmove_count = fullmove_count.toInt() * 2;
+    QString fullmove_fen = parts.size() > 5 ? parts[5] : "1";
+    int halfmove_count = fullmove_fen.toInt() * 2;
+    if (turn_fen == "w")
+        halfmove_count -= 2;
+    else
+        halfmove_count -= 1;
     halfmove hmove;
     history = vector<halfmove>(halfmove_count, hmove);
     QString pass_fen = parts[3];

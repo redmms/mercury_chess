@@ -29,7 +29,6 @@ class WebClient : public QObject
     void readPack(QPixmap&);
 
 public:
-    // FIX: probaly should be explicit
     WebClient(MainWindow* parent = nullptr);
     ~WebClient();
 

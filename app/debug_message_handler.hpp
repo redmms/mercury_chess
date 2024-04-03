@@ -56,12 +56,12 @@ public:
             }
             log_ofstream 
                 << "\n"
-                << context.file
-                << ", "
-                << context.line
-                << ", "
-                << context.function
-                << "\n"
+                //<< context.file
+                //<< ", "
+                //<< context.line
+                //<< ", "
+                //<< context.function
+                //<< "\n"
                 << (curTime() + ": ").toStdString()
                 << msg.toStdString()
                 << "\n\n";
