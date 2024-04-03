@@ -11,7 +11,7 @@ importantly, watch the history of your games, using not an ordinary .pgn format,
 every halfmove to less then 1 byte. Imagine it: 1 coordinate is 6 bits at least (64 tiles = 2^6 variants), so 1 halfmove should be 12 bits MINIMUM, 
 halfmoves in my format take only 5 bits in average, so in the end it is more than 10x more compact than .pgn.
 HISTORY MODE:  
-![history_mode](description_media/history_mode.gif)  
+![history_mode](/decription_media/history_mode.gif)  
 NOTE:
 The server is not supposed to be used for playing more than 2 players at the same time, it is a pet project, don't forget it.
 I don't get any money for this, and spend my own money on running the server, if you like the project, consider buying me a coffee:  
