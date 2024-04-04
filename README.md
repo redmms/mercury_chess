@@ -9,6 +9,7 @@ Actually, it consists of several different projects: server, gui chess, which us
 Archiver will be a closed project, I hope to make it commercial. 
 Finestream is available here:  
 https://github.com/redmms/finestream.git  
+  
 In the near future:  
   
 ![finestream_joke](/decription_media/finestream_joke.jpg)  
