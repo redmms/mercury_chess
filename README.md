@@ -1,11 +1,13 @@
 #	MercuryChess: Toxic Edition.
-Online chess with lots of stylesheets spiced by toxic humor, using an innovative data format in it's built-in archiver.
-## Pet project or not?
-This is a ready for production app. 
+Online chess with lots of stylesheets spiced with toxic humor. It uses an innovative data format in it's built-in archiver that sets it apart from the rest.
+## Pet project or more?
+This is not a project made just for the sake of it. It's primed for production. 
 Actually, it consists of several different projects: server, gui chess, which uses archiver, which uses finestream.
 Archiver will be a closed project, I hope to make it commercial.  
 Finestream is available here:   
 https://github.com/redmms/finestream.git  
+In the nearest future:
+
 ## Unique  
 So, what is so special about these chess? You've probably seen hundreds of different chess applications.
 This app is not only written fully in C++, not only cross-platform due to Qt framework, not only uses various stylesheets and sound effects, 
