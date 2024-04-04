@@ -17,8 +17,8 @@ WebClient::WebClient(MainWindow* parent) :
     read_stream(&read_package, QIODevice::ReadOnly),
     send_stream(&send_package, QIODevice::WriteOnly)
 {
-    read_stream.setVersion(/*QDataStream::Qt_6_1*/QDataStream::Qt_5_15);
-    send_stream.setVersion(/*QDataStream::Qt_6_1*/QDataStream::Qt_5_15);
+    read_stream.setVersion(QDataStream::Qt_5_15);
+    send_stream.setVersion(QDataStream::Qt_5_15);
     if (read_stream.status() != QDataStream::Ok)
         qDebug() << "read_stream error!";
     if (send_stream.status() != QDataStream::Ok)
@@ -34,22 +34,25 @@ WebClient::~WebClient() {
 
 void WebClient::initSocket()
 {
+    if (socket) {
+        socket->deleteLater();
+        qDebug() << "Previous socket in queue for deletion";
+    }
     socket = (new QTcpSocket(this));
+    qDebug() << "Socket initialized";
     connect(socket, &QTcpSocket::errorOccurred, [&](QAbstractSocket::SocketError socketError){
         if (socket->state() == QAbstractSocket::UnconnectedState){
             qDebug() << "Couldn't connect to the server:";
             qDebug() << socketError;
             showBox("No connection",
-                    "You are offline. Contact me by mmd18cury@yandex.ru to start the server.",
+                    "You are offline.",
                     QMessageBox::Warning);
-//            settings[ ] = ("game_regime", "friend_offline");
-//            mainwindow->startGame();
         }
         else if (socket->state() != QAbstractSocket::ConnectedState){
             qDebug() << "Error occured while trying to connect to server:";
             qDebug() << socketError;
             showBox("No connection",
-                    "No connection, some error occured. Contact me by mmd18cury@yandex.ru.",
+                    "An error occured. Contact me by mmd18cury@yandex.ru.",
                     QMessageBox::Warning);
         }
         else{
@@ -67,8 +70,6 @@ void WebClient::initSocket()
     });
     connect(socket, &QTcpSocket::disconnected, [&](){
         qDebug() << "Lost connection with server";
-        socket->deleteLater();
-        //initSocket();
         if (mainwindow->game_active)
             mainwindow->endSlot(endnum::server_disconnected);
         showBox("Connection failed",
@@ -77,48 +78,68 @@ void WebClient::initSocket()
         mainwindow->openTab(mainwindow->ui->pre_tab);
     });
     connect(socket, &QTcpSocket::destroyed, [&]() {
-            qDebug() << "Socket destroyed. Trying to init an new one";
-            initSocket();
+            qDebug() << "Socket destroyed.";
         });  
 }
 
-void WebClient::checkConnection(packnum type)
+bool WebClient::checkConnection(packnum type)
 {
     if (!socket){
-        if (type != packnum::registration && type != packnum::login)
-            qDebug() << "Warning: you need to register or log in before sending any data to the server";
-        initSocket();
-        connectToServer();
+        if (type == new_name) {
+            showBox("Can't change online nickname",
+                "You are offline, only local nickname has been changed. "
+                "To change online nickname you will need to enter account. ");
+        }
+        else {
+            showBox("Oops, you forgot to log in",
+                "You need to register and log in before sending any data to the server",
+                QMessageBox::Warning);
+        }
+        return false;
     }
     else if (!socket->isValid() || !socket->isOpen()){
         initSocket();
-        connectToServer();
+        return connectToServer();
     }
     else if (socket->state() == QAbstractSocket::UnconnectedState){
-        connectToServer();
+        return connectToServer();
     }
     else{
-        //auto state_copy = socket->state();
         qDebug() << "Socket is fine. Connection also seems to be fine. Socket state is "
                  << socket->state();
+        return true;
     }
 }
 
-void WebClient::connectToServer()
-// socket parameter should be a valid QTcpSocket*
+bool WebClient::connectToServer()
 {
-//    if (socket->state() == QAbstractSocket::UnconnectedState)
     QString address = settings["ip_address"].toString();
     int port = settings["port_address"].toInt();
-    socket->connectToHost(address, port);  // /*"192.168.0.10"*/ "127.0.0.1"
-    //socket->connectToHost("127.0.0.1", 49001);  // /*"192.168.0.10"*/ "127.0.0.1"
+    if (socket) {
+        socket->connectToHost(address, port);
+        return socket->waitForConnected(3000);
+    }
+    else {
+        qDebug() << "Socket was uninitialized before connecting to the server";
+        return false;
+    }
+}
 
-    //auto copy_state = socket->state();
+void WebClient::connectNewHost()
+{
+    if (!socket) {
+        initSocket();
+    }
+    if (connectToServer()) {
+        showBox("Success", "New connection established. Now log in.");
+    }
+    else {
+        showBox("Fail", "Couldn't establish new connection. Close the app and watch log file too see socket connection error.");
+    }
 }
 
 void WebClient::packFromSock(QTcpSocket *socket, QByteArray &read_package)
 {
-    //auto avail_copy = socket->bytesAvailable();
     while(socket->bytesAvailable() < 2){
         if (!socket->waitForReadyRead()) {
             qDebug() << "waitForReadyRead() timed out";
@@ -126,7 +147,6 @@ void WebClient::packFromSock(QTcpSocket *socket, QByteArray &read_package)
         }
     }
     read_package = socket->read(2);
-    //QDataStream package_stream(read_package);
     quint16 pack_size;
     read_stream >> pack_size;
     qDebug() << "Received package size supposed to be" << pack_size;
@@ -160,18 +180,20 @@ void WebClient::packFromSock(QTcpSocket *socket, QByteArray &read_package)
     read_stream.device()->reset();
 }
 
-void WebClient::connectNewHost()
-{
-    initSocket();
-    checkConnection(packnum::login);
-}
+
 
 
 void WebClient::sendToServer(packnum type, bool respond, QString message, scoord from, scoord to, char promotion_type)
 {
     quint16 pack_size = 0;
     send_stream << pack_size;
-    checkConnection(type);
+    if ((type == registration || type == login) && !socket) {
+        initSocket();
+    }
+    if (!checkConnection(type)) {
+        qDebug() << "Couldn't send data to server. Data type is " << int(type);
+        return;
+    }
     switch(type){
     case packnum::registration:
         writePack(packnum::registration);
@@ -232,10 +254,10 @@ void WebClient::sendToServer(packnum type, bool respond, QString message, scoord
     pack_size = (quint16) send_package.size();
     send_stream << pack_size;
 
+// Use for testing:
 //    QByteArray little_copy{};
 //    for (int l = 0; l < send_package.size(); l += 10){
 //        for (int r = l; r < l + 10 && r < send_package.size(); r++){
-
 //            little_copy.push_back(send_package[r]);
 //        }
 //        auto bytes_written = socket->write(little_copy);
@@ -265,7 +287,7 @@ void WebClient::readFromServer()
     packnum type;
     readPack(type);   
     switch(type){
-    case packnum::invite:  //show message box and send invite respond
+    case packnum::invite:  // show message box and send invite respond
     {
         qDebug() << "Invite received";
         QString user_name;
@@ -350,7 +372,8 @@ void WebClient::readFromServer()
         QString message;
         readPack(message);
         QString name = settings["opp_name"].toString();
-        mainwindow->chat->printMessage(name, false, message);
+        if (mainwindow->game_active)
+            mainwindow->chat->printMessage(name, false, message);
         break;
     }
     case packnum::draw_suggestion: //show message box with opponent's name and draw suggestion
@@ -360,7 +383,6 @@ void WebClient::readFromServer()
         msg_box.setWindowTitle("Draw suggestion");
         QString name = settings["opp_name"].toString();
         msg_box.setText(name + " suggested you a draw.");
-        //msg_box.setIcon(QMessageBox::Information);
         msg_box.addButton("Accept", QMessageBox::AcceptRole);
         msg_box.addButton("Decline", QMessageBox::RejectRole);
         connect(&msg_box, &QMessageBox::accepted, [this](){
@@ -425,7 +447,6 @@ void WebClient::readFromServer()
         else if (mainwindow->login_regime == 1){
             mainwindow->openTab(mainwindow->ui->friend_connect_tab);
             mainwindow->ui->menuOnline->setEnabled(true);
-            //mainwindow->ui->actionProfile->setEnabled(true);
             mainwindow->ui->login_password->clear();
         }
         else if (mainwindow->login_regime == 3){

@@ -33,8 +33,8 @@ public:
     ~WebClient();
 
     void initSocket();
-    void checkConnection(packnum type);
-    void connectToServer();
+    bool checkConnection(packnum type = packnum::login);
+    bool connectToServer();
     void packFromSock(QTcpSocket* socket, QByteArray& received_package);
     void connectNewHost();
 //    void sendRegistration();

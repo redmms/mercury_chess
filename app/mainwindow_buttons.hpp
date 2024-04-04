@@ -38,15 +38,6 @@ void MainWindow::on_change_name_button_clicked()
 {
     QString new_name = ui->name_edit->text();
     ui->name_edit->clear();
-    if (net) {
-        net->sendToServer(packnum::new_name, 0, new_name);
-    }
-    else {
-        showBox("Can't change online nickname",
-            "You are offline, only local nickname has been changed. "
-            "To change online nickname you will need to reenter account. "
-            "Contact me by mmd18cury@yandex.ru to start the server");
-    }
     int err = changeLocalName(new_name);
     if (err == 1) {
         showBox("Embarrasing!",
@@ -58,6 +49,16 @@ void MainWindow::on_change_name_button_clicked()
         showBox("So huge!",
             "This nickname is too long. Maximum length is " + QString::number(max_nick),
             QMessageBox::Warning);
+    }
+    else {
+        if (net) {
+            net->sendToServer(packnum::new_name, 0, new_name);
+        }
+        else {
+            showBox("Can't change online nickname",
+                "You are offline, only local nickname has been changed. "
+                "To change online nickname you will need to enter account. ");
+        }
     }
     //    QMessageBox msgBox;
     //    msgBox.setWindowTitle("Notification");
@@ -231,10 +232,21 @@ void MainWindow::on_actionEnter_triggered()
 void MainWindow::on_change_ip_button_clicked()
 {
     QString new_address = ui->ip_edit->text();
-    int new_port = ui->port_edit->text().toInt();
+    if (new_address.isEmpty()) {
+        showBox("Empty address", "Can't be empty");
+        return;
+    }
+    QString new_port_str = ui->port_edit->text();
+    if (new_port_str.isEmpty()) {
+        showBox("Empty port", "Can't be empty");
+        return;
+    }
+    int new_port = new_port_str.toInt();
     settings["ip_address"].setValue(new_address);
     settings["port_address"].setValue(new_port);
-    net->connectNewHost();
+    showBox("Success", "New adress saved.");
+    if (net)
+        net->connectNewHost();
 }
 
 void MainWindow::on_restore_default_button_clicked()
@@ -243,7 +255,8 @@ void MainWindow::on_restore_default_button_clicked()
     settings["ip_address"].setValue(def_address);
     int def_port = settings["def_port"].toInt();
     settings["port_address"].setValue(def_port);
-    net->connectNewHost();
+    if (net)
+        net->connectNewHost();
     ui->ip_edit->clear();
     ui->port_edit->clear();
 }
