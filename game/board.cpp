@@ -225,7 +225,7 @@ void Board::emitCurrentStatus(const halfmove& saved)
     if (saved.turn == side)
         emit moveMade(from, to, saved.promo);
 
-    if (end_type != interrupt)
+    if (end)
         emit theEnd(end_type);
     else if (valid->check)
         emit newStatus(turn == side ? check_to_user : check_to_opponent);

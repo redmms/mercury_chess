@@ -18,6 +18,7 @@ VirtualBoard::VirtualBoard() :
     side(settings["match_side"].toBool()),
     current_move(0),
     end_type(endnum::interrupt),
+    end(false),
     no_change_n(0)
 {    
     initTiles();
@@ -148,11 +149,14 @@ void VirtualBoard::halfMove(scoord from, scoord to, char promo, halfmove* hmove,
     if (!virtually) {
         turn = !turn;
         if (valid->inCheck(turn)) {
-            if (valid->inStalemate(turn))  // check + stalemate == checkmate
+            if (valid->inStalemate(turn)) {  // check + stalemate == checkmate
                 end_type = turn == side ? opponent_wins : user_wins;
+                end = true;
+            }
         }
         else if (valid->inStalemate(turn)) {
             end_type = draw_by_stalemate;
+            end = true;
         }
     }
 
@@ -233,6 +237,7 @@ void VirtualBoard::revertHalfmove(halfmove hmove, bool virtually, bool historica
     if (!virtually) {
         turn = !turn;
         end_type = endnum::interrupt;
+        end = false;
     }
 }
 

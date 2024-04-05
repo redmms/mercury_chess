@@ -1,33 +1,23 @@
 #pragma once
 #include "../app/local_types.h"
 #include <QMainWindow>
-#include <QBitmap>
 #include <QPointer>
 
 namespace Ui
 {
     class MainWindow;
 }
-
 class Chat;
 class WebClient;
-class RoundedScrollArea;
 class HistoryArea;
 class Board;
 class ChessClock;
-class OfflineDialog;
-class QPixmap;
-class QFont;
-class QFontMetrics;
 class QGraphicsDropShadowEffect;
 class QSoundEffect;
 class QEvent;
-class QVBoxLayout;
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
-friend class WebClient;
-friend class Board;
 public:
     Ui::MainWindow* ui;
     QString app_dir;
@@ -89,8 +79,6 @@ private slots:
     void on_actionAbout_Qt_triggered();
     void on_actionSave_game_triggered();
     void on_actionLoad_game_triggered();
-
-    // menu's actions in development
     void on_actionRules_triggered();
     void on_actionSend_suggestion_triggered();
     void on_actionReport_a_bug_triggered();
@@ -101,12 +89,11 @@ private slots:
     void my_history_next_button_clicked();
     void my_history_previous_button_clicked();
 
-    //void on_test_button_clicked();
-
+friend class WebClient;
 protected slots:
     void endSlot(endnum end_type);
 };
 
+//void on_test_button_clicked();
 //void on_actionWith_AI_triggered();
-//void on_actionTraining_triggered();
 //void on_actionRandomly_triggered();

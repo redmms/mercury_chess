@@ -52,9 +52,7 @@ MainWindow::MainWindow(QString app_dir_) :
     ui->resign_button->disconnect();
     ui->menuOnline->setEnabled(false);
     ui->actionWith_AI->setEnabled(false);
-    //ui->actionTraining->setEnabled(false);
     ui->actionRandomly->setEnabled(false);
-    //ui->actionProfile->setEnabled(false);
     this->setWindowIcon(QIcon(":/images/app_icon"));
 
     srand(time(0));
@@ -109,13 +107,13 @@ MainWindow::MainWindow(QString app_dir_) :
 //settings = QSettings("settings_" + curTime() + ".ini", QSettings::IniFormat);
     settings["user_name"].setValue(QString("Lazy") +
         QString::number(rand() % (int)pow(10, 8)));
-    settings["opp_name"].setValue(QString("Player2"));
+    settings["opp_name"].setValue(QString("Friend"));
     settings["time_setup"].setValue(0);
     settings["match_side"].setValue(true);
     settings["game_regime"].setValue(QString("friend_offline"));
     settings["def_port"].setValue(49001);
     settings["port_address"].setValue(49001);
-    settings["def_address"].setValue(/*"127.0.0.1"*/(QString)"40.113.33.140");
+    settings["def_address"].setValue((QString)"40.113.33.140");
     settings["ip_address"].setValue(/*(QString)"127.0.0.1"*/(QString)"40.113.33.140");
     settings["max_nick"].setValue(12);
     settings["pic_w"].setValue(100);
@@ -178,12 +176,6 @@ void MainWindow::openStopGameBox()
             QMessageBox::Warning);
 }
 
-//void MainWindow::openInDevBox()
-//{
-//    showBox("Not available yet",
-//            "This function hasn't been developed yet, but you can donate money to speed up the process.");
-//}
-
 void MainWindow::showStatus(const QString& status) 
 {
     ui->statusBar->showMessage(status, 0);
@@ -242,6 +234,9 @@ void MainWindow::startGame(QString game_regime) // side true for user - white
         qDebug() << "editReturnPressed receivers number is" << receivers(SIGNAL(editReturnPressed));
     }
     else if (game_regime == "friend_offline" || game_regime == "training") {
+        if (game_regime == "training") {
+            settings["opp_name"].setValue((QString)"DarkSide");
+        }
         settings["match_side"].setValue(true);
         ui->message_edit->setPlainText("Chat is off. But you can chat with yourself if you are a hikikomori.");
         ui->user_timer->setText("");
@@ -289,7 +284,6 @@ void MainWindow::startGame(QString game_regime) // side true for user - white
     else{
         qDebug() << "ERROR: in MainWindow::startGame() with board/ui->background pointer";
     }
-    // old board will be destroyed inside Board constructor
 
     connect(board, &Board::newStatus, this, &MainWindow::statusSlot);
     connect(board, &Board::theEnd, this, &MainWindow::endSlot);
@@ -324,18 +318,22 @@ void MainWindow::endSlot(endnum end_type)
         qDebug() << "Application tried to close inactive game";
         return;
     }
+
     if (clock)
         clock->stopTimer();
-    board->setEnabled(false);
-    ui->draw_button->disconnect();
-    ui->resign_button->disconnect();
-    ui->actionProfile->setEnabled(true);
-    disconnect(this, &MainWindow::editReturnPressed, this, &MainWindow::editReturnSlot);
-    ui->message_edit->removeEventFilter(this);
-    game_active = false;
-    ui->statusBar->hide();
-    board->end_type = end_type;
 
+    QString game_regime = settings["game_regime"].toString();
+    if (game_regime != "history") {
+        board->setEnabled(false);
+        ui->draw_button->disconnect();
+        ui->resign_button->disconnect();
+        ui->actionProfile->setEnabled(true);
+        disconnect(this, &MainWindow::editReturnPressed, this, &MainWindow::editReturnSlot);
+        ui->message_edit->removeEventFilter(this);
+        game_active = false;
+        ui->statusBar->hide();
+        board->end_type = end_type;
+    }
 
     QString opp_name = settings["opp_name"].toString();
     QString info_message;
@@ -375,7 +373,7 @@ void MainWindow::endSlot(endnum end_type)
         break;
     case endnum::opponent_disconnected_end:
         icon_type = QMessageBox::Critical;
-        info_message = "Opponent disconnected. Maybe he doesn't like to play with you?";
+        info_message = opp_name + " disconnected. Maybe he doesn't like to play with you?";
         break;
     case endnum::server_disconnected:
         info_message = "-1";
@@ -385,9 +383,10 @@ void MainWindow::endSlot(endnum end_type)
         return;
     }
 
-    if (settings["game_regime"].toString() == "friend_online" && net) {
+    if (game_regime == "friend_online" && net) {
         net->sendToServer(packnum::end_game);
     }
+
     showStatus(info_message);
     QMessageBox msg_box(this);
     msg_box.setWindowTitle("The end");
@@ -403,9 +402,6 @@ void MainWindow::endSlot(endnum end_type)
 
 void MainWindow::statusSlot(tatus status)
 {
-//    int i = 3;
-////    for (int i = 1; i <= 5; i++)
-//        qDebug() << "Counted moves:" << board->valid->countMovesTest(i);
     QString user = "Your turn";
     QString opp = settings["opp_name"].toString() + "'s turn";
     switch (status) {

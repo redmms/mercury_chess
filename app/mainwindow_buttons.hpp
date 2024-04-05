@@ -440,12 +440,14 @@ void MainWindow::on_actionLoad_game_triggered()
     Archiver archiver;
     endnum end_type;
     vector<halfmove> history;
-    int error = archiver.readGame(end_type, history, archive_fullname);
+    vector<bitmove> bistory;
+    int error = archiver.readGame(end_type, bistory, history, archive_fullname);
     if (!error) {
         startGame("history");
         for (int i = 0, size = history.size(); i < size; i++)
             history_area->writeStory(i + 1, history[i]);
-        //board->end_type = end_type;
+        board->end_type = end_type;
+        board->bistory = bistory;
         board->history = history;
     }
     else {

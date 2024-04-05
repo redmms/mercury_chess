@@ -61,7 +61,7 @@ int Archiver::writeMove(bitmove move, fsm::ofinestream& ofs) {
     return 0;
 }
 
-int Archiver::readGame(endnum& end_type, std::vector<halfmove>& history, QString filename)
+int Archiver::readGame(endnum& end_type, std::vector<bitmove>& bistory, std::vector<halfmove>& history, QString filename)
 {
     try {
         fsm::ifinestream pifs(filename.toStdString());
@@ -108,12 +108,14 @@ int Archiver::readGame(endnum& end_type, std::vector<halfmove>& history, QString
         //int order = i + 1;
         //if ( order % 2)
         //    sout << (order - 1) / 2 + 1 << "." << endl;
+        bitmove bmove;
         halfmove hmove;
-        int err = readMove(hmove, ifs, board);
+        int err = readMove(bmove, hmove, ifs, board);
         if (err) {
             //cout << sout.str();
             return err + 2;
         }
+        bistory.push_back(bmove);
         history.push_back(hmove);
         valid->valid_moves.clear();
         //cout << "\n" <<  order << ". " << halfmoveToString(hmove).toStdString() << " \n";
@@ -122,11 +124,10 @@ int Archiver::readGame(endnum& end_type, std::vector<halfmove>& history, QString
     return 0;
 }
 
-inline int Archiver::readMove(halfmove& hmove, fsm::ifinestream& ifs, VirtualBoard& board) 
+inline int Archiver::readMove(bitmove& bmove, halfmove& hmove, fsm::ifinestream& ifs, VirtualBoard& board) 
 {
     VirtualValidator* valid = board.valid;
     valid->searchingInStalemate(valid->theTurn());
-    bitmove bmove;
     bmove.piece.BITSN = fsm::MinBits(valid->movable_pieces.size() - 1);
     ifs >> bmove.piece;
     if (bmove.piece >= valid->movable_pieces.size()) {

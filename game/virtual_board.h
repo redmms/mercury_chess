@@ -19,6 +19,7 @@ public:
     bool side;
     int current_move;
     endnum end_type;
+    bool end;
     std::vector<halfmove> history;
     int no_change_n;
 
