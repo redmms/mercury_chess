@@ -7,12 +7,16 @@ class WebClient : public QObject
 {
     Q_OBJECT
 
+public:
     MainWindow* mainwindow;
     QTcpSocket* socket;
     QByteArray read_package;
     QByteArray send_package;
     QDataStream read_stream;
+
     QDataStream send_stream;
+    WebClient(MainWindow* parent = nullptr);
+    ~WebClient();
 
     void writePack(packnum);
     void writePack(quint8);
@@ -27,10 +31,6 @@ class WebClient : public QObject
     void readPack(QByteArray&);
     void readPack(QString&);
     void readPack(QPixmap&);
-
-public:
-    WebClient(MainWindow* parent = nullptr);
-    ~WebClient();
 
     void initSocket();
     bool checkConnection(packnum type = packnum::login);
