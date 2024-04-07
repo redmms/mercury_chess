@@ -244,9 +244,12 @@ void MainWindow::on_change_ip_button_clicked()
     int new_port = new_port_str.toInt();
     settings["ip_address"].setValue(new_address);
     settings["port_address"].setValue(new_port);
-    showBox("Success", "New adress saved.");
-    if (net)
+    if (net) {
         net->connectNewHost();
+    }
+    else {
+        showBox("Success", "New adress saved locally. 'net' variable not initialized.");
+    }
 }
 
 void MainWindow::on_restore_default_button_clicked()
