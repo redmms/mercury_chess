@@ -29,7 +29,10 @@
    <bool>false</bool>
   </property>
   <property name="styleSheet">
-   <string notr="true">OfflineDialog{background-image: url(:/images/background);}
+   <string notr="true">OfflineDialog{
+	background-image: url(:/images/background);
+	background-position: center;
+}
 
 QPushButton{
 background-color: qlineargradient(x: 0,y: 0, x2: 1, y2: 1, stop: 0 #C78D50, stop: 1 #634b30 );

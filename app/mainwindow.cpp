@@ -90,9 +90,9 @@ MainWindow::MainWindow(QString app_dir_) :
     sounds["start"]->setSource(QUrl::fromLocalFile(":/sounds/start"));
 
     // glow effect for avatars
-    avatar_effect->setBlurRadius(40);
+    avatar_effect->setBlurRadius(60);
     avatar_effect->setOffset(0, 0);
-    avatar_effect->setColor(Qt::green);
+    avatar_effect->setColor(QColor("#ffff00"));
 
     // mask for rounded borders on avatars
     auto mask_size = ui->user_avatar->width();
@@ -266,8 +266,6 @@ void MainWindow::startGame(QString game_regime) // side true for user - white
     ui->user_name->setText(settings["user_name"].toString());
     ui->opponent_avatar->setPixmap(getPic("opp_pic"));
     ui->opponent_name->setText(settings["opp_name"].toString());
-    bool match_side = settings["match_side"].toBool();
-    (match_side ? ui->user_avatar : ui->opponent_avatar)->setGraphicsEffect(avatar_effect);
     chat->clearMessages();
     ui->statusBar->show();
     history_area->clearStory();
@@ -287,6 +285,9 @@ void MainWindow::startGame(QString game_regime) // side true for user - white
 
     connect(board, &Board::newStatus, this, &MainWindow::statusSlot);
     connect(board, &Board::theEnd, this, &MainWindow::endSlot);
+
+    bool match_side = settings["match_side"].toBool();
+    (match_side == board->theTurn() ? ui->user_avatar : ui->opponent_avatar)->setGraphicsEffect(avatar_effect);
 
     if (game_regime == "friend_online"){
         connect(board, &Board::moveMade, [this](scoord from, scoord to, char promotion_type) {

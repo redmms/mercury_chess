@@ -17,6 +17,6 @@ int main(int argc, char *argv[])
     app.setApplicationName("MercuryChess" + curTime());
     QString app_dir = app.applicationDirPath();
     MainWindow mainwindow(app_dir);
-    mainwindow.showMaximized();
+    mainwindow.showMinimized();
     return app.exec();
 }

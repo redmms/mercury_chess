@@ -318,6 +318,10 @@ void VirtualBoard::setTiles(QString fen)
         halfmove_count -= 2;
     else
         halfmove_count -= 1;
+    if (halfmove_count < 1) {
+        showBox("Invalid FEN", "Check turn color and next move index validity.");
+        return;
+    }
     halfmove hmove;
     history = vector<halfmove>(halfmove_count, hmove);
     QString pass_fen = parts[3];

@@ -466,6 +466,7 @@ void MainWindow::on_actionTraining_triggered()
     FenDialog dialog(this);
     connect(&dialog, &FenDialog::newFen, board, &Board::setTilesSlot);
     dialog.exec();
+    switchGlow();
 }
 
 void MainWindow::on_copy_fen_button_clicked()
