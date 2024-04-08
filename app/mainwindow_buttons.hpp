@@ -412,6 +412,9 @@ void MainWindow::on_actionSave_game_triggered()
         showBox("Good news",
             "Operation done successfuly.");
     }
+    else if (error == 1) {
+        showBox("Oops", "Use Latin alphabet.");
+    }
     else {
         showBox("Oops",
             "Something went wrong. Error code: " + QString::number(error));
