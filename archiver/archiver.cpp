@@ -18,13 +18,13 @@ Archiver::Archiver() {}
 int Archiver::writeGame(endnum end_type, const std::vector<bitmove>& history, QString filename)
 {
     try {
-        fsm::ofinestream pofs(filename.toStdString());
+        fsm::ofinestream pofs(filename.toStdWString());
     }
     catch (const exception& e) {
         cerr << e.what() << endl;
         return 1;
     }
-    fsm::ofinestream ofs(filename.toStdString());
+    fsm::ofinestream ofs(filename.toStdWString());
     if (history.empty()) {
         cerr << "You are trying to write an empty game" << endl;
         return 2;
@@ -66,13 +66,13 @@ int Archiver::writeMove(bitmove move, fsm::ofinestream& ofs) {
 int Archiver::readGame(endnum& end_type, std::vector<bitmove>& bistory, std::vector<halfmove>& history, QString filename)
 {
     try {
-        fsm::ifinestream pifs(filename.toStdString());
+        fsm::ifinestream pifs(filename.toStdWString());
     }
     catch (const exception& e) {
         cerr << e.what() << endl;
         return 1;
     }
-    fsm::ifinestream ifs(filename.toStdString());
+    fsm::ifinestream ifs(filename.toStdWString());
 
     uint8_t version;
     ifs >> version;

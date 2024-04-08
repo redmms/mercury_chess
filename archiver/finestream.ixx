@@ -153,7 +153,7 @@ constexpr int CHB1 = CHAR_BIT - 1,
 
     public:
         fstream FILE_STREAM;
-        finestream(string FILE_PATH) {
+        finestream(wstring FILE_PATH) {
             FILE_STREAM.open(FILE_PATH, ios::binary | ios::out | ios::in);
             if (!FILE_STREAM.is_open()) {
                 throw runtime_error("File wasn't open.");
@@ -186,7 +186,7 @@ constexpr int CHB1 = CHAR_BIT - 1,
         //ofinestream(const ofinestream& other) = default;
         //ofinestream& operator=(const ofinestream& other) = default;
 
-        ofinestream(string FILE) : finestream(FILE) {}
+        ofinestream(wstring FILE) : finestream(FILE) {}
         ofinestream() {}
         ~ofinestream() {
             Flush();
@@ -348,7 +348,7 @@ constexpr int CHB1 = CHAR_BIT - 1,
 
     class ifinestream : public finestream {
     public:
-        ifinestream(string FILE) : finestream(FILE) {}
+        ifinestream(wstring FILE) : finestream(FILE) {}
         ifinestream() {}
 
 
