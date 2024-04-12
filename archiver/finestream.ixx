@@ -7,6 +7,7 @@ import <type_traits>;
 import <vector>;
 import <queue>;
 import <bit>;
+import <filesystem>;
 using namespace std;
 
 
@@ -20,6 +21,10 @@ template <typename T>
 concept container_adaptor = requires(T STRUCTURE) {
     STRUCTURE.pop();
 };
+template <typename T>
+    constexpr bool is_tuple_v = false;
+template<typename ... types>
+    constexpr bool is_tuple_v<std::tuple<types...>> = true;
 using uchar = unsigned char;
 constexpr int CHB1 = CHAR_BIT - 1, 
               CHB = CHAR_BIT;
@@ -65,21 +70,101 @@ constexpr int CHB1 = CHAR_BIT - 1,
         NUMBER = *NUMBERPTR;
         //NUMBER = reinterpret_cast<T>(*DATA);
     }
-    template <typename T, typename MASK_TYPE = typename make_unsigned<typename remove_const<T>::type>::type>
-    constexpr int LeadingN(const T& NUMBER) {  // return number of leading zeros in a bit representation
-        int BITSN{ sizeof(T) * CHB },
-            I{ BITSN };
-        MASK_TYPE MASK{ MASK_TYPE(1) << BITSN - 1 };
-        for (; I && !(NUMBER & MASK); I--, MASK >>= 1) {}
-        return BITSN - I;
+
+    template <typename T>
+        requires(is_same_v<vector<bool>, T> || is_same_v<bitset, T>)
+    inline constexpr size_t BitSize(const T& CONTAINER) {
+        return CONTAINER.size();
     }
     template <typename T>
-    constexpr inline int NonLeadingN(const T& NUMBER) {
-        return sizeof(T) * CHB - LeadingN(NUMBER);
+        requires(is_arithmetic_v<T>)
+    inline constexpr size_t BitSize(const T& DATA) {
+        return sizeof(DATA) * CHB;
     }
+    template <typename T>
+    inline constexpr size_t BitSize(const T& DATA) {
+        static_assert(!is_tuple_v<T>, "Not available for tuples yet");
+        return size(DATA) * CHB;
+    }
+    template <typename T>
+        requires(container<T> || is_array_v<T>)
+    inline constexpr size_t BitSize(const T& CONTAINER) {
+        size_t TOTAL_SIZE = 0;
+        for (size_t I = 0, SIZE = size(CONTAINER); I < SIZE; SIZE++) {
+            TOTAL_SIZE += BitSize(CONTAINER[I]);
+        }
+        return TOTAL_SIZE;
+    }
+
+    template <typename T>
+        requires(is_arithmetic_v<T> && sizeof(T) == 1)
+    constexpr size_t LeadingN(T& NUMBER) {  // return number of leading zeros in a bit representation
+        return static_cast<size_t>(countl_zero(reinterpret_cast<uint8_t&>(NUMBER)));
+    }
+    template <typename T>
+        requires(is_arithmetic_v<T> && sizeof(T) == 2)
+    constexpr size_t LeadingN(T& NUMBER) {  
+        return static_cast<size_t>(countl_zero(reinterpret_cast<uint16_t&>(NUMBER)));
+    }    
+    template <typename T>
+        requires(is_arithmetic_v<T> && sizeof(T) == 4)
+    constexpr size_t LeadingN(T& NUMBER) {  
+        return static_cast<size_t>(countl_zero(reinterpret_cast<uint32_t&>(NUMBER)));
+    }    
+    template <typename T>
+        requires(is_arithmetic_v<T> && sizeof(T) == 8)
+    constexpr size_t LeadingN(T& NUMBER) { 
+        return static_cast<size_t>(countl_zero(reinterpret_cast<uint64_t&>(NUMBER)));
+    }
+    template <typename T>
+        requires(is_same_v<vector<bool>, T> || is_same_v<bitset, T>)
+    constexpr size_t LeadingN(const T& BIG_NUMBER) {  
+        // Return number of leading zeros in a bit representation almost the same
+        // way if it would be written to a file using finestream and we would 
+        // want to know consequential zero bits number in the beggining of this 
+        // written bit sequence. It needs to be considered wether or not there're 
+        // any differences between these two ways of counting to adjust this 
+        // function, but the intent is to make it work same way as said above.
+        size_t LEADING_N = 0;
+        for (size_t BIT_IDX = size(BIG_NUMBER) - 1; BIT_IDX != SIZE_MAX; BIT_IDX--) {
+            if (BIG_NUMBER[BIT_IDX]) {
+                return LEADING_N;
+            }
+            else {
+                LEADING_N++;
+            }
+        }
+        return LEADING_N;
+    }
+    template <typename CONTAINER_TYPE>
+        requires(is_array_v<CONTAINER_TYPE> || container<CONTAINER_TYPE>)
+    constexpr size_t LeadingN(const CONTAINER_TYPE& CONTAINER) {  // returns number of leading zeros in a bit representation
+        size_t LEADING_N = 0;
+        for (size_t IDX = 0, SIZE = size(CONTAINER), TEMP = 0;
+            IDX < SIZE && (TEMP = LeadingN(CONTAINER[IDX]) == BitSize(CONTAINER[IDX]));
+            IDX++) 
+        {
+            LEADING_N += TEMP;
+        }
+        return LEADING_N;
+    }
+    template <typename T>
+    inline constexpr int intLeadingN(const T& NUMBER) {
+        return static_cast<int>(LeadingN(NUMBER));
+    }
+
+    template <typename T>
+    inline constexpr size_t NonLeadingN(const T& DATA) {
+        return static_cast<size_t>(BitSize(DATA) - LeadingN(DATA));
+    }
+    template <typename T>
+    inline constexpr int intNonLeadingN(const T& NUMBER) {
+        return static_cast<int>(NonLeadingN(NUMBER));
+    }
+
     template <typename T, typename MASK_TYPE = typename make_unsigned<typename remove_const<T>::type>::type>
     void NonLeadingVector(const T& NUMBER, vector<bool>& CONTAINER) {
-        MASK_TYPE MASK{ MASK_TYPE(1) << sizeof(T) * CHB - 1 };
+        MASK_TYPE MASK{ MASK_TYPE(1u) << sizeof(T) * CHB - 1 };
         while (!(NUMBER & MASK)) {
             MASK >>= 1;
         };
@@ -96,7 +181,7 @@ constexpr int CHB1 = CHAR_BIT - 1,
     } 
     template <typename T, typename MASK_TYPE = typename make_unsigned<typename remove_const<T>::type>::type>
     void ToVector(const T& NUMBER, vector<bool>& CONTAINER) {
-        MASK_TYPE MASK{ MASK_TYPE(1) << sizeof(T) * CHB - 1 };
+        MASK_TYPE MASK{ MASK_TYPE(1u) << sizeof(T) * CHB - 1 };
         while (MASK) {
             CONTAINER.emplace(CONTAINER.begin(), bool(NUMBER & MASK));
             MASK >>= 1;
@@ -117,10 +202,9 @@ constexpr int CHB1 = CHAR_BIT - 1,
         if (sizeof(T) * CHB < CONTAINER.size()) {
             cerr << "WARNING: in ToSizedVector: aim NUMBER size is less than vector<bool> size";
         }
-        MASK_TYPE MASK{ MASK_TYPE(1) << CONTAINER.size() - 1 };
-        for (size_t BIT_IDX = 0, SIZE = CONTAINER.size(); BIT_IDX < SIZE; BIT_IDX++) {
+        MASK_TYPE MASK{ MASK_TYPE(1u) << MASK_TYPE(CONTAINER.size() - 1) };
+        for (size_t BIT_IDX = 0, SIZE = CONTAINER.size(); BIT_IDX < SIZE; BIT_IDX++, MASK >>= 1) {
             CONTAINER[BIT_IDX] = bool(NUMBER & MASK); // result casted to bool
-            MASK >>= 1;
         }
     }
     template <typename T>
@@ -140,15 +224,20 @@ constexpr int CHB1 = CHAR_BIT - 1,
     template<auto ORIGINAL_NUMBER>
         constexpr auto NonLeadingBitset = bitset<NonLeadingN(ORIGINAL_NUMBER)>(ORIGINAL_NUMBER);
     template <typename T, size_t N>
-    inline void FromBitset(T& NUMBER, bitset <N> BITSET) {
+    inline void FromBitset(T& NUMBER, bitset<N> BITSET) {
         NUMBER = (T)BITSET.to_ullong();
     }
     template<typename T>
-    int MinBits(T number) {
-        if (number < 0) {
+    size_t MinBits(T NUMBER) {
+        if (NUMBER < 0) {
             cerr << "WARNING: minBits parameter was less than 0" << endl;
+            return SIZE_MAX;
         }
-        return ceil(log2(number + 1));
+        return /*ceil(log2(NUMBER + 1));*/ static_cast<size_t>(BitSize(NUMBER) - LeadingN(NUMBER));
+    }
+    template<typename T>
+    inline int intMinBits(T NUMBER) {
+        return static_cast<int>(MinBits(NUMBER));
     }
 
     class finestream {
@@ -158,14 +247,14 @@ constexpr int CHB1 = CHAR_BIT - 1,
 
     public:
         fstream FILE_STREAM;
-        finestream(wstring FILE_PATH) {
+        finestream(const filesystem::path& FILE_PATH) {
             FILE_STREAM.open(FILE_PATH, ios::binary | ios::out | ios::in);
             if (!FILE_STREAM.is_open()) {
                 throw runtime_error("File wasn't open.");
             }
             LAST.MOVED_LEFT = true;
         }
-        finestream(){}
+        //finestream(){}
 
         bitremedy LastByte() {
             return LAST;
@@ -191,23 +280,37 @@ constexpr int CHB1 = CHAR_BIT - 1,
         //ofinestream(const ofinestream& other) = default;
         //ofinestream& operator=(const ofinestream& other) = default;
 
-        ofinestream(wstring FILE) : finestream(FILE) {}
-        ofinestream() {}
+        ofinestream(const filesystem::path& FILE_PATH) : finestream(FILE_PATH) {}
+        //ofinestream() {}
         ~ofinestream() {
             Flush();
             FILE_STREAM.close();
         }
 
-        auto tellp() {
-            return FILE_STREAM.tellp();
+        template <typename T>
+            requires(is_integer_v<T>)
+        void SeekBitP(T POS_) {
+            Flush(); // clears LAST byte, no need to clear again
+            ofstream::pos_type BYTE_POS = static_cast<ofstream::pos_type>(POS_ / CHB);
+            int BIT_POS = POS_ % CHB;
+            FILE_STREAM.seekp(BYTE_POS + 1);
+            LAST = { (uchar)FILE_STREAM.rdbuf()->sgetc(), BIT_POS + 1, true };
         }
-        void seekp(fstream::pos_type pos) {
-            FILE_STREAM.seekp(pos);
+        auto TellBitP() {
+            return FILE_STREAM.tellp() * CHB + LAST.BITSN;
+        }
+        void SeekP(fstream::pos_type POS) {
+            FILE_STREAM.seekp(POS);
+        }
+        auto TellP() {
+            return FILE_STREAM.tellp();
         }
         void Flush() {
             if (LAST.BITSN) { // output buffer for last byte before closing filestream
-                LAST.MoveToLeft();
-                FILE_STREAM.put(LAST.UCBYTE);
+                uchar ALREADY_WRITTEN = (uchar) FILE_STREAM.rdbuf()->sgetc();
+                bitremedy RIGHT_PZL{ ALREADY_WRITTEN, CHB - LAST.BITSN, false };
+                LAST.AddToRight(RIGHT_PZL);
+                FILE_STREAM.put(LAST.UCBYTE); // HERE:
                 LAST.ClearToLeft();
             }
             FILE_STREAM.flush();
@@ -290,13 +393,13 @@ constexpr int CHB1 = CHAR_BIT - 1,
             else {
                 LAST.BITSN++;
             }
-            if (LAST.BITSN == CHB) {
+            if (LAST.BITSN >= CHB) {
                 FILE_STREAM.put(LAST.UCBYTE);
                 LAST.ClearToLeft();
             }
             return *this;
         }
-        template <typename T>
+        template <typename T>           
         ofinestream& operator << (const T& DATA) {
             if constexpr (container<T>) {
                 for (const auto& ELEMENT : DATA) {
@@ -304,7 +407,7 @@ constexpr int CHB1 = CHAR_BIT - 1,
                 }
             }
             else if constexpr (is_array_v<T>) {
-                for (int I = 0, SIZE = sizeof(DATA) / sizeof(DATA[0]); I < SIZE; I++) {
+                for (int I = 0, SIZE = size(DATA); I < SIZE; I++) {
                     *this << DATA[I];
                 }
             }
@@ -348,19 +451,28 @@ constexpr int CHB1 = CHAR_BIT - 1,
 
 
     class ifinestream : public finestream {
-        //uchar WarningGet() {
-        //    uchar UCREAD_BYTE = (uchar)FILE_STREAM.get();
-        //    if (UCREAD_BYTE == (uchar)EOF) {
-        //        cerr << "WARNING: reached end of file." << endl;
-        //    }
-        //    return UCREAD_BYTE;
-        //}
-
-
     public:
-        ifinestream(wstring FILE) : finestream(FILE) {}
-        ifinestream() {}
+        ifinestream(const filesystem::path& FILE_PATH) : finestream(FILE_PATH) {}
+        //ifinestream() {}
 
+        
+        template <typename T>
+            requires(is_integer_v<T>)
+        void SeekBitG(T POS_) {
+            ifstream::pos_type BYTE_POS = static_cast<ifstream::pos_type>(POS_ / CHB);
+            int BIT_POS = POS_ % CHB;
+            FILE_STREAM.seekg(BYTE_POS + 1);
+            LAST = { (uchar)FILE_STREAM.rdbuf()->sgetc(), BIT_POS + 1, true };
+        }
+        auto TellBitG() {
+            return FILE_STREAM.tellg() * CHB + LAST.BITSN;
+        }
+        void SeekG(fstream::pos_type pos) {
+            FILE_STREAM.seekg(pos);
+        }
+        auto TellG() {
+            return FILE_STREAM.tellg();
+        }
 
         inline uchar GetByte() {
             uchar UCREAD_BYTE;
@@ -395,31 +507,25 @@ constexpr int CHB1 = CHAR_BIT - 1,
             return RET;
         }
         inline int GetByte(bitremedy& BRBYTE) {
-            uchar UCREAD_BYTE;
-            if (LAST.BITSN) {
-                if (LAST.BITSN >= BRBYTE.BITSN) {
-                    LAST.ExtractFromLeft(BRBYTE);
+            if (LAST.BITSN >= BRBYTE.BITSN) {
+                LAST.ExtractFromLeft(BRBYTE);
+            }
+            else {
+                uchar UCREAD_BYTE = (uchar)FILE_STREAM.get();
+                if (UCREAD_BYTE == (uchar)EOF) {
+                    cerr << "WARNING: reached end of file." << endl;
+                    return EOF;
                 }
-                else {
-                    UCREAD_BYTE = (uchar)FILE_STREAM.get();
-                    if (UCREAD_BYTE == (uchar)EOF) {
-                        cerr << "WARNING: reached end of file." << endl;
-                        return EOF;
-                    }
-                    bitremedy READ = {UCREAD_BYTE, CHB, true};
+                if (LAST.BITSN) {
+                    bitremedy READ = { UCREAD_BYTE, CHB, true };
                     bitremedy READ_REMEDY = LAST.AddToRight(READ);
                     LAST.ExtractFromLeft(BRBYTE);
                     LAST.AddToRight(READ_REMEDY);
                 }
-            }
-            else {
-                UCREAD_BYTE = (uchar)FILE_STREAM.get();
-                if (UCREAD_BYTE == (uchar)EOF) {
-                    cerr << "WARNING: reached end of file." << endl;
-                    return EOF;
-                }    
-                LAST = {UCREAD_BYTE, CHB, true};
-                LAST.ExtractFromLeft(BRBYTE);
+                else{
+                    LAST = { UCREAD_BYTE, CHB, true };
+                    LAST.ExtractFromLeft(BRBYTE);
+                }
             }
             return 0;
         }
@@ -508,7 +614,7 @@ constexpr int CHB1 = CHAR_BIT - 1,
                 }
             }
             else if constexpr (is_array_v <T>) {
-                for (size_t I = 0, SIZE = sizeof(DATA) / sizeof(DATA[0]); I < SIZE; I++) {
+                for (size_t I = 0, SIZE = size(DATA); I < SIZE; I++) {
                     *this >> DATA[I];
                 }
             }

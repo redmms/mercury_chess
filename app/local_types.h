@@ -89,7 +89,7 @@ inline void showBox(QString header,
     msg_box.addButton("Ok", QMessageBox::AcceptRole);
     msg_box.addButton("Donate", QMessageBox::RejectRole);
     QObject::connect(&msg_box, &QMessageBox::rejected, [&]() {
-        QDesktopServices::openUrl(QUrl("https://www.buymeacoffee.com/mmd18", QUrl::TolerantMode));
+        QDesktopServices::openUrl(QUrl("https://ko-fi.com/mmd18", QUrl::TolerantMode));
     });
     msg_box.exec();
 }

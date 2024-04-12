@@ -1,4 +1,3 @@
-#pragma once
 #include "../app/local_types.h"
 
 class MainWindow;

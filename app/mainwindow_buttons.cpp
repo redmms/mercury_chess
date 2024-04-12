@@ -1,4 +1,3 @@
-
 void MainWindow::on_draw_button_clicked()
 {
     net->sendToServer(packnum::draw_suggestion);
@@ -321,7 +320,6 @@ void MainWindow::on_actionAbout_Qt_triggered()
 //{
 //    openInDevBox();
 //}
-
 
 void MainWindow::on_actionRules_triggered()
 {

@@ -39,8 +39,8 @@ Use the mouse wheel to scroll the history area on the upper side of the board ba
 ## Training mode
 
 Here (Play->Offline->Training) you can set any start position you want from a FEN string (the most popular format for describing board positions) to train your skills or test my chess engine. 
-By default, it opens this position:Â  
-https://www.chessprogramming.org/Perft_Results##Position_5Â  Â 
+By default, it opens this position:  
+https://www.chessprogramming.org/Perft_Results##Position_5   
   
 ![training_mode](/decription_media/training_mode.gif)  
   
@@ -67,9 +67,10 @@ std::map instead of QSettings is a temporary solution, so it does not save your 
 The server is not supposed to be used for playing more than two players at the same time, it is a pet project, don't forget it. 
 I don't get any money for this and spend my own money on running the server. 
 If you like the project, consider buying me a coffee:  
+https://ko-fi.com/mmd18   
 https://www.buymeacoffee.com/mmd18  
 It will inspire me to develop the project.   
-  
+
 ## Build
 
 There's a build for Windows x64 in the files. But if you're keen on diving into the code and building MercuryChess yourself, 

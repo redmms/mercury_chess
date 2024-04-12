@@ -130,7 +130,7 @@ inline int Archiver::readMove(bitmove& bmove, halfmove& hmove, fsm::ifinestream&
 {
     VirtualValidator* valid = board.valid;
     valid->searchingInStalemate(valid->theTurn());
-    bmove.piece.BITSN = fsm::MinBits(valid->movable_pieces.size() - 1);
+    bmove.piece.BITSN = fsm::intMinBits(valid->movable_pieces.size() - 1);
     ifs >> bmove.piece;
     if (bmove.piece >= valid->movable_pieces.size()) {
         cerr << "WARNING: piece idx is bigger than movable pieces available" << endl;
@@ -139,7 +139,7 @@ inline int Archiver::readMove(bitmove& bmove, halfmove& hmove, fsm::ifinestream&
     scoord from = *next(valid->movable_pieces.begin(), int(bmove.piece));
 
     valid->findValid(from);
-    bmove.move.BITSN = fsm::MinBits(valid->valid_moves.size() - 1);
+    bmove.move.BITSN = fsm::intMinBits(valid->valid_moves.size() - 1);
     ifs >> bmove.move;
     if (bmove.move >= valid->valid_moves.size()) {
         cerr << "WARNING: move idx is bigger than valid moves available" << endl;
@@ -169,12 +169,12 @@ bitmove Archiver::toBitmove(halfmove hmove, Validator* valid)
 
 bitremedy Archiver::toPieceIdx(scoord from, Validator* valid) {
     unsigned char piece_idx = distance(valid->movable_pieces.begin(), valid->movable_pieces.find(from));
-    return { piece_idx, fsm::MinBits(valid->movable_pieces.size() - 1), false };
+    return { piece_idx, fsm::intMinBits(valid->movable_pieces.size() - 1), false };
 }
 
 bitremedy Archiver::toMoveIdx(scoord to, Validator* valid) {
     unsigned char move_idx = distance(valid->valid_moves.begin(), valid->valid_moves.find(to));
-    return { move_idx, fsm::MinBits(valid->valid_moves.size() - 1), false };
+    return { move_idx, fsm::intMinBits(valid->valid_moves.size() - 1), false };
 }
 
 halfmove Archiver::toHalfmove(bitmove bmove, VirtualValidator* valid) {

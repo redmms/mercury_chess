@@ -151,7 +151,7 @@ MainWindow::~MainWindow() {
     delete ui;
 }
 
-#include "mainwindow_buttons.hpp"
+#include "mainwindow_buttons.cpp"
 
 void MainWindow::openTab(QWidget* page)
 {

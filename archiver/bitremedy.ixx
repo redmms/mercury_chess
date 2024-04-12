@@ -15,12 +15,14 @@ using namespace std;
 export struct bitremedy {
 private :
     bool LAST_ALIGN{ false };
+
 public:
     uchar UCBYTE{0};
     int BITSN{0};
     bool MOVED_LEFT{false}; // alias for leftAligned
 
 
+public:
     template <size_t N>
     bitremedy(bitset <N> BSBYTE_, int BITSN_, bool MOVED_LEFT_) :
         UCBYTE((uchar)BSBYTE_.to_ulong()), BITSN(BITSN_), MOVED_LEFT(MOVED_LEFT_)

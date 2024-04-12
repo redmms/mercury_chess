@@ -1,4 +1,3 @@
-#pragma once
 #include <QDialog>
 
 namespace Ui {

@@ -30,7 +30,8 @@ WebClient::~WebClient() {
     delete socket;
 }
 
-#include "webclient_pack_tools.hpp"
+#include "webclient_pack_tools.cpp"
+
 
 void WebClient::initSocket()
 {

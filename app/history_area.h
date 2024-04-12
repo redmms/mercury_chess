@@ -1,4 +1,3 @@
-#pragma once
 #include "../game/virtual_tile.h"
 #include <QScrollArea>
 #include <QColor>
