@@ -1,22 +1,27 @@
+#pragma once
 #include <QDialog>
 
 namespace Ui {
     class FenDialog;
 }
-class FenDialog : public QDialog
+
+namespace mmd
 {
-    Q_OBJECT
-    
-    Ui::FenDialog* ui;
+    class FenDialog : public QDialog
+    {
+        Q_OBJECT
 
-public:
-    FenDialog(QWidget *parent);
-    ~FenDialog();
+        Ui::FenDialog* ui;
 
-signals:
-    void newFen(QString fen);
+    public:
+        FenDialog(QWidget* parent);
+        ~FenDialog();
 
-private slots:
-    void on_skip_button_clicked();
-    void on_save_button_clicked();
-};
+    signals:
+        void newFen(QString fen);
+
+    private slots:
+        void on_skip_button_clicked();
+        void on_save_button_clicked();
+    };
+}

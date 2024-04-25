@@ -310,7 +310,7 @@ public:
             MASK <<= BITSN - 1;
         }
         string RES{ "" };
-        for (int I = 0; I < BITSN; MASK >>= 1, I++) {
+        for (int I = 0; I < BITSN; MASK >>= 1, ++I) {
             RES.push_back(UCBYTE & MASK ? '1' : '0');
         }
         return RES;

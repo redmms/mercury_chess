@@ -39,7 +39,7 @@ constexpr int CHB1 = CHAR_BIT - 1,
             throw out_of_range("ERROR: use array of same size as original data in ToBytes()");
         }
         ARRAY_VALUES_TYPE* BYTE_PTR = reinterpret_cast<ARRAY_VALUES_TYPE*>(&NUMBER);
-        for (int I = 0, SIZE = sizeof(NUMBER); I < SIZE; I++) {
+        for (int I = 0, SIZE = sizeof(NUMBER); I < SIZE; ++I) {
             BYTES_ARRAY[I] = BYTE_PTR[I];
         }
     }
@@ -52,7 +52,7 @@ constexpr int CHB1 = CHAR_BIT - 1,
         }
         typename CONTAINER_TYPE::value_type* BYTE_PTR = reinterpret_cast<typename
             CONTAINER_TYPE::value_type*>(&NUMBER);
-        for (int I = 0, SIZE = sizeof(NUMBER); I < SIZE; I++) {
+        for (int I = 0, SIZE = sizeof(NUMBER); I < SIZE; ++I) {
             BYTES_ARRAY.emplace(BYTES_ARRAY.end(), BYTE_PTR[I]);
         }
     }
@@ -90,7 +90,7 @@ constexpr int CHB1 = CHAR_BIT - 1,
         requires(container<T> || is_array_v<T>)
     inline constexpr size_t BitSize(const T& CONTAINER) {
         size_t TOTAL_SIZE = 0;
-        for (size_t I = 0, SIZE = size(CONTAINER); I < SIZE; SIZE++) {
+        for (size_t I = 0, SIZE = size(CONTAINER); I < SIZE; ++SIZE) {
             TOTAL_SIZE += BitSize(CONTAINER[I]);
         }
         return TOTAL_SIZE;
@@ -131,7 +131,7 @@ constexpr int CHB1 = CHAR_BIT - 1,
                 return LEADING_N;
             }
             else {
-                LEADING_N++;
+                ++LEADING_N;
             }
         }
         return LEADING_N;
@@ -142,7 +142,7 @@ constexpr int CHB1 = CHAR_BIT - 1,
         size_t LEADING_N = 0;
         for (size_t IDX = 0, SIZE = size(CONTAINER), TEMP = 0;
             IDX < SIZE && (TEMP = LeadingN(CONTAINER[IDX]) == BitSize(CONTAINER[IDX]));
-            IDX++) 
+            ++IDX) 
         {
             LEADING_N += TEMP;
         }
@@ -203,7 +203,7 @@ constexpr int CHB1 = CHAR_BIT - 1,
             cerr << "WARNING: in ToSizedVector: aim NUMBER size is less than vector<bool> size";
         }
         MASK_TYPE MASK{ MASK_TYPE(1u) << MASK_TYPE(CONTAINER.size() - 1) };
-        for (size_t BIT_IDX = 0, SIZE = CONTAINER.size(); BIT_IDX < SIZE; BIT_IDX++, MASK >>= 1) {
+        for (size_t BIT_IDX = 0, SIZE = CONTAINER.size(); BIT_IDX < SIZE; ++BIT_IDX, MASK >>= 1) {
             CONTAINER[BIT_IDX] = bool(NUMBER & MASK); // result casted to bool
         }
     }
@@ -332,7 +332,7 @@ constexpr int CHB1 = CHAR_BIT - 1,
         template <typename T>  // if you know how to safely use reference type parameter here - commit it
         inline void PutAny(T DATA) {
             uchar* BYTE_PTR = reinterpret_cast<uchar*>(&DATA);
-            for (int I = 0, SIZE = sizeof(DATA); I < SIZE; I++) {
+            for (int I = 0, SIZE = sizeof(DATA); I < SIZE; ++I) {
                 PutByte(BYTE_PTR[I]);
             }
         }
@@ -388,10 +388,10 @@ constexpr int CHB1 = CHAR_BIT - 1,
             LAST.MoveToLeft();
             if (BBYTE) {
                 LAST.UCBYTE |= (true << (CHB1 - LAST.BITSN)); // CHB - curr. seq. len. - new seq. len. = CHB - LAST.BITSN - 1 = CHB1 - LAST.BITSN
-                LAST.BITSN++;
+                ++LAST.BITSN;
             }
             else {
-                LAST.BITSN++;
+                ++LAST.BITSN;
             }
             if (LAST.BITSN >= CHB) {
                 FILE_STREAM.put(LAST.UCBYTE);
@@ -407,7 +407,7 @@ constexpr int CHB1 = CHAR_BIT - 1,
                 }
             }
             else if constexpr (is_array_v<T>) {
-                for (int I = 0, SIZE = size(DATA); I < SIZE; I++) {
+                for (int I = 0, SIZE = size(DATA); I < SIZE; ++I) {
                     *this << DATA[I];
                 }
             }
@@ -544,7 +544,7 @@ constexpr int CHB1 = CHAR_BIT - 1,
         int GetAnyReversed(T& DATA) {  // is it really reversed? or is normal?
             uchar BYTES[sizeof(T)];
             int ERR{ 0 };
-            for (int I = 0, SIZE = sizeof(T); I < SIZE; I++) {
+            for (int I = 0, SIZE = sizeof(T); I < SIZE; ++I) {
                 ERR = GetByte(BYTES[I]);
             }
             const T* DATAPTR = reinterpret_cast<const T*>(BYTES);
@@ -600,7 +600,7 @@ constexpr int CHB1 = CHAR_BIT - 1,
         }
         ifinestream& operator >> (vector<bool>& VB) {
              bool BIT;
-             for (size_t I = 0, SIZE = VB.size(); I < SIZE; I++) {
+             for (size_t I = 0, SIZE = VB.size(); I < SIZE; ++I) {
                  *this >> BIT;
                  VB[I] = BIT;
              }
@@ -614,7 +614,7 @@ constexpr int CHB1 = CHAR_BIT - 1,
                 }
             }
             else if constexpr (is_array_v <T>) {
-                for (size_t I = 0, SIZE = size(DATA); I < SIZE; I++) {
+                for (size_t I = 0, SIZE = size(DATA); I < SIZE; ++I) {
                     *this >> DATA[I];
                 }
             }

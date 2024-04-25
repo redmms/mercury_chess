@@ -1,22 +1,24 @@
-//#define QT_MESSAGELOGCONTEXT 
-#pragma once
-#include <QApplication>
 #include "app/mainwindow.h"
-#include "app/debug_message_handler.hpp"
-//#include <windows.h>  // For AllocConsole()
-//#include <cstdio>  
+#include "app/debug_message_handler.h"
+#include <QDebug>
+#ifndef NDEBUG
+#include <windows.h>  // For AllocConsole()          
+#include <cstdio>
+#endif  
+
 int main(int argc, char *argv[])
 {
-    LogHandler handler("log.txt");
-    qInstallMessageHandler(&LogHandler::messageHandler);
-    //AllocConsole();
-    //freopen("CONOUT$", "w", stdout);
-    //freopen("CONOUT$", "w", stderr);
+    mmd::LogHandler handler("log.txt");
+    qInstallMessageHandler(&mmd::LogHandler::messageHandler);
+#ifndef NDEBUG
+    AllocConsole();
+    freopen("CONOUT$", "w", stdout);
+    freopen("CONOUT$", "w", stderr);
+#endif
     QApplication app(argc, argv);
     app.setOrganizationName("MMD18 soft");
-    app.setApplicationName("MercuryChess" + curTime());
-    QString app_dir = app.applicationDirPath();
-    MainWindow mainwindow(app_dir);
+    app.setApplicationName("MercuryChess" + mmd::curTime());
+    mmd::MainWindow mainwindow;
     mainwindow.showMinimized();
     return app.exec();
 }

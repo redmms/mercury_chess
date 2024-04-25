@@ -1,22 +1,27 @@
+#pragma once
 #include <QDialog>
 
 namespace Ui {
     class OfflineDialog;
 }
 
-class OfflineDialog : public QDialog{
-    Q_OBJECT
+namespace mmd
+{
+    class OfflineDialog : public QDialog 
+    {
+        Q_OBJECT
 
-    Ui::OfflineDialog *ui;
+            Ui::OfflineDialog* ui;
 
-    bool checkName();
+        bool checkName();
 
-public:
-    explicit OfflineDialog(QWidget *parent_);
-    ~OfflineDialog();
+    public:
+        explicit OfflineDialog(QWidget* parent_);
+        ~OfflineDialog();
 
-private slots:
-    void on_choose_photo_button_clicked();
-    void on_save_button_clicked();
-    void on_skip_button_clicked();
-};
+    private slots:
+        void on_choose_photo_button_clicked();
+        void on_save_button_clicked();
+        void on_skip_button_clicked();
+    };
+}

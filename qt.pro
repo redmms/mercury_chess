@@ -28,7 +28,9 @@ SOURCES += \
     ../src/game/tile.cpp \
     ../src/game/validator.cpp \
     ../src/main.cpp \
-    ../src/app/offline_dialog.cpp
+    ../src/app/offline_dialog.cpp \
+    ../src/app/mainwindow_buttons.cpp \
+    ../src/app/webclient_pack_tools.cpp
 
 HEADERS += \
     ../src/app/chat.h \
@@ -36,14 +38,12 @@ HEADERS += \
     ../src/app/fen_dialog.h \
     ../src/app/local_types.h \
     ../src/app/mainwindow.h \
-    ../src/app/mainwindow_buttons.hpp \
     ../src/app/history_area.h \
     ../src/app/rules_dialog.h \
     ../src/game/virtual_board.h \
     ../src/game/virtual_tile.h \
     ../src/game/virtual_validator.h \
     ../src/app/webclient.h \
-    ../src/app/webclient_pack_tools.hpp \
     ../src/archiver/archiver.h \
     ../src/game/board.h \
     ../src/game/clock.h \

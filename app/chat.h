@@ -1,25 +1,29 @@
+#pragma once
 #include <QScrollArea>
 
 class QVBoxLayout;
 class QWidget;
-class Chat : public QScrollArea 
+namespace mmd
 {
-    Q_OBJECT
-    
-    QColor background_color;
-    QWidget* message_box;
-    QVBoxLayout* message_layout;
-    QFont message_font;
-    QFontMetrics message_metrics;
-    int max_message_width;
+    class Chat : public QScrollArea
+    {
+        Q_OBJECT
 
-public:
-    Chat(QWidget* parent_, QScrollArea* chat_area_, QColor background_color_ = Qt::white);
+        QColor background_color;
+        QWidget* message_box;
+        QVBoxLayout* message_layout;
+        QFont message_font;
+        QFontMetrics message_metrics;
+        int max_message_width;
 
-    void printMessage(QString name, bool own, QString text);
-    void clearMessages();
+    public:
+        Chat(QWidget* parent_, QScrollArea* chat_area_, QColor background_color_ = Qt::white);
 
-protected:
-    void paintEvent(QPaintEvent* event) override;
+        void printMessage(QString name, bool own, QString text);
+        void clearMessages();
 
-};
+    protected:
+        void paintEvent(QPaintEvent* event) override;
+
+    };
+}
