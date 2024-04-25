@@ -78,13 +78,6 @@ namespace mmd
                     "To change online nickname you will need to enter account. ");
             }
         }
-        //    QMessageBox msgBox;
-        //    msgBox.setWindowTitle("Notification");
-        //    msgBox.setText("Nickname has been changed");
-        //    msgBox.setIcon(QMessageBox::Information);
-        //    msgBox.addButton("Ok", QMessageBox::AcceptRole);
-        ////    connect(&msgBox, &QMessageBox::accepted, &msgBox, &QMessageBox::close);
-        //    msgBox.exec();
     }
 
     void MainWindow::on_back_from_settings_clicked()
@@ -318,8 +311,6 @@ namespace mmd
         msg_box.setTextFormat(Qt::RichText);   //this is what makes the links clickable
         msg_box.setText(description);
         msg_box.exec();
-        //QString description = "a" + QString(std::endl) + "<a href = 'https://github.com/redmms/finestream.git'>github< / a>";
-        //QMessageBox::about(0, title, description);
     }
 
 
@@ -328,21 +319,12 @@ namespace mmd
         QMessageBox::aboutQt(this, "About Qt");
     }
 
-    //void MainWindow::on_actionWith_AI_triggered()
-    //{
-    //    openInDevBox();
-    //}
-    //
-    //
-    //
-    //void MainWindow::on_actionRandomly_triggered()
-    //{
-    //    openInDevBox();
-    //}
-
     void MainWindow::on_actionRules_triggered()
     {
         RulesDialog* dialog = new RulesDialog(this);
+        connect(dialog, &RulesDialog::finished, [dialog]() {
+            dialog->deleteLater();
+            });
         dialog->show();
     }
 
@@ -353,9 +335,7 @@ namespace mmd
 
     void MainWindow::on_actionReport_a_bug_triggered()
     {
-        //extern std::ofstream log_ofstream;
-         //std::ofstream log_ofstream;
-        mmd::LogHandler::log_ofstream.flush();
+        LogHandler::log_ofstream.flush();
         QString app_dir = QCoreApplication::applicationDirPath();
         QDesktopServices::openUrl(QUrl("mailto:mmd18cury@yandex.ru?subject=MercuryChess:Bug report&body=Please attach the log file. Choose to attach a file and enter next path, then choose log.txt file: " + app_dir, QUrl::TolerantMode));
     }
@@ -394,11 +374,7 @@ namespace mmd
             + "_"
             + curTime()
             + ".mmd18";
-        //QString selected_fullname = QFileDialog::getSaveFileName(this, 
-        //                                "Save File",
-        //                                 archive_fullname,
-        //                                 tr("Chess Archive (*.mmd18)"));
-        auto save_dialog = QFileDialog(this,
+        QFileDialog save_dialog(this,
             "Save File",
             archive_fullname,
             tr("Chess Archive (*.mmd18)"));

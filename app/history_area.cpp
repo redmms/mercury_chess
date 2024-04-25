@@ -21,8 +21,6 @@ namespace mmd
         setMaximumSize(background_->maximumSize());
         setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
         setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-        background_->parentWidget()->layout()->replaceWidget(background_, this);
-        background_->~QLabel();
         history_label->setStyleSheet("background-color: transparent;");
         history_label->setFont({ "Segoe UI", 12 });
         history_label->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);

@@ -37,13 +37,21 @@ namespace mmd
     {
         // .ui file finish strokes
         ui->setupUi(this);
-        history_area = (new HistoryArea(this, ui->match_history, QColor(111, 196, 81)));
+
+        QLabel* old_history = ui->match_history;
+        history_area = (new HistoryArea(this, old_history, QColor(111, 196, 81)));
+        QLayoutItem* history_item = old_history->parentWidget()->layout()->replaceWidget(old_history, history_area);
+        delete old_history;
+        delete history_item;
+        ui->match_history = nullptr;
+
         QScrollArea* old_chat = ui->chat_area;
         chat = (new Chat(this, old_chat, QColor(0, 102, 51)));
-        QLayoutItem* item = old_chat->parentWidget()->layout()->replaceWidget(old_chat, chat);
+        QLayoutItem* chat_item = old_chat->parentWidget()->layout()->replaceWidget(old_chat, chat);
         delete old_chat;
-        delete item;
+        delete chat_item;
         ui->chat_area = nullptr;
+
         last_tab = ui->pre_tab;
         ui->mainToolBar->hide();
         ui->tabWidget->tabBar()->hide();
