@@ -5,11 +5,10 @@
 #include "../game/board.h"
 #include <QTcpSocket>
 #include <QBuffer>
+using namespace std;
 
 namespace mmd
 {
-    using namespace std;
-
     WebClient::WebClient(MainWindow* parent) :
         QObject(parent),
         mainwindow(parent),

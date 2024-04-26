@@ -10,6 +10,7 @@
 #include <string>
 #include <QBitmap>
 #include <QVariant>
+using namespace std;
 
 namespace mmd
 {
@@ -55,13 +56,13 @@ namespace mmd
     scoord stringToCoord(QString str)
     {
         if (str.size() < 2) {
-            throw std::invalid_argument("In local_types.h, in stringToCoord(QString str)");
+            throw invalid_argument("In local_types.h, in stringToCoord(QString str)");
         }
-        std::string s = str.toStdString();
+        string s = str.toStdString();
         return { s[0] - 'a', s[1] - '0' - 1 };
     }
 
-    const std::map<char, promnum> promo_by_char
+    const map<char, promnum> promo_by_char
     {
         {'N', to_knight},
         {'B', to_bishop},
@@ -70,7 +71,7 @@ namespace mmd
         {'e', no_promotion}
     };
 
-    const std::map<promnum, char> char_by_promo
+    const map<promnum, char> char_by_promo
     {
         {to_knight, 'N'},
         {to_bishop, 'B'},
@@ -89,7 +90,7 @@ namespace mmd
         return qvariant_cast<QBitmap>(settings[par]);
     }
 
-    std::map<setnum, QVariant> settings;
+    map<setnum, QVariant> settings;
     //
     //scoord a1 = stringToCoord("a1");
     //scoord a2 = stringToCoord("a2");

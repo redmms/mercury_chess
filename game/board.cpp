@@ -4,46 +4,37 @@
 #include "../app/mainwindow.h"
 #include <QEventLoop>
 #include <QLayout>
+using namespace std;
 
 namespace mmd
 {
-    using namespace std;
-
     Board::Board(MainWindow* parent_, int size_) :
         QLabel(parent_),
         tile_size(size_ / 9),
         valid(new Validator(this)),
         tiles{ {nullptr} },
         board_css(
-            "Board{"
-            "background-color: rgb(170, 170, 125);"
-            "border: 1 solid black;"
-            "border-radius: 14px;}"
-            "Tile{"
-            "border-radius: 7;}"
+            "mmd--Board{"
+                "background-color: rgb(170, 170, 125);"
+                "border: 1 solid black;"
+                "border-radius: 14px;}"
+            "mmd--Tile{"
+                "border-radius: 7;}"
         ),
         promo_css(
-            "Tile{"
-            "background-color: white;}:"
+            "mmd--Tile{"
+                "background-color: white;}:"
             "hover{"
-            "background-color: rgb(170,85,127);}"
+                "background-color: rgb(170,85,127);}"
         )
     {
-        setMinimumSize(size_, size_);
-        setMaximumSize(size_, size_);
-        setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
-        setStyleSheet(board_css);
-
+        resize(size_, size_);
         setToolTip("Think thoroughly");
-
         drawLetters();
         drawNumbers();
         initTiles();
-
         VirtualBoard::valid = Board::valid;
-
-        setTiles();
-
+        setTiles(); // order matters here
         for (int x = 0; x < 8; ++x) {
             for (int y = 0; y < 8; ++y) {
                 VirtualBoard::tiles[x][y] = Board::tiles[x][y];

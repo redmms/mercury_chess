@@ -14,7 +14,7 @@
    <string>Insert FEN</string>
   </property>
   <property name="styleSheet">
-   <string notr="true">FenDialog{
+   <string notr="true">mmd--FenDialog{
 	background-image: url(:/images/background);
     background-position: center;
 }</string>

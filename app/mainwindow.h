@@ -22,6 +22,7 @@ namespace mmd
     class MainWindow : public QMainWindow
     {
         Q_OBJECT
+
     public:
         QScopedPointer<Ui::MainWindow> ui;
         QPointer<HistoryArea> history_area;
@@ -44,6 +45,9 @@ namespace mmd
         int changeLocalName(QString name);
         void startGame(QString game_regime);
         void openTab(QWidget* page);
+        void copyBoardProp(Board* young, QLabel* old);
+        void copyChatProp(Chat* young, QScrollArea* old);
+        void copyHistoryProp(HistoryArea* young, QLabel* old);
 
     signals:
         void timeToSwitchTime();

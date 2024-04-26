@@ -6,11 +6,10 @@
 #include <QStringList>
 #include <cctype>
 #include <iostream>
+using namespace std;
 
 namespace mmd
 {
-    using namespace std;
-
     VirtualBoard::VirtualBoard() :
         valid(new VirtualValidator(this)),
         from_coord{ -1, -1 },  // always actualized in Tile::setPiece()
@@ -59,7 +58,7 @@ namespace mmd
         return black_king;
     }
 
-    const std::vector<halfmove>& VirtualBoard::story()
+    const vector<halfmove>& VirtualBoard::story()
     {
         return history;
     }
@@ -210,10 +209,7 @@ namespace mmd
 
     void VirtualBoard::revertPromotion(vove move, bool virtually)
     {
-        //char piece_name = move.first.piece_name;
-        //bool piece_color = move.first.piece_color;
         revertMoveSimply(move, virtually);
-        //theTile(move.first).setPiece(piece_name, piece_color);
     }
 
     void VirtualBoard::revertHalfmove(halfmove hmove, bool virtually, bool historically)

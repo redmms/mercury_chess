@@ -17,7 +17,7 @@ namespace mmd
         int max_message_width;
 
     public:
-        Chat(QWidget* parent_, QScrollArea* chat_area_, QColor background_color_ = Qt::white);
+        Chat(QWidget* parent_, QColor background_color_ = Qt::white);
 
         void printMessage(QString name, bool own, QString text);
         void clearMessages();

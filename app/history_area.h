@@ -13,7 +13,7 @@ namespace mmd
         QLabel* history_label;
 
     public:
-        HistoryArea(QWidget* parent_ = nullptr, QLabel* background_ = nullptr, QColor background_color_ = Qt::white);
+        HistoryArea(QWidget* parent_, QColor background_color_ = Qt::white);
 
         void writeStory(int order, halfmove hmove);
         void clearStory();

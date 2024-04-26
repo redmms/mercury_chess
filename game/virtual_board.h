@@ -47,7 +47,7 @@ namespace mmd
         void revertMoveSimply(vove move, bool virtually = false);
         void revertCastling(vove move, bool virtually = false);
         void revertPass(vove move, bool virtually = false);
-        void revertPromotion(vove move, bool virtually = false);
+        inline void revertPromotion(vove move, bool virtually = false);
         void revertHalfmove(halfmove saved, bool virtually = false, bool historically = true);
         // methods for watching history:
         void moveForward();

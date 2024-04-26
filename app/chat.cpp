@@ -5,12 +5,11 @@
 #include <QWidget>
 #include <QLabel>
 #include <QPainter>
+using namespace std;
 
 namespace mmd
 {
-    using namespace std;
-
-    Chat::Chat(QWidget* parent_, QScrollArea* chat_area_, QColor background_color_) :
+    Chat::Chat(QWidget* parent_, QColor background_color_) :
         QScrollArea(parent_),
         background_color(background_color_),
         message_box(new QWidget(this)),
@@ -19,15 +18,6 @@ namespace mmd
         message_metrics{ message_font },
         max_message_width{}
     {
-        // prepare scroll_area before making a chat
-        setStyleSheet("QAbstractScrollArea{background: transparent; border: none;}");
-        setGeometry(chat_area_->geometry());
-        setSizePolicy(chat_area_->sizePolicy());
-        setMinimumSize(chat_area_->minimumSize());
-        setMaximumSize(chat_area_->maximumSize());
-        setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-        setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-
         //chat itself
         max_message_width = minimumWidth() - 20;
         message_layout->setContentsMargins(10, 5, 10, 5);
@@ -36,7 +26,6 @@ namespace mmd
         message_box->setStyleSheet("background-color: transparent;"); //#1B1C1F
         setWidget(message_box);
         setWidgetResizable(true);
-
     }
 
     void Chat::printMessage(QString name, bool own, QString text)
@@ -100,7 +89,7 @@ namespace mmd
 
         QPainter painter(viewport());
         int radius = 14;
-        painter.setBrush(background_color); // QColor(0, 102, 51)
+        painter.setBrush(background_color);
         painter.setPen(Qt::NoPen);
         painter.drawRoundedRect(viewport()->rect(), radius, radius);
     }

@@ -39,18 +39,15 @@ namespace mmd
         ui->setupUi(this);
 
         QLabel* old_history = ui->match_history;
-        history_area = (new HistoryArea(this, old_history, QColor(111, 196, 81)));
-        QLayoutItem* history_item = old_history->parentWidget()->layout()->replaceWidget(old_history, history_area);
-        delete old_history;
-        delete history_item;
-        ui->match_history = nullptr;
+        history_area = (new HistoryArea(this, QColor(111, 196, 81)));
+        copyHistoryProp(history_area, old_history);
+        replaceOld(history_area, old_history);
 
         QScrollArea* old_chat = ui->chat_area;
-        chat = (new Chat(this, old_chat, QColor(0, 102, 51)));
-        QLayoutItem* chat_item = old_chat->parentWidget()->layout()->replaceWidget(old_chat, chat);
-        delete old_chat;
-        delete chat_item;
-        ui->chat_area = nullptr;
+        chat = (new Chat(this, QColor(0, 102, 51)));
+        copyChatProp(chat, old_chat);
+        replaceOld(chat, old_chat);
+
 
         last_tab = ui->pre_tab;
         ui->mainToolBar->hide();
@@ -171,6 +168,37 @@ namespace mmd
         ui->tabWidget->setCurrentWidget(page);
     }
 
+    void MainWindow::copyBoardProp(Board* young, QLabel* old)
+    {
+        int size = old->width();
+        young->setMinimumSize(size, size);
+        young->setMaximumSize(size, size);
+        young->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+        young->setStyleSheet(young->board_css);
+    }
+
+    void MainWindow::copyChatProp(Chat* young, QScrollArea* old)
+    {
+        young->setStyleSheet("QAbstractScrollArea{background: transparent; border: none;}");
+        young->setGeometry(old->geometry());
+        young->setSizePolicy(old->sizePolicy());
+        young->setMinimumSize(old->minimumSize());
+        young->setMaximumSize(old->maximumSize());
+        young->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+        young->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    }
+
+    void MainWindow::copyHistoryProp(HistoryArea* young, QLabel* old)
+    {
+        young->setStyleSheet("QAbstractScrollArea{background: transparent; border: none;}");
+        young->setGeometry(old->geometry());
+        young->setSizePolicy(old->sizePolicy());
+        young->setMinimumSize(old->minimumSize());
+        young->setMaximumSize(old->maximumSize());
+        young->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+        young->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    }
+
     void MainWindow::openStopGameBox()
     {
         showBox("Stop active game",
@@ -275,19 +303,14 @@ namespace mmd
         if (board) {
             Board* old_board = board;
             board = (new Board(this, old_board->width()));
-            QLayoutItem* item = old_board->parentWidget()->layout()->replaceWidget(old_board, board);
-            delete old_board;
-            delete item;
-            // replaces ui board by this class
+            copyBoardProp(board, old_board);
+            replaceOld(board, old_board);
         }
         else if (ui->board_background) {
             QLabel* old_board = ui->board_background;
             board = (new Board(this, old_board->width()));
-            QLayoutItem* item = old_board->parentWidget()->layout()->replaceWidget(old_board, board);
-            delete old_board;
-            delete item;
-            ui->board_background = nullptr;
-            // replaces ui board by this class
+            copyBoardProp(board, old_board);
+            replaceOld(board, old_board);
         }
         else {
             qDebug() << "ERROR: in MainWindow::startGame() with board/ui->background pointer";

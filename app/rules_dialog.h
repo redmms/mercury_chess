@@ -11,10 +11,10 @@ namespace mmd
     {
         Q_OBJECT
 
-            Ui::RulesDialog* ui;
+        Ui::RulesDialog* ui;
 
     public:
-        explicit RulesDialog(QWidget* parent);
+        explicit RulesDialog(QWidget* parent_);
         ~RulesDialog();
     };
 }

@@ -15,8 +15,8 @@ namespace mmd
         QByteArray read_package;
         QByteArray send_package;
         QDataStream read_stream;
-
         QDataStream send_stream;
+
         WebClient(MainWindow* parent = nullptr);
         ~WebClient();
 
@@ -39,15 +39,6 @@ namespace mmd
         bool connectToServer();
         void packFromSock(QTcpSocket* socket, QByteArray& received_package);
         void connectNewHost();
-        //    void sendRegistration();
-        //    void sendInvite();
-        //    void sendInviteRespond(bool respond);
-        //    void sendMove(scoord from, scoord to);
-        //    void sendChatMessage(QString message);
-        //    void sendDrawSuggestion();
-        //    void sendDrawRespond(bool respond);
-        //    void sendResignation();
-        //    void sendEndGame();
 
     signals:
         void endedReadingInvite();

@@ -29,7 +29,7 @@
    <bool>false</bool>
   </property>
   <property name="styleSheet">
-   <string notr="true">OfflineDialog{
+   <string notr="true">mmd--OfflineDialog{
 	background-image: url(:/images/background);
 	background-position: center;
 }

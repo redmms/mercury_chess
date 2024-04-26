@@ -1,11 +1,10 @@
 #include "webclient.h"
 #include <QDebug>
 #include <QBuffer>
+using namespace std;
 
 namespace mmd
 {
-    using namespace std;
-
     void WebClient::writePack(packnum data) {
         send_stream << quint8(data);
     }

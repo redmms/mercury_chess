@@ -1,13 +1,12 @@
 #include "validator.h"
 #include "board.h"
 #include <QDebug>
+using namespace std;
+using lambda = function<bool(mmd::scoord)>;
+using checker = function<bool(mmd::scoord, bool&)>;
 
 namespace mmd
 {
-    using namespace std;
-    using lambda = function<bool(scoord)>;
-    using checker = function<bool(scoord, bool&)>;
-
     Validator::Validator(Board* mother_board_) :
         VirtualValidator(mother_board_),
         board(mother_board_)

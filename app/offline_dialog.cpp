@@ -3,11 +3,10 @@
 #include "../app/local_types.h"
 #include <QFileDialog>
 #include <QBitmap>
+using namespace std;
 
 namespace mmd
 {
-    using namespace std;
-
     OfflineDialog::OfflineDialog(QWidget* parent_) :
         QDialog(parent_),
         ui(new Ui::OfflineDialog)

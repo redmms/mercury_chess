@@ -1,10 +1,9 @@
 #include "virtual_tile.h"
 #include "virtual_board.h"
+using namespace std;
 
 namespace mmd
 {
-    using namespace std;
-
     VirtualTile::VirtualTile(scoord tile_coord_, char piece_name_, bool piece_color_, VirtualBoard* mother_board_) :
         coord(tile_coord_),
         piece_name(piece_name_),

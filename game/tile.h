@@ -10,7 +10,7 @@ namespace mmd
     {
         Q_OBJECT
 
-            QColor black;
+        QColor black;
         QColor white;
         QColor selected;
         QColor valid;
@@ -33,12 +33,4 @@ namespace mmd
     signals:
         void tileClicked(Tile* tile);
     };
-
-    //struct TileCmp
-    //{
-    //    bool operator()(const Tile* l, const Tile* r) const
-    //    {
-    //        return l->coord < r->coord;
-    //    }
-    //};
 }

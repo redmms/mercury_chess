@@ -11,7 +11,7 @@ namespace mmd
     {
         Q_OBJECT
 
-            Ui::OfflineDialog* ui;
+        Ui::OfflineDialog* ui;
 
         bool checkName();
 

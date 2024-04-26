@@ -15,7 +15,7 @@ namespace mmd
 {
     Archiver::Archiver() {}
 
-    int Archiver::writeGame(endnum end_type, const std::vector<bitmove>& history, QString filename)
+    int Archiver::writeGame(endnum end_type, const vector<bitmove>& history, QString filename)
     {
         try {
             fsm::ofinestream pofs(filename.toStdWString());
@@ -70,7 +70,7 @@ namespace mmd
         return 0;
     }
 
-    int Archiver::readGame(endnum& end_type, std::vector<bitmove>& bistory, std::vector<halfmove>& history, QString filename)
+    int Archiver::readGame(endnum& end_type, vector<bitmove>& bistory, vector<halfmove>& history, QString filename)
     {
         try {
             fsm::ifinestream pifs(filename.toStdWString());

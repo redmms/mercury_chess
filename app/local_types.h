@@ -1,6 +1,8 @@
 #pragma once
 #include <QDateTime>
 #include <QMessageBox>
+#include <QDebug>
+#include <QLayoutItem>
 #include <utility>
 #include <cstdint>
 import bitremedy;
@@ -208,6 +210,36 @@ namespace mmd
     QString coordToString(scoord coord);
 
     scoord stringToCoord(QString str);
+
+    template <typename OLD, typename NEW>
+        //requires(std::is_base_of_v<QObject, OLD> && std::is_base_of_v<QObject, NEW>)
+    void replaceOld(NEW young, OLD& old) {
+        if (!young || !old) {
+            qDebug() << "WARNING: wrong arguments of replaceOld()";
+            return;
+        }
+        QLayout* layout = old->parentWidget()->layout();
+        if (layout) {
+            QLayoutItem* item = layout->replaceWidget(old, young);
+            delete old;
+            delete item;
+            old = nullptr;
+        }
+        else {
+            qDebug() << "replaceOld() 'old' argument had no layout";
+            return;
+        }
+    }
+
+    //template<typename T>
+    //    requires(std::is_function_v<T>) // add require that a
+    //void forEachTile(Tile* (&arr)[8][8], std::function<T> func) {
+    //    for (int x = 0; x < 8; x++) {
+    //        for (int y = 0; y < 8; y++) {
+    //            func(arr[x][y]);
+    //        }
+    //    }
+    //}
 
     //extern scoord a1;
     //extern scoord a2;

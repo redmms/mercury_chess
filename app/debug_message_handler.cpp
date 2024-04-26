@@ -7,7 +7,7 @@ using namespace std;
 
 namespace mmd 
 {
-    std::ofstream LogHandler::log_ofstream;
+    ofstream LogHandler::log_ofstream;
 
     LogHandler::LogHandler(QString log_file_name_) :
         log_file_name(log_file_name_),
@@ -16,9 +16,7 @@ namespace mmd
         old_ofstream{}
     {
         try {
-            //if (log_ofstream) {
             old_ofstream = move(log_ofstream);
-            //}
             log_ofstream = ofstream(log_file_name.toStdString(), ios::out | ios::app);
             
         }

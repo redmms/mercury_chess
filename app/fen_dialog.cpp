@@ -1,5 +1,6 @@
 #include "fen_dialog.h"
 #include "ui_fen_dialog.h"
+using namespace std;
 
 namespace mmd
 {

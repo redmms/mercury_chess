@@ -3,13 +3,12 @@
 #include "virtual_tile.h"
 #include "../app/mainwindow.h"
 #include <iostream>
+using namespace std;
+using lambda = function<bool(mmd::scoord)>;
+using checker = function<bool(mmd::scoord, bool&)>;
 
 namespace mmd
 {
-    using namespace std;
-    using lambda = function<bool(scoord)>;
-    using checker = function<bool(scoord, bool&)>;
-
     VirtualValidator::VirtualValidator(VirtualBoard* mother_board_) :
         board(mother_board_),
         valid_moves{},
@@ -140,7 +139,7 @@ namespace mmd
         return board->bKing();
     }
 
-    const std::vector<halfmove>& VirtualValidator::story()
+    const vector<halfmove>& VirtualValidator::story()
     {
         return board->story();
     }
@@ -176,7 +175,7 @@ namespace mmd
                    { x - 1, y - 1 }, { x, y - 1 }, { x + 1, y - 1 } };
     }
 
-    void VirtualValidator::castlingPotential(std::list<scoord>& coords)
+    void VirtualValidator::castlingPotential(list<scoord>& coords)
     {
         if (theTurn())
             coords = { {2, 0}, {6, 0} };
@@ -191,13 +190,13 @@ namespace mmd
                    { x - 2, y - 1 }, { x - 1, y - 2 }, { x + 1, y - 2 }, { x + 2, y - 1 } };
     }
 
-    void VirtualValidator::pawnEatPotential(scoord coord, std::list<scoord>& coords)
+    void VirtualValidator::pawnEatPotential(scoord coord, list<scoord>& coords)
     {
         int x = coord.x, y = coord.y, k = theTurn() ? 1 : -1;
         coords = { {x - 1, y + k}, {x + 1, y + k} };
     }
 
-    void VirtualValidator::pawnMovePotential(scoord coord, std::list<scoord>& coords)
+    void VirtualValidator::pawnMovePotential(scoord coord, list<scoord>& coords)
     {
         int x = coord.x, y = coord.y, k = theTurn() ? 1 : -1;
         coords = { {x, y + k}, {x, y + 2 * k } };

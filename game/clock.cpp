@@ -2,11 +2,10 @@
 #include <QLabel>
 #include <QTimer>
 #include <QDebug>
+using namespace std;
 
 namespace mmd
 {
-    using namespace std;
-
     ChessClock::ChessClock(QObject* parent_, QLabel* opponent_label_, QLabel* user_label_,
         bool side_, int max_minutes_)
         : QObject(parent_),
@@ -22,7 +21,6 @@ namespace mmd
         zero_time(QTime(0, 0))
     {
         for (auto timer : { black_timer, white_timer }) {
-            //timer->setTimerType(Qt::PreciseTimer); // this line will really slow down the game
             timer->setInterval(max_time);
             connect(timer, &QTimer::timeout, this, &ChessClock::gameTimeout);
         }

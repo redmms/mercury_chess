@@ -1,10 +1,9 @@
 #include "tile.h"
 #include "board.h"
+using namespace std;
 
 namespace mmd
 {
-    using namespace std;
-
     Tile::Tile(scoord tile_coord_, char piece_name_, bool piece_color_, bool side_, Board* parent_) :
         QLabel(parent_),
         VirtualTile(tile_coord_, piece_name_, piece_color_, parent_),
@@ -13,7 +12,7 @@ namespace mmd
         selected(Qt::green),
         valid(Qt::yellow),
         hover{ 185, 108, 146 }, // previous: {170, 85, 127}
-        css("QLabel{background-color: %0;}:hover{background-color: %1;}")
+        css("mmd--Tile{background-color: %0;}:hover{background-color: %1;}")
     {
         css_colors["normal"][0] = black.name(QColor::HexRgb);
         css_colors["normal"][1] = white.name(QColor::HexRgb);
@@ -25,7 +24,7 @@ namespace mmd
         css_colors["hover"][1] = hover.name(QColor::HexRgb);
 
         dyeNormal();
-        auto size = parent_->tile_size;
+        int size = parent_->tile_size;
         if (side_)
             setGeometry(size / 2 + coord.x * size, size / 2 + (7 - coord.y) * size,
                 size, size); // size/2 is the indent from the left upper corner
