@@ -1,0 +1,3 @@
+[submodule "archiver/finestream"]
+	path = archiver/finestream
+	url = https://github.com/redmms/finestream.git
