@@ -18,13 +18,13 @@ namespace mmd
     int Archiver::writeGame(endnum end_type, const vector<bitmove>& history, QString filename)
     {
         try {
-            fsm::ofinestream pofs(filename.toStdWString());
+            fn::ofinestream pofs(filename.toStdWString());
         }
         catch (const exception& e) {
             cerr << e.what() << endl;
             return 1;
         }
-        fsm::ofinestream ofs(filename.toStdWString());
+        fn::ofinestream ofs(filename.toStdWString());
         if (history.empty()) {
             cerr << "You are trying to write an empty game" << endl;
             return 2;
@@ -40,7 +40,7 @@ namespace mmd
             return 3;
         }
         uint8_t moves_num = history.size();
-        bitremedy end(end_type, 4, false);
+        fn::bitremedy end{ int(end_type), 4, false };
         ofs << archiver_version
             << char_num
             << opp_name
@@ -58,7 +58,7 @@ namespace mmd
         return 0;
     }
 
-    int Archiver::writeMove(bitmove bmove, fsm::ofinestream& ofs) {
+    int Archiver::writeMove(bitmove bmove, fn::ofinestream& ofs) {
         ofs << bmove.piece
             << bmove.move;
         //sout << " piece: " << move.piece.toStr() << endl
@@ -73,13 +73,13 @@ namespace mmd
     int Archiver::readGame(endnum& end_type, vector<bitmove>& bistory, vector<halfmove>& history, QString filename)
     {
         try {
-            fsm::ifinestream pifs(filename.toStdWString());
+            fn::ifinestream pifs(filename.toStdWString());
         }
         catch (const exception& e) {
             cerr << e.what() << endl;
             return 1;
         }
-        fsm::ifinestream ifs(filename.toStdWString());
+        fn::ifinestream ifs(filename.toStdWString());
 
         uint8_t version;
         ifs >> version;
@@ -102,7 +102,7 @@ namespace mmd
         uint8_t moves_num;
         ifs >> moves_num;
 
-        bitremedy end{ 0, 4, false };
+        fn::bitremedy end{ 0, 4, false };
         ifs >> end;
         end_type = endnum(int(end));
 
@@ -133,11 +133,11 @@ namespace mmd
         return 0;
     }
 
-    inline int Archiver::readMove(bitmove& bmove, halfmove& hmove, fsm::ifinestream& ifs, VirtualBoard& board)
+    inline int Archiver::readMove(bitmove& bmove, halfmove& hmove, fn::ifinestream& ifs, VirtualBoard& board)
     {
         VirtualValidator& valid = *board.valid;
         valid.searchingInStalemate(valid.theTurn());
-        bmove.piece.BITSN = fsm::intMinBits(valid.movable_pieces.size() - 1);
+        bmove.piece = { bmove.piece.Ucbyte(), fn::IntNonLeadingN(valid.movable_pieces.size() - 1), bmove.piece.MovedLeft() };
         ifs >> bmove.piece;
         if (bmove.piece >= valid.movable_pieces.size()) {
             cerr << "WARNING: piece idx is bigger than movable pieces available" << endl;
@@ -146,7 +146,7 @@ namespace mmd
         scoord from = *next(valid.movable_pieces.begin(), int(bmove.piece));
 
         valid.findValid(from);
-        bmove.move.BITSN = fsm::intMinBits(valid.valid_moves.size() - 1);
+        bmove.move = { bmove.move.Ucbyte(), fn::IntNonLeadingN(valid.valid_moves.size() - 1), bmove.move.MovedLeft() };
         ifs >> bmove.move;
         if (bmove.move >= valid.valid_moves.size()) {
             cerr << "WARNING: move idx is bigger than valid moves available" << endl;
@@ -174,14 +174,14 @@ namespace mmd
         return { toPieceIdx(from, valid), toMoveIdx(to, valid), promo_by_char.at(hmove.promo) };
     }
 
-    bitremedy Archiver::toPieceIdx(scoord from, Validator& valid) {
+    fn::bitremedy Archiver::toPieceIdx(scoord from, Validator& valid) {
         unsigned char piece_idx = distance(valid.movable_pieces.begin(), valid.movable_pieces.find(from));
-        return { piece_idx, fsm::intMinBits(valid.movable_pieces.size() - 1), false };
+        return { piece_idx, fn::IntNonLeadingN(valid.movable_pieces.size() - 1), false };
     }
 
-    bitremedy Archiver::toMoveIdx(scoord to, Validator& valid) {
+    fn::bitremedy Archiver::toMoveIdx(scoord to, Validator& valid) {
         unsigned char move_idx = distance(valid.valid_moves.begin(), valid.valid_moves.find(to));
-        return { move_idx, fsm::intMinBits(valid.valid_moves.size() - 1), false };
+        return { move_idx, fn::IntNonLeadingN(valid.valid_moves.size() - 1), false };
     }
 
     halfmove Archiver::toHalfmove(bitmove bmove, VirtualValidator& valid) {

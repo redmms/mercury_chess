@@ -79,11 +79,13 @@ namespace mmd
         bool canPromote(scoord pawn, scoord destination);
         void updateHasMoved(scoord from, scoord to);
         // testing:
+#ifdef MMDTEST
         unsigned countMovesTest(int depth = 5, int i = 0);
         unsigned countMoves(int depth = 5, int i = 0);
         inline void printMoveCount(scoord from, scoord to, char promo, unsigned mc);
         inline unsigned tryMove(int depth, int i, scoord from, scoord to, char promo);
         inline unsigned countParticular(int depth, int i, scoord from);
         void printHasMoved();
+#endif  // MMDTEST
     };
 }

@@ -1,0 +1,10 @@
+log.txt
+ui_fen_dialog.h
+ui_mainwindow.h
+ui_offline_dialog.h
+ui_rules_dialog.h
+qt.vcxproj.user
+all.pro.user
+.vs
+debug
+release

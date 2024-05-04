@@ -168,8 +168,8 @@ namespace mmd
 
     struct bitmove 
     {
-        bitremedy piece = {};
-        bitremedy move = {};
+        fn::bitremedy piece = {};
+        fn::bitremedy move = {};
         promnum promo = promnum::no_promotion;
     };
 
@@ -232,7 +232,7 @@ namespace mmd
     }
 
     //template<typename T>
-    //    requires(std::is_function_v<T>) // add require that a
+    //    requires(std::is_function_v<T>)
     //void forEachTile(Tile* (&arr)[8][8], std::function<T> func) {
     //    for (int x = 0; x < 8; x++) {
     //        for (int y = 0; y < 8; y++) {
@@ -241,68 +241,70 @@ namespace mmd
     //    }
     //}
 
-    //extern scoord a1;
-    //extern scoord a2;
-    //extern scoord a3;
-    //extern scoord a4;
-    //extern scoord a5;
-    //extern scoord a6;
-    //extern scoord a7;
-    //extern scoord a8;
-    //extern scoord b1;
-    //extern scoord b2;
-    //extern scoord b3;
-    //extern scoord b4;
-    //extern scoord b5;
-    //extern scoord b6;
-    //extern scoord b7;
-    //extern scoord b8;
-    //extern scoord c1;
-    //extern scoord c2;
-    //extern scoord c3;
-    //extern scoord c4;
-    //extern scoord c5;
-    //extern scoord c6;
-    //extern scoord c7;
-    //extern scoord c8;
-    //extern scoord d1;
-    //extern scoord d2;
-    //extern scoord d3;
-    //extern scoord d4;
-    //extern scoord d5;
-    //extern scoord d6;
-    //extern scoord d7;
-    //extern scoord d8;
-    //extern scoord e1;
-    //extern scoord e2;
-    //extern scoord e3;
-    //extern scoord e4;
-    //extern scoord e5;
-    //extern scoord e6;
-    //extern scoord e7;
-    //extern scoord e8;
-    //extern scoord f1;
-    //extern scoord f2;
-    //extern scoord f3;
-    //extern scoord f4;
-    //extern scoord f5;
-    //extern scoord f6;
-    //extern scoord f7;
-    //extern scoord f8;
-    //extern scoord g1;
-    //extern scoord g2;
-    //extern scoord g3;
-    //extern scoord g4;
-    //extern scoord g5;
-    //extern scoord g6;
-    //extern scoord g7;
-    //extern scoord g8;
-    //extern scoord h1;
-    //extern scoord h2;
-    //extern scoord h3;
-    //extern scoord h4;
-    //extern scoord h5;
-    //extern scoord h6;
-    //extern scoord h7;
-    //extern scoord h8;
+#ifndef NDEBUG
+    extern scoord a1;
+    extern scoord a2;
+    extern scoord a3;
+    extern scoord a4;
+    extern scoord a5;
+    extern scoord a6;
+    extern scoord a7;
+    extern scoord a8;
+    extern scoord b1;
+    extern scoord b2;
+    extern scoord b3;
+    extern scoord b4;
+    extern scoord b5;
+    extern scoord b6;
+    extern scoord b7;
+    extern scoord b8;
+    extern scoord c1;
+    extern scoord c2;
+    extern scoord c3;
+    extern scoord c4;
+    extern scoord c5;
+    extern scoord c6;
+    extern scoord c7;
+    extern scoord c8;
+    extern scoord d1;
+    extern scoord d2;
+    extern scoord d3;
+    extern scoord d4;
+    extern scoord d5;
+    extern scoord d6;
+    extern scoord d7;
+    extern scoord d8;
+    extern scoord e1;
+    extern scoord e2;
+    extern scoord e3;
+    extern scoord e4;
+    extern scoord e5;
+    extern scoord e6;
+    extern scoord e7;
+    extern scoord e8;
+    extern scoord f1;
+    extern scoord f2;
+    extern scoord f3;
+    extern scoord f4;
+    extern scoord f5;
+    extern scoord f6;
+    extern scoord f7;
+    extern scoord f8;
+    extern scoord g1;
+    extern scoord g2;
+    extern scoord g3;
+    extern scoord g4;
+    extern scoord g5;
+    extern scoord g6;
+    extern scoord g7;
+    extern scoord g8;
+    extern scoord h1;
+    extern scoord h2;
+    extern scoord h3;
+    extern scoord h4;
+    extern scoord h5;
+    extern scoord h6;
+    extern scoord h7;
+    extern scoord h8;
+#endif
 }

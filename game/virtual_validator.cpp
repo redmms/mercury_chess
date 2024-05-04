@@ -520,6 +520,7 @@ namespace mmd
         }
     }
 
+#ifdef MMDTEST
     unsigned VirtualValidator::countMovesTest(int depth, int i)
     {
         //VirtualBoard board_copy = *board;
@@ -668,19 +669,5 @@ namespace mmd
             << move_count
             << endl;
     }
-
-    //// should go as fastMoveFinder():
-    //moveFinder([&](scoord coord, lambda can_move_checker, set<scoord>& container) -> bool {
-    //    if (can_move_checker(coord)) {
-    //        addValid(coord, container);
-    //        if (occupied(coord))
-    //            return true;
-    //        // add move but stop, we can eat but cannot go next
-    //        return false;
-    //        // add to valid_moves, but continue the cycle,
-    //        // threat may be somewhere next on the line
-    //    }
-    //    else
-    //        return true; // break cycle
-    //    })
+#endif  // MMDTEST
 }

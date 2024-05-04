@@ -10,52 +10,54 @@ CONFIG += c++20
 #DEFINES += QT_MESSAGELOGCONTEXT
 
 SOURCES += \
-    ../src/app/fen_dialog.cpp \
-    ../src/app/history_area.cpp \
-    ../src/app/chat.cpp \
-    ../src/app/local_types.cpp \
-    ../src/app/mainwindow.cpp \
-    ../src/app/rules_dialog.cpp \
-    ../src/game/virtual_board.cpp \
-    ../src/game/virtual_tile.cpp \
-    ../src/game/virtual_validator.cpp \
-    ../src/app/webclient.cpp \
-    ../src/archiver/archiver.cpp \
-    ../src/archiver/bitremedy.ixx \
-    ../src/archiver/finestream.ixx \
-    ../src/game/board.cpp \
-    ../src/game/clock.cpp \
-    ../src/game/tile.cpp \
-    ../src/game/validator.cpp \
-    ../src/main.cpp \
-    ../src/app/offline_dialog.cpp \
-    ../src/app/mainwindow_buttons.cpp \
-    ../src/app/webclient_pack_tools.cpp
+    ./app/fen_dialog.cpp \
+    ./app/history_area.cpp \
+    ./app/chat.cpp \
+    ./app/local_types.cpp \
+    ./app/mainwindow.cpp \
+    ./app/rules_dialog.cpp \
+    ./game/virtual_board.cpp \
+    ./game/virtual_tile.cpp \
+    ./game/virtual_validator.cpp \
+    ./app/webclient.cpp \
+    ./archiver/archiver.cpp \
+    ./archiver/finestream/modules/bitremedy.ixx \
+    ./archiver/finestream/modules/finestream.ixx \
+    ./game/board.cpp \
+    ./game/clock.cpp \
+    ./game/tile.cpp \
+    ./game/validator.cpp \
+    ./main.cpp \
+    ./app/offline_dialog.cpp \
+    ./app/webclient_pack_tools.cpp \
+    ./app/mainwindow_buttons.cpp  \
+    ./app/debug_message_handler.cpp \
 
 HEADERS += \
-    ../src/app/chat.h \
-    ../src/app/debug_message_handler.hpp \
-    ../src/app/fen_dialog.h \
-    ../src/app/local_types.h \
-    ../src/app/mainwindow.h \
-    ../src/app/history_area.h \
-    ../src/app/rules_dialog.h \
-    ../src/game/virtual_board.h \
-    ../src/game/virtual_tile.h \
-    ../src/game/virtual_validator.h \
-    ../src/app/webclient.h \
-    ../src/archiver/archiver.h \
-    ../src/game/board.h \
-    ../src/game/clock.h \
-    ../src/game/tile.h \
-    ../src/game/validator.h \
-    ../src/app/offline_dialog.h
+    ./app/chat.h \
+    ./app/debug_message_handler.h \
+    ./app/fen_dialog.h \
+    ./app/local_types.h \
+    ./app/mainwindow.h \
+    ./app/history_area.h \
+    ./app/rules_dialog.h \
+    ./game/virtual_board.h \
+    ./game/virtual_tile.h \
+    ./game/virtual_validator.h \
+    ./app/webclient.h \
+    ./archiver/archiver.h \
+    ./game/board.h \
+    ./game/clock.h \
+    ./game/tile.h \
+    ./game/validator.h \
+    ./app/offline_dialog.h \
+
 
 FORMS += \
-    ../src/app/fen_dialog.ui \
-    ../src/app/mainwindow.ui \
-    ../src/app/offline_dialog.ui \
-    ../src/app/rules_dialog.ui
+    ./app/fen_dialog.ui \
+    ./app/mainwindow.ui \
+    ./app/offline_dialog.ui \
+    ./app/rules_dialog.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
@@ -63,35 +65,35 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
 
 RESOURCES += \
-    ../src/media.qrc
+    ./media.qrc
 
 DISTFILES += \
-    ../src/LICENSE.txt \
-    ../src/images/bishop_black.svg \
-    ../src/images/bishop_white.svg \
-    ../src/images/exp.png \
-    ../src/images/king_black.svg \
-    ../src/images/king_white.svg \
-    ../src/images/knight_black.svg \
-    ../src/images/knight_white.svg \
-    ../src/images/pawn_black.svg \
-    ../src/images/pawn_white.svg \
-    ../src/images/profile.png \
-    ../src/images/queen_black.svg \
-    ../src/images/queen_white.svg \
-    ../src/images/rook_black.svg \
-    ../src/images/rook_white.svg \
-    ../src/images/temnozelenyi-zadnii-fon-100-foto-93.jpg \
-    ../src/sounds/nice/wav/castling.wav \
-    ../src/sounds/nice/wav/check.wav \
-    ../src/sounds/nice/wav/check_to_opp.wav \
-    ../src/sounds/nice/wav/eaten_by_opp.wav \
-    ../src/sounds/nice/wav/eaten_by_user.wav \
-    ../src/sounds/nice/wav/invalid_move.wav \
-    ../src/sounds/nice/wav/lose.wav \
-    ../src/sounds/nice/wav/move.wav \
-    ../src/sounds/nice/wav/start.wav \
-    ../src/sounds/nice/wav/promotion.wav \
-    ../src/sounds/nice/wav/the_end_close_the_board.wav \
-    ../src/sounds/nice/wav/win.wav \
-    ../src/sounds/nice/wav/you_ate_ou-eee.wav
+    ./LICENSE.txt \
+    ./images/bishop_black.svg \
+    ./images/bishop_white.svg \
+    ./images/exp.png \
+    ./images/king_black.svg \
+    ./images/king_white.svg \
+    ./images/knight_black.svg \
+    ./images/knight_white.svg \
+    ./images/pawn_black.svg \
+    ./images/pawn_white.svg \
+    ./images/profile.png \
+    ./images/queen_black.svg \
+    ./images/queen_white.svg \
+    ./images/rook_black.svg \
+    ./images/rook_white.svg \
+    ./images/temnozelenyi-zadnii-fon-100-foto-93.jpg \
+    ./sounds/nice/wav/castling.wav \
+    ./sounds/nice/wav/check.wav \
+    ./sounds/nice/wav/check_to_opp.wav \
+    ./sounds/nice/wav/eaten_by_opp.wav \
+    ./sounds/nice/wav/eaten_by_user.wav \
+    ./sounds/nice/wav/invalid_move.wav \
+    ./sounds/nice/wav/lose.wav \
+    ./sounds/nice/wav/move.wav \
+    ./sounds/nice/wav/start.wav \
+    ./sounds/nice/wav/promotion.wav \
+    ./sounds/nice/wav/the_end_close_the_board.wav \
+    ./sounds/nice/wav/win.wav \
+    ./sounds/nice/wav/you_ate_ou-eee.wav

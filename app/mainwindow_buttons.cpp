@@ -470,26 +470,27 @@ namespace mmd
         clipboard->setText(board->getFen());
     }
 
-    //#include <iostream>
-    //void MainWindow::on_test_button_clicked() {
-    //
-    //    // cout << endl << "Current position:" << board->toFen() << endl;
-    //    VirtualBoard vb(board);
-    //    //vb.turn = board->turn;
-    //    //vb.history = board->history;
-    //    //vb.importTiles(board->tiles);
-    //    //for (int i = 0; i < 6; ++i) {
-    //    //    vb.valid->has_moved[i] = board->valid->has_moved[i];
-    //    //}
-    //
-    //    int i = 0, depth = ui->message_edit->toPlainText().toInt(); /*5 - board->story().size()*/
-    //    if (depth < 0) {
-    //        cout << endl << "Depth is incorrect" << endl;
-    //        return;
-    //    }
-    //    //auto moves_count = vb.valid->countMovesTest(depth, i);
-    //    auto moves_count = vb.valid->VirtualValidator::countMovesTest(depth, i);
-    //    cout << endl << "Depth: " << depth << ", counted moves : " << moves_count << endl;
-    //}
-
+#ifdef MMDTEST
+#include <iostream>
+    void MainWindow::on_test_button_clicked() {
+    
+        // cout << endl << "Current position:" << board->toFen() << endl;
+        VirtualBoard vb(board);
+        //vb.turn = board->turn;
+        //vb.history = board->history;
+        //vb.importTiles(board->tiles);
+        //for (int i = 0; i < 6; ++i) {
+        //    vb.valid->has_moved[i] = board->valid->has_moved[i];
+        //}
+    
+        int i = 0, depth = ui->message_edit->toPlainText().toInt(); /*5 - board->story().size()*/
+        if (depth < 0) {
+            cout << endl << "Depth is incorrect" << endl;
+            return;
+        }
+        //auto moves_count = vb.valid->countMovesTest(depth, i);
+        auto moves_count = vb.valid->VirtualValidator::countMovesTest(depth, i);
+        cout << endl << "Depth: " << depth << ", counted moves : " << moves_count << endl;
+    }
+#endif
 }

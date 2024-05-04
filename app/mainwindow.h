@@ -95,11 +95,15 @@ namespace mmd
         void my_history_next_button_clicked();
         void my_history_previous_button_clicked();
 
+        // testing:
+#ifdef MMDTEST
+        void on_test_button_clicked();
+#endif  // MMDTEST
+
         friend class WebClient;
     protected slots:
         void endSlot(endnum end_type);
     };
 }
-//void on_test_button_clicked();
 //void on_actionWith_AI_triggered();
 //void on_actionRandomly_triggered();
