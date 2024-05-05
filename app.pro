@@ -40,12 +40,13 @@ SOURCES += \
     main.cpp \
     app/offline_dialog.cpp \
     app/webclient_pack_tools.cpp \
-    app/mainwindow_buttons.cpp
+    app/mainwindow_buttons.cpp \
+    app/debug_message_handler.cpp \
 
 
 HEADERS += \
     app/chat.h \
-    app/debug_message_handler.hpp \
+    app/debug_message_handler.h \
     app/fen_dialog.h \
     app/local_types.h \
     app/mainwindow.h \
@@ -78,6 +79,8 @@ RESOURCES += \
 
 DISTFILES += \
     LICENSE.txt \
+    archiver/finestream/modules/bitremedy.ixx \
+    archiver/finestream/modules/finestream.ixx \
     images/bishop_black.svg \
     images/bishop_white.svg \
     images/exp.png \

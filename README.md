@@ -73,9 +73,25 @@ It will inspire me to develop the project.
 
 ## Build
 
-There's a build for Windows x64 in the files. But if you're keen on diving into the code and building MercuryChess yourself, 
+Running a ready app:
+1) Download the build from github Releases
+2) Extract the file from the archive
+3) Open game.exe
+
+MS Visual Studio:
+1) Clone the repository
+2) Open qt.sln
+If it will not run, try to add /dxifcInlineFunctions- compiler command.
+
+Qt Creator:
+1) Clone the repository
+2) Open all.pro
+
+From scratch, without project file:  
+	If you're keen on diving into the code and building MercuryChess yourself, 
 you will probably want to use MS Visual Studio (VS) with Qt VS tools addon to use qmake, because VS has the best C++20 module support at the moment. 
 You will need to enable Qt 5.15 if you want to hear sounds in the game (there's a bug in Qt 6). 
-And then you will need to use this compiler command: /dxifcInlineFunctions- because of the MSVC compiler bug. 
-Summary: use MS VS 2022, Qt VS tools addon, enable Qt 5.15, run .sln file from VS.  
-If .sln file will not match with your PC: turn on C++20 in project settings and use /dxifcInlineFunctions- compiler command.
+And then you may need to use this compiler command: /dxifcInlineFunctions- because of this MSVC compiler bug:  
+https://developercommunity.visualstudio.com/t/Modules-ICE-when-using-cout-inside-of/10299789?stateGroup=active&ftype=problem 
+Summary:  
+	Use MS VS 2022, Qt VS tools addon, enable Qt 5.15, enable C++20, MSVC v143 or later, add compiler command /dxifcInlineFunctions-  
