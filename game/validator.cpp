@@ -2,8 +2,6 @@
 #include "board.h"
 #include <QDebug>
 using namespace std;
-using lambda = function<bool(mmd::scoord)>;
-using checker = function<bool(mmd::scoord, bool&)>;
 
 namespace mmd
 {
@@ -30,8 +28,8 @@ namespace mmd
     void Validator::hideValid()
     {
         QString game_regime = settings[game_regime_e].toString();
-        if (game_regime != "history") {
-            scoord from = board->from_coord;
+        if (game_regime != historical) {
+            scoord from = board->FromCoord();
             if (from != scoord{ -1, -1 })
                 theTile(from)->dyeNormal();
             else
@@ -42,8 +40,9 @@ namespace mmd
         valid_moves.clear();
     }
 
-    bool Validator::inStalemate(bool color)
+    bool Validator::inStalemate()
     {
-        return searchingInStalemate(color);
+        // checks the current turn
+        return searchingInStalemate();
     }
-}
+}  // namespace mmd

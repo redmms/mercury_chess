@@ -93,4 +93,4 @@ namespace mmd
         painter.setPen(Qt::NoPen);
         painter.drawRoundedRect(viewport()->rect(), radius, radius);
     }
-}
+}  // namespace mmd

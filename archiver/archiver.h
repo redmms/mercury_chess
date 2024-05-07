@@ -27,4 +27,4 @@ namespace mmd
         static fn::bitremedy toMoveIdx(scoord to, Validator& valid);
         static halfmove toHalfmove(bitmove bmove, VirtualValidator& valid);
     };
-}
+}  // namespace mmd

@@ -21,7 +21,7 @@ namespace mmd
         setWidgetResizable(true);
     }
 
-    void HistoryArea::writeStory(int order, halfmove hmove) {
+    void HistoryArea::writeStory(size_t order, halfmove hmove) {
         QString out = halfmoveToString(hmove);
         if (order % 2)
             history_label->setText(history_label->text() + QString::number((order - 1) / 2 + 1) + ". " + out + " ");
@@ -55,4 +55,4 @@ namespace mmd
         }
         QScrollArea::wheelEvent(event);
     }
-}
+}  // namespace mmd

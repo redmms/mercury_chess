@@ -16,9 +16,7 @@ namespace mmd
         ui->friend_avatar->setMask(getBMap(pic_mask_e));
     }
 
-    OfflineDialog::~OfflineDialog() {
-        delete ui;
-    }
+    OfflineDialog::~OfflineDialog() = default;
 
     bool OfflineDialog::checkName()
     {
@@ -68,4 +66,4 @@ namespace mmd
     {
         reject();
     }
-}
+}  // namespace mmd

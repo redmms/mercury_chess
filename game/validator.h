@@ -7,7 +7,6 @@ namespace mmd
     class Board;
     class Validator : public VirtualValidator 
     {
-    protected:
         Board* board;
 
     public:
@@ -16,6 +15,6 @@ namespace mmd
         Tile* theTile(scoord) override;
         void showValid(scoord from);
         void hideValid();
-        inline bool inStalemate(bool color) override;
+        inline bool inStalemate() override;
     };
-}
+}  // namespace mmd

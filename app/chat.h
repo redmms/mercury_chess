@@ -8,7 +8,6 @@ namespace mmd
     class Chat : public QScrollArea
     {
         Q_OBJECT
-
         QColor background_color;
         QWidget* message_box;
         QVBoxLayout* message_layout;
@@ -26,4 +25,4 @@ namespace mmd
         void paintEvent(QPaintEvent* event) override;
 
     };
-}
+}  // namespace mmd

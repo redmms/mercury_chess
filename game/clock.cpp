@@ -53,7 +53,7 @@ namespace mmd
     void ChessClock::gameTimeout()
     {
         stopTimer();
-        QTimer* timer = (QTimer*)sender();
+        QTimer* timer = qobject_cast<QTimer*>(sender());
         if (side && timer == black_timer || !side && timer == white_timer)
             emit opponentOut();
         else if (side && timer == white_timer || !side && timer == black_timer)
@@ -79,4 +79,4 @@ namespace mmd
             black_timer->start(black_remains);
         }
     }
-}
+}  // namespace mmd

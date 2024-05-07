@@ -19,4 +19,4 @@ namespace mmd
         ~LogHandler();
         static void messageHandler(QtMsgType type, const QMessageLogContext& context, const QString& msg);
     };
-}
+}  // namespace mmd

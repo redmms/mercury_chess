@@ -1,5 +1,4 @@
 #include "local_types.h"
-#include <QMessageBox>
 #include <QDesktopServices>
 #include <QUrl>
 #include <QObject>
@@ -9,11 +8,69 @@
 #include <QString>
 #include <QBitmap>
 #include <QVariant>
+#include <QDateTime>
 #include <string>
 using namespace std;
 
 namespace mmd
 {
+    QString curTime()
+    {
+        return QDateTime::currentDateTime().toString("dd_MMM_hh_mm_ss_zzz");
+    }
+
+    unsigned char arrToChar(bool const (&arr)[6])
+    {
+        unsigned char c = 0;
+        for (int i = 5; i >= 0; --i) {
+            c <<= 1;
+            c |= (unsigned char)arr[i];
+        }
+        return c;
+    }
+
+    void charToArr(unsigned char c, bool(&arr)[6])
+    {
+        for (int i = 0; i < 6; ++i) {
+            arr[i] = c & true;
+            c >>= 1;
+        }
+    }
+
+    QString operator ""_qs (const char* str, size_t size) {
+        return QString(str);
+    }
+
+    scoord::scoord(std::initializer_list<int> values) {
+        if (values.size() != 2) {
+            throw std::invalid_argument("Initializer list must contain exactly 2 values.");
+        }
+        auto it = values.begin();
+        x = *it;
+        y = *++it;
+    }
+
+    scoord::scoord() : x(0), y(0) {}
+
+    scoord::scoord(const std::pair<int, int>& p) : x(p.first), y(p.second) {}
+
+    bool scoord::isValid() {
+        return x >= 0 && x <= 7 && y >= 0 && y <= 7;
+    }
+
+    bool scoord::operator == (const scoord& r) const {
+        return x == r.x && y == r.y;
+    }
+
+    bool scoord::operator != (const scoord& r) const {
+        return x != r.x || y != r.y;
+    }
+
+    bool scoord::operator < (const scoord& r) const {
+        return (y != r.y ? y < r.y : x < r.x);
+        // necessary for finding piece idxs on the board in Archiver
+    }
+
     void showBox(QString header,
         QString text,
         QMessageBox::Icon icon_type)
@@ -92,7 +149,12 @@ namespace mmd
 
     map<setnum, QVariant> settings;
  
-#ifndef NDEBUG
+    QString friend_offline = "friend_offline";
+    QString friend_online = "friend_online";
+    QString training = "training";
+    QString historical = "history";
+
+#ifdef MMDTEST
     scoord a1 = stringToCoord("a1");
     scoord a2 = stringToCoord("a2");
     scoord a3 = stringToCoord("a3");
@@ -158,4 +220,4 @@ namespace mmd
     scoord h7 = stringToCoord("h7");
     scoord h8 = stringToCoord("h8");
 #endif
-}
+}  // namespace mmd

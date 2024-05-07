@@ -8,7 +8,6 @@ namespace Ui
 {
     class MainWindow;
 }
-
 class QGraphicsDropShadowEffect;
 class QSoundEffect;
 class QEvent;
@@ -22,8 +21,6 @@ namespace mmd
     class MainWindow : public QMainWindow
     {
         Q_OBJECT
-
-    public:
         QScopedPointer<Ui::MainWindow> ui;
         QPointer<HistoryArea> history_area;
         QPointer<ChessClock> clock;
@@ -36,6 +33,7 @@ namespace mmd
         bool game_active;
         lognum login_regime;
 
+    public:
         MainWindow();
 
         void showStatus(const QString& status);
@@ -104,6 +102,4 @@ namespace mmd
     protected slots:
         void endSlot(endnum end_type);
     };
-}
-//void on_actionWith_AI_triggered();
-//void on_actionRandomly_triggered();
+}  // namespace mmd

@@ -5,12 +5,19 @@ CONFIG += staticlib
 
 #MODULES_COMMON_FLAGS += /MDd
 
-CONFIG(debug) {
-    MODULES_COMMON_FLAGS += /MDd
-}
-else {
+#CONFIG(debug) {
+#    MODULES_COMMON_FLAGS += /MDd
+#}
+#else {
+#    MODULES_COMMON_FLAGS += /MD
+#}
+
+#debug{
+#    MODULES_COMMON_FLAGS += /MDd
+#}
+#!debug{
     MODULES_COMMON_FLAGS += /MD
-}
+#}
 
 MODULES_COMMON_FLAGS += /std:c++20 /EHsc /DUNICODE /D_UNICODE /DWIN32 /DWIN64 /D_ENABLE_EXTENDED_ALIGNED_STORAGE
 

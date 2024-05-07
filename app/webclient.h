@@ -8,17 +8,12 @@ namespace mmd
     class WebClient : public QObject
     {
         Q_OBJECT
-
-    public:
         MainWindow* mainwindow;
         QTcpSocket* socket;
         QByteArray read_package;
         QByteArray send_package;
         QDataStream read_stream;
         QDataStream send_stream;
-
-        WebClient(MainWindow* parent = nullptr);
-        ~WebClient();
 
         void writePack(packnum);
         void writePack(quint8);
@@ -38,14 +33,19 @@ namespace mmd
         bool checkConnection(packnum type = packnum::login);
         bool connectToServer();
         void packFromSock(QTcpSocket* socket, QByteArray& received_package);
+
+    public:
+        WebClient(MainWindow* parent = nullptr);
+        ~WebClient();
+
         void connectNewHost();
 
     signals:
-        void endedReadingInvite();
+        void endReadingInvite();
 
     public slots:
         void sendToServer(packnum type, bool respond = false, QString message = "", scoord from = {}, scoord to = {}, char promotion_type = 'e');
         void readFromServer();
 
     };
-}
+}  // namespace mmd

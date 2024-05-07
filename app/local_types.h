@@ -1,10 +1,9 @@
 #pragma once
-#include <QDateTime>
 #include <QMessageBox>
 #include <QDebug>
 #include <QLayoutItem>
-#include <utility>
-#include <cstdint>
+#include <utility>  // for std::pair, can be turned off in some compilers
+#include <cstdint>  // for uint8_t, can be turned off in some compilers
 import bitremedy;
 
 class QBitmap;
@@ -122,98 +121,33 @@ namespace mmd
         no_promotion
     };
 
-    inline QString curTime()
-    {
-        return QDateTime::currentDateTime().toString("dd_MMM_hh_mm_ss_zzz");
-    }
-
-    void showBox(QString header,
-        QString text,
-        QMessageBox::Icon icon_type = QMessageBox::Information);
-
-    struct scoord 
+    struct scoord
     {
         int x = 0;
         int y = 0;
-        scoord(std::initializer_list<int> values) {
-            if (values.size() != 2) {
-                throw std::invalid_argument("Initializer list must contain exactly 2 values.");
-            }
-            auto it = values.begin();
-            x = *it;
-            y = *++it;
-        }
-        scoord() : x(0), y(0) {}
-        scoord(const std::pair<int, int>& p) : x(p.first), y(p.second) {}
-        bool isValid() {
-            return x >= 0 && x <= 7 && y >= 0 && y <= 7;
-        }
-        bool operator == (const scoord& r) const {
-            return x == r.x && y == r.y;
-        }
-        bool operator != (const scoord& r) const {
-            return x != r.x || y != r.y;
-        }
-        bool operator < (const scoord& r) const {
-            return (y != r.y ? y < r.y : x < r.x); // necessary for placing 
-            // piece idxs on board in archiver
-        }
-        //operator std::pair<int, int>() const {
-        //    return std::make_pair(x, y);
-        //}
-        //operator bool() {
-        //    return isValid();
-        //}
+        scoord(std::initializer_list<int> values);
+        scoord();
+        scoord(const std::pair<int, int>& p);
+        bool isValid();
+        bool operator == (const scoord& r) const;
+        bool operator != (const scoord& r) const;
+        bool operator < (const scoord& r) const;
     };
 
-    struct bitmove 
+    struct bitmove
     {
         fn::bitremedy piece = {};
         fn::bitremedy move = {};
         promnum promo = promnum::no_promotion;
     };
 
-    extern const std::map<char, promnum> promo_by_char;
-
-    extern const std::map<promnum, char> char_by_promo;
-
-    extern std::map<setnum, QVariant> settings;
-
-    struct halfmove;
-
-    void setPic(setnum par, const QPixmap& pic);
-
-    QPixmap getPic(setnum par);
-
-    void setBMap(setnum par, const QBitmap& bmap);
-
-    QBitmap getBMap(setnum par);
-
-    inline unsigned char arrToChar(const bool(&arr)[6])
-    {
-        unsigned char c = 0;
-        for (int i = 5; i >= 0; i--) {
-            c <<= 1;
-            c |= arr[i];
-        }
-        return c;
-    }
-
-    inline void charToArr(unsigned char c, bool(&arr)[6])
-    {
-        for (int i = 0; i < 6; ++i) {
-            arr[i] = c & true;
-            c >>= 1;
-        }
-    }
-
-    QString coordToString(scoord coord);
-
-    scoord stringToCoord(QString str);
+    struct halfmove;  // defined in virtual_tile.h
 
     template <typename OLD, typename NEW>
-        //requires(std::is_base_of_v<QObject, OLD> && std::is_base_of_v<QObject, NEW>)
-    void replaceOld(NEW young, OLD& old) {
+    //requires (std::is_base_of_v<QObject, OLD> && std::is_base_of_v<QObject, NEW>) && requires (OLD old){
+    //    old.parentWidget();
+    //}
+    void replaceOld(NEW young, OLD old) {
         if (!young || !old) {
             qDebug() << "WARNING: wrong arguments of replaceOld()";
             return;
@@ -231,17 +165,42 @@ namespace mmd
         }
     }
 
-    //template<typename T>
-    //    requires(std::is_function_v<T>)
-    //void forEachTile(Tile* (&arr)[8][8], std::function<T> func) {
-    //    for (int x = 0; x < 8; x++) {
-    //        for (int y = 0; y < 8; y++) {
-    //            func(arr[x][y]);
-    //        }
-    //    }
-    //}
+    QString curTime();
 
-#ifndef NDEBUG
+    void showBox(QString header,
+        QString text,
+        QMessageBox::Icon icon_type = QMessageBox::Information);
+
+    extern const std::map<char, promnum> promo_by_char;
+
+    extern const std::map<promnum, char> char_by_promo;
+
+    extern std::map<setnum, QVariant> settings;
+
+    extern QString friend_offline;
+    extern QString friend_online;
+    extern QString training;
+    extern QString historical;
+
+    void setPic(setnum par, const QPixmap& pic);
+
+    QPixmap getPic(setnum par);
+
+    void setBMap(setnum par, const QBitmap& bmap);
+
+    QBitmap getBMap(setnum par);
+
+    unsigned char arrToChar(bool const (&arr)[6]);
+
+    void charToArr(unsigned char c, bool(&arr)[6]);
+
+    QString coordToString(scoord coord);
+
+    scoord stringToCoord(QString str);
+
+    QString operator ""_qs (const char* str, size_t size);
+
+#ifdef MMDTEST
     extern scoord a1;
     extern scoord a2;
     extern scoord a3;
@@ -307,4 +266,15 @@ namespace mmd
     extern scoord h7;
     extern scoord h8;
 #endif
-}
+}  // namespace mmd
+
+// TODO:
+    //template<typename T>
+    //    requires(std::is_function_v<T>)
+    //void forEachTile(Tile* (&arr)[8][8], std::function<T> func) {
+    //    for (int x = 0; x < 8; x++) {
+    //        for (int y = 0; y < 8; y++) {
+    //            func(arr[x][y]);
+    //        }
+    //    }
+    //}

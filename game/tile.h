@@ -9,7 +9,6 @@ namespace mmd
     class Tile : public QLabel, public VirtualTile
     {
         Q_OBJECT
-
         QColor black;
         QColor white;
         QColor selected;
@@ -19,7 +18,7 @@ namespace mmd
         QString css;
 
         void mousePressEvent(QMouseEvent* event);
-        QColor mixColors(QColor color_a, QColor color_b, float b_coef);
+        static QColor mixColors(QColor color_a, QColor color_b, float b_coef);
 
     public:
         Tile(scoord tile_coord_ = {}, char piece_name_ = 'e', bool piece_color_ = false, bool side_ = true, Board* parent_ = 0);
@@ -33,4 +32,4 @@ namespace mmd
     signals:
         void tileClicked(Tile* tile);
     };
-}
+}  // namespace mmd

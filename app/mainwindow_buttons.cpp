@@ -13,6 +13,9 @@
 #include <QClipboard>
 #include <QDesktopServices>
 #include <QDebug>
+#ifdef MMDTEST
+#include <iostream>
+#endif  // MMDTEST
 using namespace std;
 
 namespace mmd 
@@ -188,7 +191,7 @@ namespace mmd
         QString message_text = ui->message_edit->toPlainText();
         chat->printMessage(settings[user_name_e].toString(), true, message_text);
         ui->message_edit->clear();
-        if (settings[game_regime_e].toString() == "friend_online")
+        if (settings[game_regime_e].toString() == friend_online)
             net->sendToServer(chat_message, false, message_text);
     }
 
@@ -230,9 +233,9 @@ namespace mmd
         OfflineDialog dialog(this);
         if (dialog.exec() == QDialog::Rejected) {
             setPic(opp_pic_e, getPic(def_pic_e));
-            settings[opp_name_e].setValue((QString)"Friend");
+            settings[opp_name_e].setValue("Friend"_qs);
         }
-        startGame("friend_offline");
+        startGame(friend_offline);
     }
 
     void MainWindow::on_actionEnter_triggered()
@@ -348,7 +351,7 @@ namespace mmd
             return;
         }
         QString game_regime = settings[game_regime_e].toString();
-        if (game_regime == "training") {
+        if (game_regime == training) {
             showBox("In development", "Not available for training mode yet.");
             return;
         }
@@ -367,7 +370,7 @@ namespace mmd
         }
 
         // Create archive file
-        QString  archive_fullname =
+        QString archive_fullname =
             archive_dir
             + "/"
             + settings[opp_name_e].toString()
@@ -401,7 +404,7 @@ namespace mmd
 
         // Write game to the file
         Archiver archiver;
-        int error = archiver.writeGame(board->end_type, board->bistory, archive_fullname);
+        int error = archiver.writeGame(board->EndType(), board->Bistory(), archive_fullname);
         if (!error) {
             showBox("Good news",
                 "Operation done successfuly.");
@@ -418,7 +421,7 @@ namespace mmd
         QString archive_dir = app_dir + "/saved_games";
 
         // Create archive file
-        QString  archive_fullname = QFileDialog::getOpenFileName(this,
+        QString archive_fullname = QFileDialog::getOpenFileName(this,
             "Open File",
             archive_dir,
             tr("Chess Archive (*.mmd18)"));
@@ -441,12 +444,12 @@ namespace mmd
         vector<bitmove> bistory;
         int error = archiver.readGame(end_type, bistory, history, archive_fullname);
         if (!error) {
-            startGame("history");
-            for (int i = 0, size = history.size(); i < size; ++i)
+            startGame(historical);
+            for (size_t i = 0, size = history.size(); i < size; ++i)
                 history_area->writeStory(i + 1, history[i]);
-            board->end_type = end_type;
-            board->bistory = bistory;
-            board->history = history;
+            board->setEndType(end_type);
+            board->setBistory(bistory);
+            board->setHistory(history);
         }
         else {
             showBox("Oops",
@@ -457,7 +460,7 @@ namespace mmd
 
     void MainWindow::on_actionTraining_triggered()
     {
-        startGame("training");
+        startGame(training);
         FenDialog dialog(this);
         connect(&dialog, &FenDialog::newFen, board, &Board::setTilesSlot);
         dialog.exec();
@@ -471,7 +474,6 @@ namespace mmd
     }
 
 #ifdef MMDTEST
-#include <iostream>
     void MainWindow::on_test_button_clicked() {
     
         // cout << endl << "Current position:" << board->toFen() << endl;
@@ -483,7 +485,7 @@ namespace mmd
         //    vb.valid->has_moved[i] = board->valid->has_moved[i];
         //}
     
-        int i = 0, depth = ui->message_edit->toPlainText().toInt(); /*5 - board->story().size()*/
+        int i = 0, depth = ui->message_edit->toPlainText().toInt(); /*5 - board->History().size()*/
         if (depth < 0) {
             cout << endl << "Depth is incorrect" << endl;
             return;
@@ -492,5 +494,5 @@ namespace mmd
         auto moves_count = vb.valid->VirtualValidator::countMovesTest(depth, i);
         cout << endl << "Depth: " << depth << ", counted moves : " << moves_count << endl;
     }
-#endif
-}
+#endif  // MMDTEST
+}  // namespace mmd

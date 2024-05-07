@@ -24,7 +24,7 @@ namespace mmd
         css_colors["hover"][1] = hover.name(QColor::HexRgb);
 
         dyeNormal();
-        int size = parent_->tile_size;
+        int size = parent_->TileSize();
         if (side_)
             setGeometry(size / 2 + coord.x * size, size / 2 + (7 - coord.y) * size,
                 size, size); // size/2 is the indent from the left upper corner
@@ -51,7 +51,7 @@ namespace mmd
 
     void Tile::setPiece(char name, bool color, bool virtually)
     {
-        VirtualTile::setPiece(name, color, virtually);
+        VirtualTile::setPiece(name, color);  // 3d parameter is default
         if (virtually) {
             return;
         }
@@ -104,4 +104,4 @@ namespace mmd
     {
         return { coord, piece_name, piece_color };
     }
-}
+}  // namespace mmd

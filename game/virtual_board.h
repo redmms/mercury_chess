@@ -11,7 +11,7 @@ namespace mmd
     class Board;
     class VirtualBoard
     {
-    public:
+    protected:
         VirtualValidator* valid;
         VirtualTile* tiles[8][8];
         scoord from_coord;
@@ -25,16 +25,30 @@ namespace mmd
         std::vector<halfmove> history;
         int no_change_n;
 
+    public:
         VirtualBoard();
         VirtualBoard(Board* copy_);
-        virtual ~VirtualBoard() {};
+        virtual ~VirtualBoard() {}
 
-        // member access:
-        virtual VirtualTile* theTile(scoord coord);
-        bool theTurn();
-        scoord wKing();
+        // getters:
+        VirtualValidator* Valid();
+        VirtualTile* (&Tiles())[8][8];
+        scoord FromCoord();
         scoord bKing();
-        const std::vector<halfmove>& story();
+        scoord wKing();
+        bool Turn();
+        bool Side();
+        int CurrentMove();
+        endnum EndType();
+        bool End();
+        const std::vector<halfmove>& History();
+        int NoChangeN();
+        virtual VirtualTile* theTile(scoord coord);
+        // setters:
+        void setEndType(endnum end_type_);
+        void setHistory(const std::vector<halfmove>& history_);
+        void setWKing(scoord white_king_);
+        void setBKing(scoord black_king_);
         // move forward:
         void saveMoveSimply(scoord from, scoord to, vove& move);
         void moveSimply(scoord from, scoord to, bool virtually = false);
@@ -53,16 +67,16 @@ namespace mmd
         void moveForward();
         void moveBack();
         // tile initialization:
-        virtual void initTiles();
+        void initTiles();
         void setTiles();
         void setTiles(QString fen);
         QString getFen();
         // other:
-        std::string toStr(bool stat = false);
+        std::string toStr(bool staticly = false);
         auto operator [](int i) {
             return tiles[i];
         }
-        void importTiles(Tile* (&arr)[8][8]);
+        void importTiles(Tile* const (&arr)[8][8]);
         //void copyState(Board* orig);
     };
-}
+}  // namespace mmd

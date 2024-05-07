@@ -9,8 +9,7 @@ namespace mmd
     class ChessClock : public QObject
     {
         Q_OBJECT
-
-            bool side;
+        bool side;
         QLabel* black_label;
         QLabel* white_label;
         int max_time;
@@ -38,4 +37,4 @@ namespace mmd
         void startTimer();
         void switchTimer();
     };
-}
+}  // namespace mmd

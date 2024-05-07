@@ -115,16 +115,16 @@ namespace mmd
         // settings init
     //settings = QSettings("settings_" + curTime() + ".ini", QSettings::IniFormat);
         settings[user_pass_e] = {};
-        settings[user_name_e].setValue(QString("Lazy") +
+        settings[user_name_e].setValue("Lazy"_qs +
             QString::number(rand() % int(1e8)));
-        settings[opp_name_e].setValue(QString("Friend"));
+        settings[opp_name_e].setValue("Friend"_qs);
         settings[time_setup_e].setValue(0);
         settings[match_side_e].setValue(true);
-        settings[game_regime_e].setValue(QString("friend_offline"));
+        settings[game_regime_e].setValue(QString(friend_offline));
         settings[def_port_e].setValue(49001);
         settings[port_address_e].setValue(49001);
-        settings[def_address_e].setValue((QString)"40.113.33.140");
-        settings[ip_address_e].setValue(/*(QString)"127.0.0.1"*/(QString)"40.113.33.140");
+        settings[def_address_e].setValue("40.113.33.140"_qs);
+        settings[ip_address_e].setValue(/*"127.0.0.1"_qs*/"40.113.33.140"_qs);
         settings[max_nick_e].setValue(12);
         settings[pic_w_e].setValue(100);
         settings[pic_h_e].setValue(100);
@@ -174,7 +174,7 @@ namespace mmd
         young->setMinimumSize(size, size);
         young->setMaximumSize(size, size);
         young->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
-        young->setStyleSheet(young->board_css);
+        young->setStyleSheet(young->BoardCss());
     }
 
     void MainWindow::copyChatProp(Chat* young, QScrollArea* old)
@@ -214,7 +214,7 @@ namespace mmd
     void MainWindow::switchGlow()
     {
         bool match_side = settings[match_side_e].toBool();
-        if (board->turn == match_side)
+        if (board->Turn() == match_side)
             ui->user_avatar->setGraphicsEffect(avatar_effect);
         else
             ui->opponent_avatar->setGraphicsEffect(avatar_effect);
@@ -241,13 +241,13 @@ namespace mmd
     void MainWindow::startGame(QString game_regime) // side true for user - white
     {
         if (game_active) {
-            if (settings[game_regime_e].toString() == "friend_online" && net) {
+            if (settings[game_regime_e].toString() == friend_online && net) {
                 net->sendToServer(packnum::interrupt_signal);
             }
             endSlot(endnum::interrupt);
         }
         settings[game_regime_e].setValue(game_regime);
-        if (game_regime == "friend_online") {
+        if (game_regime == friend_online) {
             ui->actionProfile->setEnabled(false);
             ui->message_edit->setPlainText("Great move! Have you studied in a clown school?");
             ui->message_edit->installEventFilter(this);
@@ -263,9 +263,9 @@ namespace mmd
             }
             qDebug() << "editReturnPressed receivers number is" << receivers(SIGNAL(editReturnPressed));
         }
-        else if (game_regime == "friend_offline" || game_regime == "training") {
-            if (game_regime == "training") {
-                settings[opp_name_e].setValue((QString)"DarkSide");
+        else if (game_regime == friend_offline || game_regime == training) {
+            if (game_regime == training) {
+                settings[opp_name_e].setValue("DarkSide"_qs);
             }
             settings[match_side_e].setValue(true);
             ui->message_edit->setPlainText("Chat is off. But you can chat with yourself if you are a hikikomori.");
@@ -278,7 +278,7 @@ namespace mmd
             connect(ui->resign_button, &QPushButton::clicked, this, &MainWindow::my_offline_back_button_clicked);
             connect(ui->draw_button, &QPushButton::clicked, this, &MainWindow::my_offline_stop_button_clicked);
         }
-        else if (game_regime == "history") {
+        else if (game_regime == historical) {
             setPic(opp_pic_e, getPic(def_pic_e));
             ui->message_edit->setPlainText("Chat is off. But you can chat with yourself if you are a hikikomori.");
             ui->user_timer->setText("");
@@ -320,9 +320,9 @@ namespace mmd
         connect(board, &Board::theEnd, this, &MainWindow::endSlot);
 
         bool match_side = settings[match_side_e].toBool();
-        (match_side == board->theTurn() ? ui->user_avatar : ui->opponent_avatar)->setGraphicsEffect(avatar_effect);
+        (match_side == board->Turn() ? ui->user_avatar : ui->opponent_avatar)->setGraphicsEffect(avatar_effect);
 
-        if (game_regime == "friend_online") {
+        if (game_regime == friend_online) {
             connect(board, &Board::moveMade, [this](scoord from, scoord to, char promotion_type) {
                 net->sendToServer(packnum::move_pack, {}, {}, from, to, promotion_type);
                 });
@@ -357,7 +357,7 @@ namespace mmd
             clock->stopTimer();
 
         QString game_regime = settings[game_regime_e].toString();
-        if (game_regime != "history") {
+        if (game_regime != historical) {
             board->setEnabled(false);
             ui->draw_button->disconnect();
             ui->resign_button->disconnect();
@@ -366,7 +366,7 @@ namespace mmd
             ui->message_edit->removeEventFilter(this);
             game_active = false;
             ui->statusBar->hide();
-            board->end_type = end_type;
+            board->setEndType(end_type);
         }
 
         QString opp_name = settings[opp_name_e].toString();
@@ -417,7 +417,7 @@ namespace mmd
             return;
         }
 
-        if (game_regime == "friend_online" && net) {
+        if (game_regime == friend_online && net) {
             net->sendToServer(packnum::end_game);
         }
 
@@ -449,15 +449,15 @@ namespace mmd
             break;
         case estatus::user_piece_eaten:
             sounds[user_eaten_s]->play();
-            showStatus(board->turn ? user : opp);
+            showStatus(board->Turn() ? user : opp);
             break;
         case estatus::opponent_piece_eaten:
             sounds[opp_eaten_s]->play();
-            showStatus(board->turn ? user : opp);
+            showStatus(board->Turn() ? user : opp);
             break;
         case estatus::just_new_turn:
             sounds[move_s]->play();
-            showStatus(board->turn ? user : opp);
+            showStatus(board->Turn() ? user : opp);
             break;
         case estatus::invalid_move:
             sounds[invalid_move_s]->play();
@@ -465,20 +465,20 @@ namespace mmd
             return; // will not switch glow effect
         case estatus::castling:
             sounds[castling_s]->play();
-            showStatus(board->turn ? user : opp);
+            showStatus(board->Turn() ? user : opp);
             break;
         case estatus::promotion:
             sounds[promotion_s]->play();
-            showStatus(board->turn ? user : opp);
+            showStatus(board->Turn() ? user : opp);
             break;
         }
         switchGlow();
         emit timeToSwitchTime();
-        size_t order = board->history.size();
+        size_t order = board->History().size();
         if (order) {
-            halfmove last_move = board->history.back();
+            halfmove last_move = board->History().back();
             QString game_regime = settings[game_regime_e].toString();
-            if (game_regime != "history") {
+            if (game_regime != historical) {
                 history_area->writeStory(order, last_move);
             }
         }
@@ -486,4 +486,4 @@ namespace mmd
             qDebug() << "WARNING: you tried to write an empty history";
         }
     }
-}
+}  // namespace mmd

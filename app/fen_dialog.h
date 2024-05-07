@@ -1,20 +1,20 @@
 #pragma once
 #include <QDialog>
+#include <QScopedPointer>
 
-namespace Ui {
+namespace Ui 
+{
     class FenDialog;
 }
-
 namespace mmd
 {
     class FenDialog : public QDialog
     {
         Q_OBJECT
-
-        Ui::FenDialog* ui;
+        QScopedPointer<Ui::FenDialog> ui;
 
     public:
-        FenDialog(QWidget* parent);
+        explicit FenDialog(QWidget* parent);
         ~FenDialog();
 
     signals:
@@ -24,4 +24,4 @@ namespace mmd
         void on_skip_button_clicked();
         void on_save_button_clicked();
     };
-}
+}  // namespace mmd

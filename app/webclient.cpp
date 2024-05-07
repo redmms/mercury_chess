@@ -27,7 +27,9 @@ namespace mmd
     }
 
     WebClient::~WebClient() {
-        socket->disconnect();
+        if (socket) {
+            socket->disconnect();
+        }
         delete socket;
     }
 
@@ -318,7 +320,7 @@ namespace mmd
                     setPic(opp_pic_e, getPic(def_pic_e));
                 settings[match_side_e].setValue(side);
                 settings[time_setup_e].setValue(int(time));
-                mainwindow->startGame("friend_online");
+                mainwindow->startGame(friend_online);
                 sendToServer(packnum::invite_respond, true);
                 });
             connect(&msg_box, &QMessageBox::rejected, [&]() {
@@ -344,9 +346,9 @@ namespace mmd
                     setPic(opp_pic_e, picture);
                 else
                     setPic(opp_pic_e, getPic(def_pic_e));
-                mainwindow->startGame("friend_online");
+                mainwindow->startGame(friend_online);
             }
-            emit endedReadingInvite();
+            emit endReadingInvite();
             break;
         }
         case packnum::move_pack:
@@ -417,7 +419,7 @@ namespace mmd
             showBox("No such user",
                 "Player with this nickname wasn't found",
                 QMessageBox::Warning);
-            emit endedReadingInvite();
+            emit endReadingInvite();
             break;
         }
         case packnum::opponent_disconnected:
@@ -466,11 +468,11 @@ namespace mmd
         {
             showBox("User offline",
                 "Suggested user is offline.");
-            emit endedReadingInvite();
+            emit endReadingInvite();
             break;
         }
         }
         read_package.clear();
         read_stream.device()->reset();
     }
-}
+}  // namespace mmd

@@ -52,6 +52,41 @@ namespace mmd
         }
     }
 
+    Validator* Board::Valid()
+    {
+        return valid;
+    }
+
+    QString Board::BoardCss()
+    {
+        return board_css;
+    }
+
+    QString Board::PromoCss()
+    {
+        return promo_css;
+    }
+
+    int Board::TileSize()
+    {
+        return tile_size;
+    }
+
+    const vector<bitmove>& Board::Bistory()
+    {
+        return bistory;
+    }
+
+    Tile* (&Board::Tiles())[8][8]
+    {
+        return tiles;
+    }
+
+    void Board::setBistory(const vector<bitmove>& bistory_)
+    {
+        this->bistory = bistory_;
+    }
+
     void Board::initLetter(int x, int y, int width, int height, QString ch)
     {
         QLabel* letter = new QLabel(this);
@@ -86,9 +121,9 @@ namespace mmd
     }
 
     void Board::reactOnClick(Tile* tile) {
-        scoord coord = tile->coord;
+        scoord coord = tile->Coord();
         QString game_regime = settings[game_regime_e].toString();
-        if (game_regime == "history" || game_regime == "friend_online" && turn != side) {
+        if (game_regime == historical || game_regime == friend_online && turn != side) {
             return;
         }
         else if (from_coord == scoord{ -1, -1 }) { // 1st click
@@ -123,13 +158,14 @@ namespace mmd
         string pieces = "QNRB";
         char promo;
         scoord menu_coord = from;
+        Tile* menu[4];
         for (int i = 0, k = turn ? -1 : 1; i < 4; ++i, menu_coord.y += k) {
             menu[i] = (new Tile(menu_coord, pieces[i], turn, side, this));
             menu[i]->setStyleSheet(promo_css);
             menu[i]->raise();
             menu[i]->show();
             QObject::connect(menu[i], &Tile::tileClicked, [&](Tile* into) {
-                promo = into->piece_name;
+                promo = into->PieceName();
                 emit promotionEnd();
                 });
             QObject::connect(this, &Board::promotionEnd, &loop, &QEventLoop::quit);
@@ -165,11 +201,16 @@ namespace mmd
 
     void Board::promotePawn(scoord from, char& into, bool virtually)
     {
-        QString game_regime = settings[game_regime_e].toString();
-        if (game_regime == "friend_offline" || game_regime == "training" || game_regime == "friend_online" && turn == side) {
-            into = openPromotion(from);
+        if (virtually) {
+            VirtualBoard::promotePawn(from, into, virtually);
         }
-        theTile(from)->setPiece(into, theTile(from)->piece_color);
+        else {
+            QString game_regime = settings[game_regime_e].toString();
+            if (game_regime == friend_offline || game_regime == training || game_regime == friend_online && turn == side) {
+                into = openPromotion(from);
+            }
+            theTile(from)->setPiece(into, theTile(from)->PieceColor());
+        }
     }
 
     void Board::halfMove(scoord from, scoord to, char promo, halfmove* saved, bool virtually, bool historically)
@@ -195,12 +236,12 @@ namespace mmd
     void Board::saveBitmove(scoord from, scoord to, bitmove& bmove)
     {
         QString game_regime = settings[game_regime_e].toString();
-        if (game_regime == "friend_online" && turn != side) {
+        if (game_regime == friend_online && turn != side) {
             valid->findValid(from); // updates valid_moves for move index
         }
         bmove.move = Archiver::toMoveIdx(to, *valid);
-        if (history.empty() /*|| game_regime == "training"*/) { // first move
-            valid->inStalemate(true); // updates movable_pieces for piece index
+        if (history.empty() /*|| game_regime == training*/) { // first move
+            valid->inStalemate(); // updates movable_pieces for piece index
         }
         bmove.piece = Archiver::toPieceIdx(from, *valid);
     }
@@ -209,24 +250,24 @@ namespace mmd
     {
         auto from_tile = saved.move.first;
         auto to_tile = saved.move.second;
-        scoord from = from_tile.coord;
-        scoord to = to_tile.coord;
+        scoord from = from_tile.Coord();
+        scoord to = to_tile.Coord();
 
         if (saved.turn == side)
             emit moveMade(from, to, saved.promo);
 
         if (end)
             emit theEnd(end_type);
-        else if (valid->check)
+        else if (valid->Check())
             emit newStatus(turn == side ? check_to_user : check_to_opponent);
         else if (saved.castling)
             emit newStatus(castling);
         else if (saved.promo != 'e')
             emit newStatus(promotion);
         else if (saved.pass ||
-            from_tile.piece_name != 'e' &&
-            to_tile.piece_name != 'e' &&
-            from_tile.piece_color != to_tile.piece_color)
+            from_tile.PieceName() != 'e' &&
+            to_tile.PieceName() != 'e' &&
+            from_tile.PieceColor() != to_tile.PieceColor())
             emit newStatus(saved.turn == side ? opponent_piece_eaten : user_piece_eaten);
         else
             emit newStatus(just_new_turn);
@@ -236,4 +277,4 @@ namespace mmd
     {
         setTiles(fen);
     }
-}
+}  // namespace mmd

@@ -30,11 +30,11 @@ namespace mmd
     {
         *this = *copy_;
         initTiles();
-        importTiles(copy_->tiles);
+        importTiles(copy_->Tiles());
         valid = new VirtualValidator(this);
-        valid->check = copy_->valid->check;
+        valid->setCheck(copy_->Valid()->Check());
         for (int i = 0; i < 6; ++i) {
-            valid->has_moved[i] = copy_->valid->has_moved[i];
+            valid->setHasMoved(i, copy_->Valid()->HasMoved()[i]);
         }
     }
 
@@ -43,9 +43,49 @@ namespace mmd
         return VirtualBoard::tiles[coord.x][coord.y];
     }
 
-    bool VirtualBoard::theTurn()
+    void VirtualBoard::setEndType(endnum end_type_)
+    {
+        end_type = end_type_;
+    }
+
+    void VirtualBoard::setHistory(const vector<halfmove>& history_)
+    {
+        history = history_;
+    }
+
+    void VirtualBoard::setWKing(scoord white_king_)
+    {
+        white_king = white_king_;
+    }
+
+    void VirtualBoard::setBKing(scoord black_king_)
+    {
+        black_king = black_king_;
+    }
+
+    bool VirtualBoard::Turn()
     {
         return turn;
+    }
+
+    bool VirtualBoard::Side()
+    {
+        return side;
+    }
+
+    int VirtualBoard::CurrentMove()
+    {
+        return current_move;
+    }
+
+    endnum VirtualBoard::EndType()
+    {
+        return end_type;
+    }
+
+    bool VirtualBoard::End()
+    {
+        return end;
     }
 
     scoord VirtualBoard::wKing()
@@ -53,14 +93,34 @@ namespace mmd
         return white_king;
     }
 
+    VirtualValidator* VirtualBoard::Valid()
+    {
+        return valid;
+    }
+
+    VirtualTile* (&VirtualBoard::Tiles())[8][8]
+    {
+        return tiles;
+    }
+
+    scoord VirtualBoard::FromCoord()
+    {
+        return from_coord;
+    }
+
     scoord VirtualBoard::bKing()
     {
         return black_king;
     }
 
-    const vector<halfmove>& VirtualBoard::story()
+    const vector<halfmove>& VirtualBoard::History()
     {
         return history;
+    }
+
+    int VirtualBoard::NoChangeN()
+    {
+        return no_change_n;
     }
 
     void VirtualBoard::saveMoveSimply(scoord from, scoord to, vove& move)
@@ -72,7 +132,7 @@ namespace mmd
     {
         auto from_tile = theTile(from);
         auto to_tile = theTile(to);
-        to_tile->setPiece(from_tile->piece_name, from_tile->piece_color, virtually);
+        to_tile->setPiece(from_tile->PieceName(), from_tile->PieceColor(), virtually);
         from_tile->setPiece('e', 0, virtually);
         valid->updateHasMoved(from, to);
     }
@@ -98,19 +158,19 @@ namespace mmd
     {
         halfmove saved;
         saveMoveSimply(from, to, saved.move);
-        saved.check = valid->check;
+        saved.check = valid->Check();
         saved.turn = turn;
-        saved.moved = arrToChar(valid->has_moved);
+        saved.moved = arrToChar(valid->HasMoved());
         saved.no_change_n = no_change_n;
 
-        if (theTile(to)->piece_name == 'e' && theTile(from)->piece_name != 'P') {
+        if (theTile(to)->PieceName() == 'e' && theTile(from)->PieceName() != 'P') {
             ++no_change_n;
         }
         else {
             no_change_n = 0;
         }
 
-        int last_move;
+        size_t last_move;
         if (historically) {
             last_move = history.size() - 1;
         }
@@ -132,10 +192,7 @@ namespace mmd
         }
 
         if (valid->canPromote(to, to)) {
-            if (virtually)
-                VirtualBoard::promotePawn(to, promo, virtually);
-            else
-                promotePawn(to, promo, virtually); // promo will be changed by user
+            promotePawn(to, promo, virtually);  // promo will be changed by user
             saved.promo = promo;
         }
 
@@ -150,12 +207,12 @@ namespace mmd
         if (!virtually) {
             turn = !turn;
             if (valid->inCheck(turn)) {
-                if (valid->inStalemate(turn)) {  // check + stalemate == checkmate
+                if (valid->inStalemate()) {  // check + stalemate == checkmate
                     end_type = turn == side ? opponent_wins : user_wins;
                     end = true;
                 }
             }
-            else if (valid->inStalemate(turn)) {
+            else if (valid->inStalemate()) {
                 end_type = draw_by_stalemate;
                 end = true;
             }
@@ -173,8 +230,8 @@ namespace mmd
 
     void VirtualBoard::restoreTile(const VirtualTile& saved, bool virtually)
     {
-        auto tile = theTile(saved.coord);
-        tile->setPiece(saved.piece_name, saved.piece_color, virtually);
+        auto tile = theTile(saved.Coord());
+        tile->setPiece(saved.PieceName(), saved.PieceColor(), virtually);
     }
 
     void VirtualBoard::revertMoveSimply(vove move, bool virtually)
@@ -185,25 +242,25 @@ namespace mmd
 
     void VirtualBoard::revertCastling(vove move, bool virtually)
     {
-        scoord king = move.first.coord;
-        scoord destination = move.second.coord;
+        scoord king = move.first.Coord();
+        scoord destination = move.second.Coord();
         int add = destination.x - king.x > 0 ? 1 : -1;
         scoord rook{ destination.x - add, destination.y };
         scoord rook_corner{ add > 0 ? 7 : 0, destination.y };
         revertMoveSimply(move, virtually);
         auto corner_tile = theTile(rook_corner);
         auto rook_tile = theTile(rook);
-        corner_tile->setPiece('R', rook_tile->piece_color, virtually);
+        corner_tile->setPiece('R', rook_tile->PieceColor(), virtually);
         rook_tile->setPiece('e', 0, virtually);
     }
 
     void VirtualBoard::revertPass(vove move, bool virtually)
     {
         revertMoveSimply(move, virtually);
-        scoord from = move.first.coord;
-        scoord to = move.second.coord;
+        scoord from = move.first.Coord();
+        scoord to = move.second.Coord();
         auto opp_to_tile = theTile({ to.x, from.y });
-        opp_to_tile->setPiece('P', !move.first.piece_color, virtually);
+        opp_to_tile->setPiece('P', !move.first.PieceColor(), virtually);
 
     }
 
@@ -226,8 +283,10 @@ namespace mmd
         else {
             revertMoveSimply(hmove.move, virtually);
         }
-        valid->check = hmove.check;
-        charToArr(hmove.moved, valid->has_moved);
+        valid->setCheck(hmove.check);
+        bool has_moved_[6];
+        charToArr(hmove.moved, has_moved_);
+        valid->setHasMoved(has_moved_);
         no_change_n = hmove.no_change_n;
         if (historically) {
             history.pop_back();
@@ -291,22 +350,22 @@ namespace mmd
         turn = turn_fen == "w";
         QString castle_fen = parts[2];
         for (int i = 0; i < 6; ++i)
-            valid->has_moved[i] = true;
+            valid->setHasMoved(i, true);
         if (castle_fen.contains('Q')) {
-            valid->has_moved[0] = false;
-            valid->has_moved[1] = false;
+            valid->setHasMoved(0, false);
+            valid->setHasMoved(1, false);
         }
         if (castle_fen.contains('K')) {
-            valid->has_moved[1] = false;
-            valid->has_moved[2] = false;
+            valid->setHasMoved(1, false);
+            valid->setHasMoved(2, false);
         }
         if (castle_fen.contains('q')) {
-            valid->has_moved[3] = false;
-            valid->has_moved[4] = false;
+            valid->setHasMoved(3, false);
+            valid->setHasMoved(4, false);
         }
         if (castle_fen.contains('k')) {
-            valid->has_moved[4] = false;
-            valid->has_moved[5] = false;
+            valid->setHasMoved(4, false);
+            valid->setHasMoved(5, false);
         }
         QString no_change_fen = parts.size() > 4 ? parts[4] : "0";
         no_change_n = no_change_fen.toInt();
@@ -335,7 +394,7 @@ namespace mmd
             history.back().turn = !turn;
         }
         valid->inCheck(turn);
-        valid->searchingInStalemate(turn);
+        valid->searchingInStalemate();
     }
 
     QString VirtualBoard::getFen()
@@ -345,13 +404,13 @@ namespace mmd
         int empty_count = 0;
         for (int y = 7; y >= 0; --y) {
             for (int x = 0; x <= 7; ++x) {
-                char c = theTile({ x, y })->piece_name;
+                char c = theTile({ x, y })->PieceName();
                 if (c != 'e') {
                     if (empty_count) {
                         tiles_fen.push_back('0' + empty_count);
                         empty_count = 0;
                     }
-                    bool color = theTile({ x, y })->piece_color;
+                    bool color = theTile({ x, y })->PieceColor();
                     QChar qc = c;
                     if (!color) {
                         qc = qc.toLower();
@@ -371,34 +430,34 @@ namespace mmd
         tiles_fen.chop(1);
         QString turn_fen = turn ? "w" : "b";
         QString castle_fen = "KQkq";
-        if (valid->has_moved[0]) {
+        if (valid->HasMoved()[0]) {
             castle_fen.remove('Q');
         }
-        if (valid->has_moved[1]) {
+        if (valid->HasMoved()[1]) {
             castle_fen.remove('Q');
             castle_fen.remove('K');
         }
-        if (valid->has_moved[2]) {
+        if (valid->HasMoved()[2]) {
             castle_fen.remove('K');
         }
-        if (valid->has_moved[3]) {
+        if (valid->HasMoved()[3]) {
             castle_fen.remove('q');
         }
-        if (valid->has_moved[4]) {
+        if (valid->HasMoved()[4]) {
             castle_fen.remove('q');
             castle_fen.remove('k');
         }
-        if (valid->has_moved[5]) {
+        if (valid->HasMoved()[5]) {
             castle_fen.remove('k');
         }
         QString pass_fen;
         if (!history.empty()) {
             vove last = history.back().move;
-            scoord from = last.first.coord;
-            scoord to = last.second.coord;
+            scoord from = last.first.Coord();
+            scoord to = last.second.Coord();
             bool could_be_pass = abs(to.y - from.y) == 2;
             if (could_be_pass) {
-                int k = last.first.piece_color ? 1 : -1;
+                int k = last.first.PieceColor() ? 1 : -1;
                 scoord middle = { to.x, int(4 - 1.5 * k) };
                 pass_fen = coordToString(middle);
             }
@@ -431,8 +490,8 @@ namespace mmd
     {
         if (0 <= current_move && current_move < history.size()) {
             halfmove hmove = history[current_move];
-            scoord from = hmove.move.first.coord;
-            scoord to = hmove.move.second.coord;
+            scoord from = hmove.move.first.Coord();
+            scoord to = hmove.move.second.Coord();
             char promo = hmove.promo;
             halfMove(from, to, promo, nullptr, false, false);
             ++current_move;
@@ -449,24 +508,24 @@ namespace mmd
         }
     }
 
-    string VirtualBoard::toStr(bool stat)
+    string VirtualBoard::toStr(bool staticly)
     {
         string view;
         for (int y = 7; y >= 0; --y) {
             for (int x = 0; x < 8; ++x) {
-                auto tile = stat ? VirtualBoard::theTile({ x, y }) : theTile({ x, y });
-                view.push_back(tile->piece_color ? tile->piece_name : tolower(tile->piece_name));
+                auto tile = staticly ? VirtualBoard::theTile({ x, y }) : theTile({ x, y });
+                view.push_back(tile->PieceColor() ? tile->PieceName() : tolower(tile->PieceName()));
             }
             view.push_back('\n');
         }
         return view;
     }
 
-    void VirtualBoard::importTiles(Tile* (&arr)[8][8])
+    void VirtualBoard::importTiles(Tile* const (&arr)[8][8])
     {
         for (int x = 0; x < 8; ++x) {
             for (int y = 0; y < 8; ++y) {
-                tiles[x][y]->setPiece(arr[x][y]->piece_name, arr[x][y]->piece_color);
+                tiles[x][y]->setPiece(arr[x][y]->PieceName(), arr[x][y]->PieceColor());
             }
         }
     }
@@ -483,7 +542,7 @@ namespace mmd
     void VirtualBoard::promotePawn(scoord from, char& into, bool virtually)
     {
         auto pawn_tile = theTile(from);
-        pawn_tile->setPiece(into, pawn_tile->piece_color, virtually);
+        pawn_tile->setPiece(into, pawn_tile->PieceColor(), virtually);
         valid->updateHasMoved(from, from);
     }
-}
+}  // namespace mmd

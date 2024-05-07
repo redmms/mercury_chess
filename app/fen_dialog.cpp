@@ -4,17 +4,14 @@ using namespace std;
 
 namespace mmd
 {
-    FenDialog::FenDialog(QWidget* parent) :
-        QDialog(parent),
+    FenDialog::FenDialog(QWidget* parent_) :
+        QDialog(parent_),
         ui(new Ui::FenDialog)
     {
         ui->setupUi(this);
     }
 
-    FenDialog::~FenDialog()
-    {
-        delete ui;
-    }
+    FenDialog::~FenDialog() = default;
 
     void FenDialog::on_skip_button_clicked()
     {
@@ -29,4 +26,4 @@ namespace mmd
         emit newFen(fen);
         accept();
     }
-}
+}  // namespace mmd

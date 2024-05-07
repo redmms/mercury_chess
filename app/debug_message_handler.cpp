@@ -20,7 +20,7 @@ namespace mmd
             log_ofstream = ofstream(log_file_name.toStdString(), ios::out | ios::app);
             
         }
-        catch (const exception& err) {
+        catch (const exception& e) {
             throw;
         }
         if (log_ofstream.is_open()) {
@@ -79,4 +79,4 @@ namespace mmd
             log_ofstream.close();
         }
     }
-}
+}  // namespace mmd

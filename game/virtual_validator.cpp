@@ -3,6 +3,10 @@
 #include "virtual_tile.h"
 #include "../app/mainwindow.h"
 #include <iostream>
+#ifdef MMDTEST
+#include <iostream>
+#include <string_view>
+#endif
 using namespace std;
 using lambda = function<bool(mmd::scoord)>;
 using checker = function<bool(mmd::scoord, bool&)>;
@@ -35,87 +39,87 @@ namespace mmd
         perp_dir{ { 0,  1 }, { 0,  -1 }, { 1,  0 },  { -1, 0 } },
         diag_dir{ { 1,  1 }, { 1, -1 },  { -1,  1 }, { -1, -1 } },
         inBoard([](scoord coord) -> bool {
-        return 0 <= coord.x && coord.x < 8 && 0 <= coord.y && coord.y < 8;
+            return 0 <= coord.x && coord.x < 8 && 0 <= coord.y && coord.y < 8;
             }),
         occupied([&](scoord coord) -> bool {
-        return theTile(coord)->piece_name != 'e';
+            return theTile(coord)->PieceName() != 'e';
             }),
         pieceName([&](scoord coord) -> char {
-        return theTile(coord)->piece_name;
+            return theTile(coord)->PieceName();
             }),
         pieceColor([&](scoord coord) -> bool {
-        return theTile(coord)->piece_color;
+            return theTile(coord)->PieceColor();
             }),
         differentColor([&](scoord coord) -> bool {
-        // may be realized differently, with either turn or piece color
-        return occupied(coord) && pieceColor(coord) != theTurn();
+            // may be realized differently, with either turn or piece color
+            return occupied(coord) && pieceColor(coord) != Turn();
             }),
         sameColor([&](scoord coord) -> bool {
-        // may be realized differently, with either turn or piece color
-        return occupied(coord) && pieceColor(coord) == theTurn();
+            // may be realized differently, with either turn or piece color
+            return occupied(coord) && pieceColor(coord) == Turn();
             }),
         freeToEat([&](scoord coord) -> bool {
-        return differentColor(coord) && pieceName(coord) != 'K';
+            return differentColor(coord) && pieceName(coord) != 'K';
             }),
         freeToPlace([&](scoord coord) -> bool {
-        return !occupied(coord) || freeToEat(coord);
+            return !occupied(coord) || freeToEat(coord);
             }),
         addValid([&](scoord coord, set<scoord>& container) -> void {
-        container.emplace(coord);
+            container.emplace(coord);
             }),
         runThrough([&](scoord coord, scoord add, lambda stop_cond, lambda borders_cond) -> bool {
-        // here range is (from, to] or (from, to), depending on stop_cond
-        coord.x += add.x, coord.y += add.y;
-        while (inBoard(coord) && borders_cond(coord)) {
-            if (stop_cond(coord))
-                return true;
+            // here range is (from, to] or (from, to), depending on stop_cond
             coord.x += add.x, coord.y += add.y;
-        }
-        return false;
+            while (inBoard(coord) && borders_cond(coord)) {
+                if (stop_cond(coord))
+                    return true;
+                coord.x += add.x, coord.y += add.y;
+            }
+            return false;
             }),
         runLines([&](scoord from, lambda stop_cond, lambda borders_cond, const list<scoord>& direction) -> bool {
-        bool res = false;
-        for (scoord add : direction)
-            res |= runThrough(from, add, stop_cond, borders_cond);
-        return res;
+            bool res = false;
+            for (scoord add : direction)
+                res |= runThrough(from, add, stop_cond, borders_cond);
+            return res;
             }),
         fastThrough([&](scoord coord, scoord add, checker stop_cond, bool& result) -> void {
-        // here range is (from, to] or (from, to), depending on stop_cond
-        do { coord.x += add.x, coord.y += add.y; } while (inBoard(coord) && !stop_cond(coord, result));
-            }),
-        fastLines([&](scoord coord, checker stop_cond, const list<scoord>& direction) -> bool {
-        bool result = false;
-        for (auto add : direction) {
-            fastThrough(coord, add, stop_cond, result);
-            if (result)
-                return true;
-        }
-        return false;
+            // here range is (from, to] or (from, to), depending on stop_cond
+            do { coord.x += add.x, coord.y += add.y; } while (inBoard(coord) && !stop_cond(coord, result));
+                }),
+            fastLines([&](scoord coord, checker stop_cond, const list<scoord>& direction) -> bool {
+            bool result = false;
+            for (auto add : direction) {
+                fastThrough(coord, add, stop_cond, result);
+                if (result)
+                    return true;
+            }
+            return false;
             }),
         enemyFinder([&](scoord coord, lambda comparison, lambda borders, bool& result) -> bool {
-        if (!borders(coord)) { // borders checking should always go first
-            result = false;
-            return true; // stop
-        }
-        else if (differentColor(coord)) {
-            result = comparison(coord);
-            return true; // stop
-        }
-        else
-            return false; // continue
-            }),
-        moveFinder([&](scoord coord, lambda can_move_checker, lambda let_king_die_checker, set<scoord>& container) -> bool {
-        if (can_move_checker(coord)) {
-            if (!let_king_die_checker(coord))
-                addValid(coord, container);
-            if (occupied(coord))
-                return true; // stop cycle
+            if (!borders(coord)) { // borders checking should always go first
+                result = false;
+                return true; // stop
+            }
+            else if (differentColor(coord)) {
+                result = comparison(coord);
+                return true; // stop
+            }
             else
                 return false; // continue
-        }
-        else {
-            return true; // stop 
-        }
+            }),
+        moveFinder([&](scoord coord, lambda can_move_checker, lambda let_king_die_checker, set<scoord>& container) -> bool {
+            if (can_move_checker(coord)) {
+                if (!let_king_die_checker(coord))
+                    addValid(coord, container);
+                if (occupied(coord))
+                    return true; // stop cycle
+                else
+                    return false; // continue
+            }
+            else {
+                return true; // stop 
+            }
             })
     {}
 
@@ -124,9 +128,9 @@ namespace mmd
         return board->theTile(coord);
     }
 
-    bool VirtualValidator::theTurn()
+    bool VirtualValidator::Turn()
     {
-        return board->theTurn();
+        return board->Turn();
     }
 
     scoord VirtualValidator::wKing()
@@ -139,9 +143,46 @@ namespace mmd
         return board->bKing();
     }
 
-    const vector<halfmove>& VirtualValidator::story()
+    const vector<halfmove>& VirtualValidator::History()
     {
-        return board->story();
+        return board->History();
+    }
+
+    const std::set<scoord>& VirtualValidator::ValidMoves()
+    {
+        return valid_moves;
+    }
+
+    bool const (&VirtualValidator::HasMoved())[6]
+    {
+        return has_moved;
+    }
+
+    const std::set<scoord>& VirtualValidator::MovablePieces()
+    {
+        return movable_pieces;
+    }
+
+    bool VirtualValidator::Check()
+    {
+        return check;
+    }
+
+    void VirtualValidator::setCheck(bool check_)
+    {
+        check = check_;
+    }
+
+    void VirtualValidator::setHasMoved(int i, bool moved)
+    {
+        has_moved[i] = moved;
+    }
+
+    void VirtualValidator::setHasMoved(const bool(&has_moved_)[6])
+    {
+        for (int i = 0; i < 6; ++i) {
+            has_moved[i] = has_moved_[i];
+        }
     }
 
     void VirtualValidator::moveVirtually(scoord from, scoord to, char promo, halfmove& saved_move)
@@ -154,19 +195,6 @@ namespace mmd
         board->VirtualBoard::revertHalfmove(saved_move, true, true);
     }
 
-    //void VirtualValidator::printHasMoved()
-    //{    
-    //    cout << '\n';
-    //    for (int i = 0; i < 3; ++i) {
-    //        cout << has_moved[i] << ' ';
-    //    }
-    //    cout << '\n';
-    //    for (int i = 3; i < 6; ++i) {
-    //        cout << has_moved[i] << ' ';
-    //    }
-    //    cout << '\n';
-    //}
-
     void VirtualValidator::kingPotential(scoord coord, list<scoord>& coords)
     {
         int x = coord.x, y = coord.y;
@@ -177,7 +205,7 @@ namespace mmd
 
     void VirtualValidator::castlingPotential(list<scoord>& coords)
     {
-        if (theTurn())
+        if (Turn())
             coords = { {2, 0}, {6, 0} };
         else
             coords = { {2, 7}, {6, 7} };
@@ -192,13 +220,13 @@ namespace mmd
 
     void VirtualValidator::pawnEatPotential(scoord coord, list<scoord>& coords)
     {
-        int x = coord.x, y = coord.y, k = theTurn() ? 1 : -1;
+        int x = coord.x, y = coord.y, k = Turn() ? 1 : -1;
         coords = { {x - 1, y + k}, {x + 1, y + k} };
     }
 
     void VirtualValidator::pawnMovePotential(scoord coord, list<scoord>& coords)
     {
-        int x = coord.x, y = coord.y, k = theTurn() ? 1 : -1;
+        int x = coord.x, y = coord.y, k = Turn() ? 1 : -1;
         coords = { {x, y + k}, {x, y + 2 * k } };
     }
 
@@ -256,14 +284,13 @@ namespace mmd
         // 7 line
         //valid_moves.clear();
         auto from_tile = theTile(from);
-        const bool turn = theTurn();
-        const char piece = from_tile->piece_name;
+        const bool turn = Turn();
+        const char piece = from_tile->PieceName();
         const scoord king = turn ? wKing() : bKing();
-        int X, Y;
-        bool first_evaluation = true, may_exposure = false;
+        bool first_evaluation = true, may_expose = false;
         scoord add;
         list <scoord> potenial_moves;
-        const int k = theTurn() ? 1 : -1;
+        const int k = Turn() ? 1 : -1;
 
         // Usefull formulas:
         static auto findDirection = [](scoord beg, scoord end) {
@@ -287,7 +314,7 @@ namespace mmd
         // Lambdas about king:
         auto exposureKing = [&](scoord coord) {
             if (first_evaluation) {
-                X = from.x - king.x,
+                int X = from.x - king.x,
                     Y = from.y - king.y;
                 bool from_aligns_king = abs(X) == abs(Y) || !X || !Y;
                 if (from_aligns_king) {
@@ -312,11 +339,11 @@ namespace mmd
                         };
                     bool occurs_threat = false;
                     fastThrough(from, add, checkerAfter, occurs_threat);
-                    may_exposure = from_aligns_king && nothing_between && occurs_threat;
+                    may_expose = from_aligns_king && nothing_between && occurs_threat;
                 }
                 first_evaluation = false;
             }
-            return may_exposure && notAlignsKing(coord, king, from); // if not aligns king then exposure him
+            return may_expose && notAlignsKing(coord, king, from); // if not aligns king then exposure him
             // otherwise it will protect king with its own body
             };
         auto letKingDie = [&](scoord coord) {
@@ -407,6 +434,7 @@ namespace mmd
 
     bool VirtualValidator::inCheck(bool color)
     {
+        // updates 'check' variable
         auto king = color ? wKing() : bKing();
         return (check = underAttack(king));
     }
@@ -415,11 +443,12 @@ namespace mmd
     {
         auto king = color ? wKing() : bKing();
         cout << check << endl;
-        return (check = underAttack(king)) && inStalemate(color);
+        return (check = underAttack(king)) && inStalemate();
     }
 
-    bool VirtualValidator::inStalemate(bool color)
+    bool VirtualValidator::inStalemate()
     {
+        // checks the current turn
         for (int x = 0; x < 8; ++x) {
             for (int y = 0; y < 8; ++y) {
                 scoord coord{ x, y };
@@ -435,8 +464,9 @@ namespace mmd
         return true;
     }
 
-    bool VirtualValidator::searchingInStalemate(bool color)
+    bool VirtualValidator::searchingInStalemate()
     {
+        // checks the current turn
         movable_pieces.clear();
         set<scoord> temp_valid_moves;
         bool stalemate = true;
@@ -459,9 +489,9 @@ namespace mmd
     bool VirtualValidator::canCastle(scoord from, scoord to, scoord* rook)
     {
         list<int> castling_sides{};
-        if (theTurn() && pieceName(from) == 'K' && !has_moved[1])
+        if (Turn() && pieceName(from) == 'K' && !has_moved[1])
             castling_sides = { 0, 2 };
-        else if (!theTurn() && pieceName(from) == 'K' && !has_moved[4])
+        else if (!Turn() && pieceName(from) == 'K' && !has_moved[4])
             castling_sides = { 3, 5 };
         for (int i : castling_sides) {
             if (to == castling_destination[i] && !has_moved[i]) {
@@ -481,9 +511,9 @@ namespace mmd
 
     bool VirtualValidator::canPass(scoord from, scoord to)
     {
-        if (story().empty())
+        if (History().empty())
             return false;
-        vove last_move = story().back().move;
+        vove last_move = History().back().move;
         return canPass(from, to, last_move);
     }
 
@@ -491,10 +521,10 @@ namespace mmd
     {
         VirtualTile opp_from_tile = last_move.first;
         VirtualTile opp_to_tile = last_move.second;
-        scoord opp_from = last_move.first.coord;
-        scoord opp_to = last_move.second.coord;
-        return opp_from_tile.piece_name == 'P' &&
-            opp_from_tile.piece_color != pieceColor(from) &&
+        scoord opp_from = last_move.first.Coord();
+        scoord opp_to = last_move.second.Coord();
+        return opp_from_tile.PieceName() == 'P' &&
+            opp_from_tile.PieceColor() != pieceColor(from) &&
             abs(opp_to.y - opp_from.y) == 2 &&
             // it was pawn of opp color moved by 2 tiles
             pieceName(from) == 'P' &&
@@ -508,7 +538,7 @@ namespace mmd
 
     bool VirtualValidator::canPromote(scoord pawn, scoord destination)
     {
-        return pieceName(pawn) == 'P' && destination.y == (theTurn() ? 7 : 0);
+        return pieceName(pawn) == 'P' && destination.y == (Turn() ? 7 : 0);
     }
 
     void VirtualValidator::updateHasMoved(scoord from, scoord to)
@@ -521,6 +551,19 @@ namespace mmd
     }
 
 #ifdef MMDTEST
+    void VirtualValidator::printHasMoved()
+    {
+        cout << '\n';
+        for (int i = 0; i < 3; ++i) {
+            cout << has_moved[i] << ' ';
+        }
+        cout << '\n';
+        for (int i = 3; i < 6; ++i) {
+            cout << has_moved[i] << ' ';
+        }
+        cout << '\n';
+    }
+
     unsigned VirtualValidator::countMovesTest(int depth, int i)
     {
         //VirtualBoard board_copy = *board;
@@ -549,9 +592,7 @@ namespace mmd
         return total_count;
     }
 
-#include <iostream>
-#include <string_view>
-    unsigned VirtualValidator::countParticular(int depth, int i, scoord from) // если первый ход был h2h3
+    unsigned VirtualValidator::countParticular(int depth, int i, scoord from)
         // last_from == {7, 1} && last_to == {7, 2} и i == 1 (2)
     {
         //auto size = board->history.size();
@@ -670,4 +711,4 @@ namespace mmd
             << endl;
     }
 #endif  // MMDTEST
-}
+}  // namespace mmd

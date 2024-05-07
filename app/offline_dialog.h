@@ -1,17 +1,17 @@
 #pragma once
 #include <QDialog>
+#include <QScopedPointer>
 
-namespace Ui {
+namespace Ui 
+{
     class OfflineDialog;
 }
-
 namespace mmd
 {
     class OfflineDialog : public QDialog 
     {
         Q_OBJECT
-
-        Ui::OfflineDialog* ui;
+        QScopedPointer<Ui::OfflineDialog> ui;
 
         bool checkName();
 
@@ -24,4 +24,4 @@ namespace mmd
         void on_save_button_clicked();
         void on_skip_button_clicked();
     };
-}
+}  // namespace mmd

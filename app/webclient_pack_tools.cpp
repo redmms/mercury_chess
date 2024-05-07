@@ -75,4 +75,4 @@ namespace mmd
     void WebClient::readPack(quint8& data) {
         read_stream >> data;
     }
-}
+}  // namespace mmd

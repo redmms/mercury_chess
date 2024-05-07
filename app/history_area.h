@@ -12,14 +12,14 @@ namespace mmd
         QColor background_color;
         QLabel* history_label;
 
-    public:
-        HistoryArea(QWidget* parent_, QColor background_color_ = Qt::white);
-
-        void writeStory(int order, halfmove hmove);
-        void clearStory();
-
     protected:
         void paintEvent(QPaintEvent* event) override;
         void wheelEvent(QWheelEvent* event) override;
+
+    public:
+        HistoryArea(QWidget* parent_, QColor background_color_ = Qt::white);
+
+        void writeStory(size_t order, halfmove hmove);
+        void clearStory();
     };
-}
+}  // namespace mmd

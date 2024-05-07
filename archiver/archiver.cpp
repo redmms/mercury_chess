@@ -33,13 +33,13 @@ namespace mmd
         if (opp_name.size() > 255) {
             cerr << "WARNING: in Archiver: opp_name size is bigger than 255" << endl;
         }
-        uint8_t char_num = opp_name.size();
+        uint8_t char_num = static_cast<uint8_t>(opp_name.size());
         bool user_side = settings[match_side_e].toBool();
         if (history.size() > 255) {
             cerr << "ERROR: you are trying to save a game longer than 255 halfmoves. This archiver version supports only 122 move games" << endl;
             return 3;
         }
-        uint8_t moves_num = history.size();
+        uint8_t moves_num = static_cast<uint8_t>(history.size());
         fn::bitremedy end{ int(end_type), 4, false };
         ofs << archiver_version
             << char_num
@@ -111,8 +111,8 @@ namespace mmd
         //     << " end: " << end.toStr() << endl;
 
         VirtualBoard board;
-        VirtualValidator& valid = *board.valid;
-        valid.searchingInStalemate(true);
+        VirtualValidator& valid = *board.Valid();
+        valid.searchingInStalemate();
         for (int i = 0; i < moves_num; ++i) {
             //int order = i + 1;
             //if ( order % 2)
@@ -126,7 +126,7 @@ namespace mmd
             }
             bistory.push_back(bmove);
             history.push_back(hmove);
-            valid.valid_moves.clear();
+            //valid.valid_moves.clear();
             //cout << "\n" <<  order << ". " << halfmoveToString(hmove).toStdString() << " \n";
         }
         //cout << sout.str();
@@ -135,24 +135,24 @@ namespace mmd
 
     inline int Archiver::readMove(bitmove& bmove, halfmove& hmove, fn::ifinestream& ifs, VirtualBoard& board)
     {
-        VirtualValidator& valid = *board.valid;
-        valid.searchingInStalemate(valid.theTurn());
-        bmove.piece = { bmove.piece.Ucbyte(), fn::IntNonLeadingN(valid.movable_pieces.size() - 1), bmove.piece.MovedLeft() };
+        VirtualValidator& valid = *board.Valid();
+        valid.searchingInStalemate();
+        bmove.piece = { bmove.piece.Ucbyte(), fn::IntNonLeadingN(valid.MovablePieces().size() - 1), bmove.piece.MovedLeft()};
         ifs >> bmove.piece;
-        if (bmove.piece >= valid.movable_pieces.size()) {
+        if (bmove.piece >= valid.MovablePieces().size()) {
             cerr << "WARNING: piece idx is bigger than movable pieces available" << endl;
             return 1;
         }
-        scoord from = *next(valid.movable_pieces.begin(), int(bmove.piece));
+        scoord from = *next(valid.MovablePieces().begin(), int(bmove.piece));
 
         valid.findValid(from);
-        bmove.move = { bmove.move.Ucbyte(), fn::IntNonLeadingN(valid.valid_moves.size() - 1), bmove.move.MovedLeft() };
+        bmove.move = { bmove.move.Ucbyte(), fn::IntNonLeadingN(valid.ValidMoves().size() - 1), bmove.move.MovedLeft()};
         ifs >> bmove.move;
-        if (bmove.move >= valid.valid_moves.size()) {
+        if (bmove.move >= valid.ValidMoves().size()) {
             cerr << "WARNING: move idx is bigger than valid moves available" << endl;
             return 2;
         }
-        scoord to = *next(valid.valid_moves.begin(), int(bmove.move));
+        scoord to = *next(valid.ValidMoves().begin(), int(bmove.move));
         //sout << " piece: " << bmove.piece.toStr()
         //    << " move: " << bmove.move.toStr();
 
@@ -169,31 +169,31 @@ namespace mmd
 
     bitmove Archiver::toBitmove(halfmove hmove, Validator& valid)
     {
-        scoord from = hmove.move.first.coord;
-        scoord to = hmove.move.second.coord;
+        scoord from = hmove.move.first.Coord();
+        scoord to = hmove.move.second.Coord();
         return { toPieceIdx(from, valid), toMoveIdx(to, valid), promo_by_char.at(hmove.promo) };
     }
 
     fn::bitremedy Archiver::toPieceIdx(scoord from, Validator& valid) {
-        unsigned char piece_idx = distance(valid.movable_pieces.begin(), valid.movable_pieces.find(from));
-        return { piece_idx, fn::IntNonLeadingN(valid.movable_pieces.size() - 1), false };
+        unsigned char piece_idx = distance(valid.MovablePieces().begin(), valid.MovablePieces().find(from));
+        return { piece_idx, fn::IntNonLeadingN(valid.MovablePieces().size() - 1), false};
     }
 
     fn::bitremedy Archiver::toMoveIdx(scoord to, Validator& valid) {
-        unsigned char move_idx = distance(valid.valid_moves.begin(), valid.valid_moves.find(to));
-        return { move_idx, fn::IntNonLeadingN(valid.valid_moves.size() - 1), false };
+        unsigned char move_idx = distance(valid.ValidMoves().begin(), valid.ValidMoves().find(to));
+        return { move_idx, fn::IntNonLeadingN(valid.ValidMoves().size() - 1), false};
     }
 
     halfmove Archiver::toHalfmove(bitmove bmove, VirtualValidator& valid) {
-        scoord from = *next(valid.movable_pieces.begin(), int(bmove.piece));
-        scoord to = *next(valid.valid_moves.begin(), int(bmove.move));
+        scoord from = *next(valid.MovablePieces().begin(), int(bmove.piece));
+        scoord to = *next(valid.ValidMoves().begin(), int(bmove.move));
         //you need to control that these Validator movable_pieces and valid_moves will be actual and valid at the moment
         halfmove hmove;
         hmove.move = { *valid.theTile(from), *valid.theTile(to) };
         hmove.promo = char_by_promo.at(bmove.promo);
         hmove.castling = valid.canCastle(from, to);
         hmove.pass = valid.canPass(from, to);
-        hmove.turn = valid.theTurn();
+        hmove.turn = valid.Turn();
         return hmove;
     }
-}
+}  // namespace mmd

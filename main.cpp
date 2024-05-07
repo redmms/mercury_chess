@@ -1,7 +1,7 @@
 #include "app/mainwindow.h"
 #include "app/debug_message_handler.h"
 #include <QDebug>
-#ifndef NDEBUG
+#ifdef MMDTEST
 #include <windows.h>  // For AllocConsole()          
 #include <cstdio>
 #endif  
@@ -10,7 +10,7 @@ int main(int argc, char *argv[])
 {
     mmd::LogHandler handler("log.txt");
     qInstallMessageHandler(&mmd::LogHandler::messageHandler);
-#ifndef NDEBUG
+#ifdef MMDTEST
     AllocConsole();
     freopen("CONOUT$", "w", stdout);
     freopen("CONOUT$", "w", stderr);

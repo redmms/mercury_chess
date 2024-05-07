@@ -10,9 +10,5 @@ namespace mmd
     {
         ui->setupUi(this);
     }
-
-    RulesDialog::~RulesDialog()
-    {
-        delete ui;
-    }
-}
+    RulesDialog::~RulesDialog() = default;
+}  // namespace mmd
