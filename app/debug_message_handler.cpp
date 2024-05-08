@@ -2,7 +2,7 @@
 #include <iostream>
 #ifndef NDEBUG
 #include <QMessageLogContext>
-#endif
+#endif  // NDEBUG
 using namespace std;
 
 namespace mmd 
@@ -15,10 +15,10 @@ namespace mmd
         cerrbuf(0),
         old_ofstream{}
     {
+#ifdef NDEBUG
         try {
             old_ofstream = move(log_ofstream);
-            log_ofstream = ofstream(log_file_name.toStdString(), ios::out | ios::app);
-            
+            log_ofstream = ofstream(log_file_name.toStdString(), ios::out | ios::app);            
         }
         catch (const exception& e) {
             throw;
@@ -31,13 +31,16 @@ namespace mmd
         else {
             cerr << "\n" << curTime().toStdString() << ": Couldn't open log file\n";
         }
+#endif  // NDEBUG
     }
 
     LogHandler::~LogHandler() {
+#ifdef NDEBUG
         log_ofstream.close();
         log_ofstream = move(old_ofstream);
         cout.rdbuf(coutbuf);
         cerr.rdbuf(cerrbuf);
+#endif  // NDEBUG
     }
 
     void LogHandler::messageHandler(QtMsgType type, const QMessageLogContext& context, const QString& msg)
@@ -71,7 +74,7 @@ namespace mmd
              << ", "
              << context.function
              << "\n";
-#endif           
+#endif  // NDEBUG
         cerr << (curTime() + ": ").toStdString()
              << msg.toStdString()
              << "\n\n";

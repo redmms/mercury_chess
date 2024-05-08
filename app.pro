@@ -20,6 +20,11 @@ QMAKE_CXXFLAGS += \
     /reference finestream=finestream.ifc \
     $$STD_HEADER_UNITS
 
+QMAKE_CXXFLAGS_DEBUG += /ifcSearchDir debug
+QMAKE_CXXFLAGS_RELEASE += /ifcSearchDir release
+QMAKE_LFLAGS_DEBUG += /LIBPATH:debug/
+QMAKE_LFLAGS_RELEASE += /LIBPATH:release/
+
 
 SOURCES += \
     app/fen_dialog.cpp \

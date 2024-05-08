@@ -6,7 +6,7 @@
 #ifdef MMDTEST
 #include <iostream>
 #include <string_view>
-#endif
+#endif  // MMDTEST
 using namespace std;
 using lambda = function<bool(mmd::scoord)>;
 using checker = function<bool(mmd::scoord, bool&)>;

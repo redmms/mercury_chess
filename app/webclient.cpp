@@ -12,7 +12,7 @@ namespace mmd
     WebClient::WebClient(MainWindow* parent) :
         QObject(parent),
         mainwindow(parent),
-        socket{},
+        socket(nullptr),
         read_package{},
         send_package{},
         read_stream(&read_package, QIODevice::ReadOnly),
@@ -32,8 +32,6 @@ namespace mmd
         }
         delete socket;
     }
-
-
 
     void WebClient::initSocket()
     {
@@ -88,6 +86,7 @@ namespace mmd
     bool WebClient::checkConnection(packnum type)
     {
         if (!socket) {
+            // forgot to initialize a socket? Go check your code :)
             if (type == new_name) {
                 showBox("Can't change online nickname",
                     "You are offline, only local nickname has been changed. "
@@ -100,11 +99,16 @@ namespace mmd
             }
             return false;
         }
-        else if (!socket->isValid() || !socket->isOpen()) {
-            initSocket();
+        else if (!socket->isValid()) {
+            qDebug() << "Socket wasn't valid, connecting.";
+            return connectToServer();
+        }
+        else if(!socket->isOpen()){
+            qDebug() << "Socket wasn't open, connecting.";
             return connectToServer();
         }
         else if (socket->state() == QAbstractSocket::UnconnectedState) {
+            qDebug() << "Socket wasn't connected, connecting.";
             return connectToServer();
         }
         else {
@@ -183,15 +187,13 @@ namespace mmd
         read_stream.device()->reset();
     }
 
-
-
-
     void WebClient::sendToServer(packnum type, bool respond, QString message, scoord from, scoord to, char promotion_type)
     {
         quint16 pack_size = 0;
         send_stream << pack_size;
         if ((type == registration || type == login) && !socket) {
             initSocket();
+            connectToServer();
         }
         if (!checkConnection(type)) {
             qDebug() << "Couldn't send data to server. Data type is " << int(type);

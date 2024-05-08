@@ -219,5 +219,5 @@ namespace mmd
     scoord h6 = stringToCoord("h6");
     scoord h7 = stringToCoord("h7");
     scoord h8 = stringToCoord("h8");
-#endif
+#endif  // MMDTEST
 }  // namespace mmd

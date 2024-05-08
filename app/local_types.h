@@ -265,7 +265,7 @@ namespace mmd
     extern scoord h6;
     extern scoord h7;
     extern scoord h8;
-#endif
+#endif  // MMDTEST
 }  // namespace mmd
 
 // TODO:

@@ -30,4 +30,20 @@
         <file alias="check_to_opp">sounds/nice/wav/check_to_opp.wav</file>
         <file alias="start">sounds/nice/wav/start.wav</file>
     </qresource>
+    <qresource prefix="/">
+        <file>rules/rules.html</file>
+        <file>rules/rules_files/bishop.png</file>
+        <file>rules/rules_files/castling.png</file>
+        <file>rules/rules_files/check.png</file>
+        <file>rules/rules_files/checkmate.png</file>
+        <file>rules/rules_files/en-passant.png</file>
+        <file>rules/rules_files/initial-setup.png</file>
+        <file>rules/rules_files/king.png</file>
+        <file>rules/rules_files/knight.png</file>
+        <file>rules/rules_files/pawns.png</file>
+        <file>rules/rules_files/promotion.png</file>
+        <file>rules/rules_files/queen.png</file>
+        <file>rules/rules_files/rook.png</file>
+        <file>rules/rules_files/stalemate-1.png</file>
+    </qresource>
 </RCC>

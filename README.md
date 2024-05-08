@@ -1,3 +1,8 @@
+<p align="center">
+   <img src="https://img.shields.io/github/last-commit/redmms/mercury_chess" alt="Last Update">
+   <img src="https://img.shields.io/github/languages/code-size/redmms/mercury_chess" alt="Size">
+</p>
+
 #	MercuryChess: Toxic Edition.
 
 Online chess with lots of stylesheets spiced with toxic humor. It uses an innovative data format in its built-in archiver that sets it apart from the rest.  
@@ -11,7 +16,6 @@ Finestream is available here:
 https://github.com/redmms/finestream.git  
   
 In the near future:  
-  
 ![finestream_joke](/decription_media/finestream_joke.jpg)  
   
 ## Unique  
@@ -77,15 +81,17 @@ Running a ready app:
 1) Download the build from github Releases
 2) Extract the file from the archive
 3) Open game.exe
+4) If some .dll files are missing open PRESS_ME shortcut, it will download VC++ redistributable packages installer, run it to install .dll files 
 
 MS Visual Studio:
 1) Clone the repository
 2) Open qt.sln  
-If it will not run, try to add /dxifcInlineFunctions- compiler command.
+3) If it will not run, try to add /dxifcInlineFunctions- compiler command.
 
 Qt Creator:
 1) Clone the repository
 2) Open all.pro
+3) Choose Desktop Qt 5.15.2 MSVC2019 64bit kit
 
 From scratch, without project file:  
 	If you're keen on diving into the code and building MercuryChess yourself, 
