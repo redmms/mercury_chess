@@ -43,8 +43,8 @@ Use the mouse wheel to scroll the history area on the upper side of the board ba
 ## Training mode
 
 Here (Play->Offline->Training) you can set any start position you want from a FEN string (the most popular format for describing board positions) to train your skills or test my chess engine. 
-By default, it opens this position:  
-https://www.chessprogramming.org/Perft_Results##Position_5   
+By default, it opens this position:Â  
+https://www.chessprogramming.org/Perft_Results##Position_5Â  Â 
   
 ![training_mode](/decription_media/training_mode.gif)  
   
@@ -94,7 +94,8 @@ Qt Creator:
 3) Choose Desktop Qt 5.15.2 MSVC2019 64bit kit
 
 From scratch, without project file:  
-	If you're keen on diving into the code and building MercuryChess yourself, 
+  
+ 	If you're keen on diving into the code and building MercuryChess yourself, 
 you will probably want to use MS Visual Studio (VS) with Qt VS tools addon to use qmake, because VS has the best C++20 module support at the moment.  
 	You will need to enable Qt 5.15 if you want to hear sounds in the game (there's a bug in Qt 6):  
 https://doc.qt.io/qtvstools/  
