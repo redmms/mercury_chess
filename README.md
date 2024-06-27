@@ -95,7 +95,7 @@ Qt Creator:
 
 From scratch, without project file:  
   
-	If you're keen on diving into the code and building MercuryChess yourself, 
+If you're keen on diving into the code and building MercuryChess yourself, 
 you will probably want to use MS Visual Studio (VS) with Qt VS tools addon to use qmake, because VS has the best C++20 module support at the moment.  
 	You will need to enable Qt 5.15 if you want to hear sounds in the game (there's a bug in Qt 6):  
 https://doc.qt.io/qtvstools/  
