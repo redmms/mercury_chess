@@ -123,8 +123,8 @@ namespace mmd
         settings[game_regime_e].setValue(QString(friend_offline));
         settings[def_port_e].setValue(49001);
         settings[port_address_e].setValue(49001);
-        settings[def_address_e].setValue("40.113.33.140"_qs);
-        settings[ip_address_e].setValue(/*"127.0.0.1"_qs*/"40.113.33.140"_qs);
+        settings[def_address_e].setValue("45.76.82.147"_qs);
+        settings[ip_address_e].setValue(/*"127.0.0.1"_qs*/"45.76.82.147"_qs);
         settings[max_nick_e].setValue(12);
         settings[pic_w_e].setValue(100);
         settings[pic_h_e].setValue(100);
